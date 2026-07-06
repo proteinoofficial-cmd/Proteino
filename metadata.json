@@ -1,0 +1,6 @@
+{
+  "name": "Proteino",
+  "description": "Healthy high-protein meal prep and fresh salads delivered directly to your doorstep and gyms.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

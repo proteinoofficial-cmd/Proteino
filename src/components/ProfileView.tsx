@@ -1,0 +1,319 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { 
+  User, 
+  Target, 
+  Scale, 
+  Ruler, 
+  Calculator, 
+  Flame, 
+  Beef, 
+  Sparkles,
+  ChevronRight,
+  TrendingUp,
+  Check,
+  Phone,
+  Lock,
+  Mail
+} from 'lucide-react';
+import { UserProfile, Product } from '../types';
+import { PRODUCTS } from '../data';
+
+interface ProfileViewProps {
+  profile: UserProfile;
+  onUpdateProfile: (profile: UserProfile) => void;
+  onSelectProduct: (product: Product) => void;
+}
+
+export default function ProfileView({ profile, onUpdateProfile, onSelectProduct }: ProfileViewProps) {
+  const [name, setName] = useState(profile.name);
+  const [weight, setWeight] = useState(profile.weight);
+  const [height, setHeight] = useState(profile.height);
+  const [goal, setGoal] = useState<'gain' | 'loss' | 'maintain'>(profile.goal);
+  const [phone, setPhone] = useState(profile.phone || '');
+  const [password, setPassword] = useState(profile.password || '');
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    setName(profile.name);
+    setWeight(profile.weight);
+    setHeight(profile.height);
+    setGoal(profile.goal);
+    setPhone(profile.phone || '');
+    setPassword(profile.password || '');
+  }, [profile]);
+
+  // Recalculate dynamic targets whenever weight, height or goal changes
+  const calculateTargets = (w: number, h: number, g: 'gain' | 'loss' | 'maintain') => {
+    let calories = Math.round(w * 30);
+    let protein = Math.round(w * 1.8);
+
+    if (g === 'gain') {
+      calories = Math.round(w * 38);
+      protein = Math.round(w * 2.2);
+    } else if (g === 'loss') {
+      calories = Math.round(w * 24);
+      protein = Math.round(w * 2.0);
+    }
+
+    return { calories, protein };
+  };
+
+  const handleSave = () => {
+    const { calories, protein } = calculateTargets(Number(weight), Number(height), goal);
+    onUpdateProfile({
+      name,
+      email: profile.email,
+      goal,
+      weight: Number(weight),
+      height: Number(height),
+      dailyCalorieGoal: calories,
+      dailyProteinGoal: protein,
+      phone,
+      password
+    });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  // Recommendations matching the active goal
+  const recommendedProducts = PRODUCTS.filter(p => {
+    if (goal === 'gain') return p.category === 'weight_gain';
+    if (goal === 'loss') return p.category === 'weight_loss' || p.category === 'salad';
+    return true; // maintain gets a mix
+  }).slice(0, 3);
+
+  return (
+    <div className="flex flex-col h-full bg-[#FAF9F6] p-5 pb-24 overflow-y-auto select-none">
+      
+      {/* Top Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-black text-brand-navy tracking-tight">Your Fitness Profile</h2>
+        <p className="text-xs font-semibold text-brand-navy/50 mt-0.5">Customize your personal nutritional goals</p>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        
+        {/* Profile Card & Inputs */}
+        <div className="bg-white border border-brand-navy/5 rounded-3xl p-5 shadow-sm flex flex-col gap-4">
+          
+          {/* Name Field */}
+          <div className="flex flex-col gap-1.5 opacity-75">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Full Name</label>
+              <span className="text-[9px] font-bold text-brand-navy/30 flex items-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" /> Locked
+              </span>
+            </div>
+            <div className="flex items-center bg-brand-navy/5 border border-brand-navy/10 rounded-2xl px-3.5 py-3 cursor-not-allowed">
+              <User className="w-4 h-4 text-brand-navy/35 mr-2.5" />
+              <input 
+                type="text" 
+                value={name}
+                readOnly
+                placeholder="Enter your name"
+                className="bg-transparent text-sm font-semibold text-brand-navy/60 w-full focus:outline-none cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {/* Phone Field */}
+          <div className="flex flex-col gap-1.5 opacity-75">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Mobile Number</label>
+              <span className="text-[9px] font-bold text-brand-navy/30 flex items-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" /> Locked
+              </span>
+            </div>
+            <div className="flex items-center bg-brand-navy/5 border border-brand-navy/10 rounded-2xl px-3.5 py-3 cursor-not-allowed">
+              <Phone className="w-4 h-4 text-brand-navy/35 mr-2.5" />
+              <input 
+                type="tel" 
+                value={phone}
+                readOnly
+                maxLength={10}
+                placeholder="Mobile number"
+                className="bg-transparent text-sm font-semibold text-brand-navy/60 w-full focus:outline-none cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {/* Password Field */}
+          <div className="flex flex-col gap-1.5 opacity-75">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Password</label>
+              <span className="text-[9px] font-bold text-brand-navy/30 flex items-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" /> Locked
+              </span>
+            </div>
+            <div className="flex items-center bg-brand-navy/5 border border-brand-navy/10 rounded-2xl px-3.5 py-3 cursor-not-allowed">
+              <Lock className="w-4 h-4 text-brand-navy/35 mr-2.5" />
+              <input 
+                type="password" 
+                value={password}
+                readOnly
+                placeholder="Password"
+                className="bg-transparent text-sm font-semibold text-brand-navy/60 w-full focus:outline-none cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {/* Goal Selector */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Your Health Target</label>
+            <div className="grid grid-cols-2 gap-3">
+              
+              <button
+                onClick={() => setGoal('gain')}
+                className={`py-3 px-2 rounded-2xl border-2 text-xs font-extrabold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${goal === 'gain' ? 'bg-[#EBF4E0] border-brand-green text-brand-green' : 'bg-[#FAF9F6] border-brand-navy/5 text-brand-navy/55'}`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Weight Gain (Bulk)</span>
+              </button>
+
+              <button
+                onClick={() => setGoal('loss')}
+                className={`py-3 px-2 rounded-2xl border-2 text-xs font-extrabold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${goal === 'loss' ? 'bg-[#EBF4E0] border-brand-green text-brand-green' : 'bg-[#FAF9F6] border-brand-navy/5 text-brand-navy/55'}`}
+              >
+                <Scale className="w-4 h-4" />
+                <span>Weight Loss (Lean)</span>
+              </button>
+
+            </div>
+          </div>
+
+          {/* Metrics Row: Weight & Height */}
+          <div className="grid grid-cols-2 gap-4">
+            
+            {/* Weight Input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Weight (KG)</label>
+              <div className="flex items-center bg-[#FAF9F6] border border-brand-navy/5 rounded-2xl px-3.5 py-2.5">
+                <Scale className="w-4 h-4 text-brand-navy/35 mr-2.5" />
+                <input 
+                  type="number" 
+                  value={weight}
+                  onChange={(e) => setWeight(Number(e.target.value))}
+                  placeholder="KG"
+                  className="bg-transparent text-sm font-semibold text-brand-navy w-full focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Height Input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Height (CM)</label>
+              <div className="flex items-center bg-[#FAF9F6] border border-brand-navy/5 rounded-2xl px-3.5 py-2.5">
+                <Ruler className="w-4 h-4 text-brand-navy/35 mr-2.5" />
+                <input 
+                  type="number" 
+                  value={height}
+                  onChange={(e) => setHeight(Number(e.target.value))}
+                  placeholder="CM"
+                  className="bg-transparent text-sm font-semibold text-brand-navy w-full focus:outline-none"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            id="btn-save-profile"
+            className={`w-full py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer border-0 ${isSaved ? 'bg-brand-navy text-brand-green' : 'bg-brand-green hover:bg-brand-green-hover text-white'} transition-all`}
+          >
+            {isSaved ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Profile Target Saved!</span>
+              </>
+            ) : (
+              <>
+                <Calculator className="w-4 h-4" />
+                <span>Calculate & Save Macro Plan</span>
+              </>
+            )}
+          </button>
+
+        </div>
+
+        {/* Calculated Daily Target Ring/Card */}
+        <div className="bg-[#0F1E36] text-white rounded-3xl p-5 shadow-lg relative overflow-hidden flex flex-col gap-4">
+          <div className="absolute right-[-10px] bottom-[-10px] w-36 h-36 rounded-full bg-brand-green/10 blur-xl pointer-events-none" />
+          
+          <div className="flex items-center gap-2 border-b border-white/10 pb-2.5">
+            <Sparkles className="w-4 h-4 text-brand-green animate-spin" />
+            <h4 className="text-xs font-black uppercase tracking-wider text-white/70">Calculated Daily Macro Goal</h4>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            
+            {/* Calories Goal Box */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+              <div className="w-8 h-8 rounded-full bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-2">
+                <Flame className="w-4 h-4 fill-orange-400 text-orange-400" />
+              </div>
+              <p className="text-lg font-black text-white font-display">{profile.dailyCalorieGoal} <span className="text-[10px] text-white/40 uppercase">Kcal</span></p>
+              <p className="text-[9px] font-bold text-white/50 uppercase tracking-tight mt-1">Calorie Budget</p>
+            </div>
+
+            {/* Protein Goal Box */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto mb-2">
+                <Beef className="w-4 h-4 text-blue-400" />
+              </div>
+              <p className="text-lg font-black text-white font-display">{profile.dailyProteinGoal} <span className="text-[10px] text-white/40 uppercase">g</span></p>
+              <p className="text-[9px] font-bold text-white/50 uppercase tracking-tight mt-1">Protein Target</p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Dynamic Meal Recommendations based on Target */}
+        <div>
+          <div className="flex items-center justify-between mb-3.5">
+            <h3 className="font-extrabold text-base text-brand-navy tracking-tight">Recommended For Your Goal</h3>
+            <span className="text-[10px] font-black uppercase tracking-wider text-brand-green bg-[#EBF4E0] border border-brand-green/20 px-2 py-0.5 rounded-full">
+              {goal === 'gain' ? 'Bulk Up' : 'Lean Shred'} Plan
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {recommendedProducts.map(product => (
+              <div 
+                key={product.id}
+                onClick={() => onSelectProduct(product)}
+                className="bg-white border border-brand-navy/5 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={product.image} 
+                    alt={product.name} 
+                    className="w-12 h-12 rounded-xl object-cover border border-brand-navy/5"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div>
+                    <h4 className="font-extrabold text-xs text-brand-navy">{product.name}</h4>
+                    <p className="text-[10px] text-brand-navy/40 font-semibold mt-0.5">
+                      {product.calories} Kcal • {product.protein}g Protein
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-xs text-brand-navy">₹{product.price}</span>
+                  <div className="p-1 rounded-lg bg-[#FAF9F6] text-brand-navy/40">
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
