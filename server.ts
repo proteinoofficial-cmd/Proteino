@@ -151,27 +151,50 @@ app.post("/api/auth/reset-password", (req, res) => {
 });
 
 // Google OAuth & Simulator Endpoints
-const getRedirectUri = (req: any): string => {
-  const protocol = req.headers["x-forwarded-proto"] || "http";
+const getRedirectUri = (req: any, clientOrigin?: string): string => {
+  if (clientOrigin) {
+    try {
+      const urlObj = new URL(clientOrigin);
+      return `${urlObj.origin}/auth/callback`;
+    } catch (e) {}
+  }
+
+  const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
   let origin = `${protocol}://${host}`;
 
   const referer = req.headers.referer || req.headers.origin;
+  let hasCustomDomain = false;
+
   if (referer) {
     try {
       const urlObj = new URL(referer);
       if (urlObj.hostname !== "accounts.google.com" && urlObj.hostname !== "google.com") {
         origin = urlObj.origin;
+        const hostname = urlObj.hostname;
+        if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".run.app") && !hostname.includes("aistudio")) {
+          hasCustomDomain = true;
+        }
       }
     } catch (e) {}
   }
 
-  const appUrl = process.env.APP_URL;
-  if (appUrl && appUrl !== "MY_APP_URL") {
-    try {
-      const appUrlObj = new URL(appUrl);
-      origin = appUrlObj.origin;
-    } catch (e) {}
+  try {
+    const cleanHost = host.split(":")[0];
+    if (cleanHost !== "localhost" && cleanHost !== "127.0.0.1" && !cleanHost.endsWith(".run.app") && !cleanHost.includes("aistudio")) {
+      hasCustomDomain = true;
+    }
+  } catch (e) {}
+
+  // If a custom domain is NOT active, fall back to the APP_URL override if present
+  if (!hasCustomDomain) {
+    const appUrl = process.env.APP_URL;
+    if (appUrl && appUrl !== "MY_APP_URL") {
+      try {
+        const appUrlObj = new URL(appUrl);
+        origin = appUrlObj.origin;
+      } catch (e) {}
+    }
   }
 
   return `${origin}/auth/callback`;
@@ -179,7 +202,8 @@ const getRedirectUri = (req: any): string => {
 
 app.get("/api/auth/google/url", (req, res) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = getRedirectUri(req);
+  const clientOrigin = req.query.origin as string;
+  const redirectUri = getRedirectUri(req, clientOrigin);
 
   if (clientId) {
     const params = new URLSearchParams({
@@ -188,7 +212,8 @@ app.get("/api/auth/google/url", (req, res) => {
       response_type: "code",
       scope: "openid email profile",
       access_type: "offline",
-      prompt: "select_account"
+      prompt: "select_account",
+      state: clientOrigin || ""
     });
     res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`, isMock: false });
   } else {
@@ -315,7 +340,7 @@ app.get("/auth/google/simulator", (req, res) => {
 
 // Callback route handler supporting both Real Google OAuth and Google Sign-In Simulator
 app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
-  const { code, name, email, picture, sub } = req.query;
+  const { code, name, email, picture, sub, state } = req.query;
 
   let finalName = (name as string) || "";
   let finalEmail = (email as string) || "";
@@ -323,7 +348,7 @@ app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
   let finalSub = (sub as string) || "";
   let errorDetails = "";
 
-  const redirectUri = getRedirectUri(req);
+  const redirectUri = getRedirectUri(req, state as string);
 
   // If there is no mock user query parameters, and we have a real Google Client ID, run the real token exchange
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -382,7 +407,13 @@ app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
         <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f8fafc; color: #0f172a; margin: 0; padding: 20px; text-align: center;">
           <h3 style="color: #EA4335; margin-bottom: 8px;">Google Authentication Failed</h3>
           <p style="margin-bottom: 16px; font-size: 14px;">We could not retrieve your account info. Please close this window and try again.</p>
-          ${errorDetails ? `<pre style="font-size: 11px; color: #ef4444; background: #fee2e2; border: 1px border #fca5a5; padding: 12px; border-radius: 8px; max-width: 600px; overflow-x: auto; font-family: monospace; text-align: left; margin: 0 auto 20px auto; white-space: pre-wrap; word-break: break-all;">${errorDetails}</pre>` : ''}
+          ${errorDetails ? `<pre style="font-size: 11px; color: #ef4444; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px; border-radius: 8px; max-width: 600px; overflow-x: auto; font-family: monospace; text-align: left; margin: 0 auto 20px auto; white-space: pre-wrap; word-break: break-all;">${errorDetails}</pre>` : ''}
+          <div style="background-color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 11px; font-family: monospace; text-align: left; max-width: 600px; margin: 0 auto 20px auto; word-break: break-all; border: 1px solid #cbd5e1;">
+            <strong style="color: #334155;">Computed Redirect URI for your domain:</strong><br/>
+            <span style="color: #2563eb;">${redirectUri}</span>
+            <br/><br/>
+            <strong style="color: #334155;">How to fix:</strong> Ensure you have added this exact Redirect URI to your Google Cloud Console OAuth 2.0 Client credentials under <strong>Authorized redirect URIs</strong>!
+          </div>
           <button onclick="window.close()" style="padding: 10px 20px; background: #4285F4; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px;">Close Window</button>
         </body>
       </html>

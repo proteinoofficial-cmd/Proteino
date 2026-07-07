@@ -40,20 +40,35 @@ import { Product, UserProfile, ActiveSubscription, Order, CartItem } from './typ
 export default function App() {
   // --- Profile State ---
   const [profile, setProfile] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('proteino_profile');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('proteino_profile');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Failed to parse proteino_profile from localStorage:", e);
+      return null;
+    }
   });
 
   // --- Core Lists ---
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeSubscriptions, setActiveSubscriptions] = useState<ActiveSubscription[]>([]);
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('proteino_cart');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('proteino_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to parse proteino_cart from localStorage:", e);
+      return [];
+    }
   });
   const [favorites, setFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem('proteino_favorites');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('proteino_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to parse proteino_favorites from localStorage:", e);
+      return [];
+    }
   });
 
   // --- UI Routing States ---
@@ -515,11 +530,15 @@ export default function App() {
   // --- ROOT SWITCH RENDER ---
   if (!profile) {
     return (
-      <Onboarding 
-        onRegister={handleRegister} 
-        onLogin={handleLogin} 
-        onResetPassword={handleResetPassword} 
-      />
+      <div className="min-h-screen bg-slate-100 flex flex-col justify-between select-none">
+        <div className="w-full max-w-md mx-auto bg-[#FAF9F6] min-h-screen shadow-2xl flex flex-col relative overflow-x-hidden border-x border-slate-200/50">
+          <Onboarding 
+            onRegister={handleRegister} 
+            onLogin={handleLogin} 
+            onResetPassword={handleResetPassword} 
+          />
+        </div>
+      </div>
     );
   }
 

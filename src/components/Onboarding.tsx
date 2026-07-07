@@ -38,7 +38,7 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword }: Onb
     try {
       setIsLoading(true);
       setError('');
-      const res = await fetch('/api/auth/google/url');
+      const res = await fetch(`/api/auth/google/url?origin=${encodeURIComponent(window.location.origin)}`);
       if (!res.ok) throw new Error('Failed to get authentication URL');
       const { url } = await res.json();
       
@@ -170,7 +170,7 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword }: Onb
   };
 
   return (
-    <div className="flex flex-col justify-between h-full bg-[#FAF9F6] p-6 select-none overflow-y-auto">
+    <div className="flex flex-col justify-between min-h-screen bg-[#FAF9F6] p-6 select-none overflow-y-auto">
       <AnimatePresence mode="wait">
         {step === 'welcome' && (
           <motion.div
