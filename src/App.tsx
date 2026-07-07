@@ -36,6 +36,7 @@ import AdminPanel from './components/AdminPanel';
 
 import { PRODUCTS, GYMS } from './data';
 import { Product, UserProfile, ActiveSubscription, Order, CartItem } from './types';
+import { apiFetch } from './utils/api';
 
 export default function App() {
   // --- Profile State ---
@@ -97,8 +98,8 @@ export default function App() {
     if (!profile?.phone) return;
     try {
       const [ordersRes, subsRes] = await Promise.all([
-        fetch(`/api/orders?phone=${profile.phone}`),
-        fetch(`/api/subscriptions?phone=${profile.phone}`)
+        apiFetch(`/api/orders?phone=${profile.phone}`),
+        apiFetch(`/api/subscriptions?phone=${profile.phone}`)
       ]);
       if (ordersRes.ok && ordersRes.headers.get('content-type')?.includes('application/json')) {
         const oData = await ordersRes.json();
@@ -210,7 +211,7 @@ export default function App() {
   // --- Onboarding Actions ---
   const handleRegister = async (name: string, phone: string, pass: string) => {
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, password: pass })
@@ -231,7 +232,7 @@ export default function App() {
 
   const handleLogin = async (phone: string, pass: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: pass })
@@ -252,7 +253,7 @@ export default function App() {
 
   const handleResetPassword = async (phone: string, pass: string) => {
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await apiFetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: pass })
@@ -363,7 +364,7 @@ export default function App() {
           deliveryTimeSlot: checkoutTimeSlot
         };
 
-        const orderRes = await fetch('/api/orders', {
+        const orderRes = await apiFetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderPayload)
@@ -393,7 +394,7 @@ export default function App() {
               isPaused: false
             };
 
-            const subRes = await fetch('/api/subscriptions', {
+            const subRes = await apiFetch('/api/subscriptions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(subPayload)
@@ -444,7 +445,7 @@ export default function App() {
       const existing = orders.find(o => o.id === newOrder.id);
       if (existing && existing.status !== newOrder.status) {
         try {
-          await fetch(`/api/orders/${newOrder.id}`, {
+          await apiFetch(`/api/orders/${newOrder.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newOrder.status })
@@ -459,7 +460,7 @@ export default function App() {
   // --- Subscription Controls ---
   const handleBuySubscriptionDirect = async (newSub: ActiveSubscription) => {
     try {
-      const res = await fetch('/api/subscriptions', {
+      const res = await apiFetch('/api/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSub)
@@ -478,7 +479,7 @@ export default function App() {
     if (activeSubscriptions.length === 0) return;
     const subId = activeSubscriptions[0].id;
     try {
-      const res = await fetch(`/api/subscriptions/${subId}`, {
+      const res = await apiFetch(`/api/subscriptions/${subId}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -493,7 +494,7 @@ export default function App() {
     if (activeSubscriptions.length === 0) return;
     const subId = activeSubscriptions[0].id;
     try {
-      const res = await fetch(`/api/subscriptions/${subId}/pause`, {
+      const res = await apiFetch(`/api/subscriptions/${subId}/pause`, {
         method: 'PUT'
       });
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {

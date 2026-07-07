@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Order, ActiveSubscription } from "../types";
 import { PRODUCTS } from "../data";
+import { apiFetch } from "../utils/api";
 
 interface AdminPanelProps {
   onBackToApp: () => void;
@@ -53,8 +54,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     setIsLoading(true);
     try {
       const [ordersRes, subsRes] = await Promise.all([
-        fetch("/api/orders?admin=true"),
-        fetch("/api/subscriptions?admin=true")
+        apiFetch("/api/orders?admin=true"),
+        apiFetch("/api/subscriptions?admin=true")
       ]);
       if (ordersRes.ok && ordersRes.headers.get('content-type')?.includes('application/json')) {
         const oData = await ordersRes.json();
@@ -91,7 +92,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   // Update order status on server & locally
   const handleUpdateOrderStatus = async (orderId: string, newStatus: "cooking" | "out_for_delivery" | "delivered") => {
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await apiFetch(`/api/orders/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })
@@ -108,7 +109,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   // Update subscription status on server & locally
   const handleUpdateSubscriptionStatus = async (subId: string, status: "active" | "completed") => {
     try {
-      const res = await fetch(`/api/subscriptions/${subId}/status`, {
+      const res = await apiFetch(`/api/subscriptions/${subId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -128,7 +129,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       return;
     }
     try {
-      const res = await fetch(`/api/subscriptions/${subId}`, {
+      const res = await apiFetch(`/api/subscriptions/${subId}`, {
         method: "DELETE"
       });
       if (res.ok) {

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import mascotImg from '../assets/images/mascot_illustration_1783093311674.jpg';
 import proteinoLogo from '../assets/images/proteino_logo_1783248797173.jpg';
+import { apiFetch } from '../utils/api';
 
 interface OnboardingProps {
   onRegister: (name: string, phone: string, pass: string) => Promise<{ success: boolean; error?: string }>;
@@ -38,7 +39,7 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword }: Onb
     try {
       setIsLoading(true);
       setError('');
-      const res = await fetch(`/api/auth/google/url?origin=${encodeURIComponent(window.location.origin)}`);
+      const res = await apiFetch(`/api/auth/google/url?origin=${encodeURIComponent(window.location.origin)}`);
       if (!res.ok) throw new Error('Failed to get authentication URL');
       const { url } = await res.json();
       
