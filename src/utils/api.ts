@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://ais-pre-r7sluimpqgkvpybsu47oqz-783985883356.asia-southeast1.run.app';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ais-pre-r7sluimpqgkvpybsu47oqz-783985883356.asia-southeast1.run.app';
 
 export function getApiUrl(path: string): string {
   if (path.startsWith('/api/') || path.startsWith('/auth/')) {

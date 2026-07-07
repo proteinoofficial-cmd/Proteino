@@ -11,15 +11,25 @@ app.use(express.json());
 
 // CORS Middleware to support cross-origin requests from custom domains (Vercel)
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
+  let origin = req.headers.origin;
+  
+  // Fallback to referer origin if req.headers.origin is not provided (common for GET requests)
+  if (!origin && req.headers.referer) {
+    try {
+      const urlObj = new URL(req.headers.referer);
+      origin = urlObj.origin;
+    } catch (e) {}
+  }
+
   if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
   } else {
     res.setHeader("Access-Control-Allow-Origin", "*");
   }
+
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
@@ -169,50 +179,17 @@ app.post("/api/auth/reset-password", (req, res) => {
 });
 
 // Google OAuth & Simulator Endpoints
-const getRedirectUri = (req: any, clientOrigin?: string): string => {
-  if (clientOrigin) {
-    try {
-      const urlObj = new URL(clientOrigin);
-      return `${urlObj.origin}/auth/callback`;
-    } catch (e) {}
-  }
-
+const getRedirectUri = (req: any): string => {
   const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
   let origin = `${protocol}://${host}`;
 
-  const referer = req.headers.referer || req.headers.origin;
-  let hasCustomDomain = false;
-
-  if (referer) {
+  const appUrl = process.env.APP_URL;
+  if (appUrl && appUrl !== "MY_APP_URL" && !host.includes("localhost") && !host.includes("127.0.0.1")) {
     try {
-      const urlObj = new URL(referer);
-      if (urlObj.hostname !== "accounts.google.com" && urlObj.hostname !== "google.com") {
-        origin = urlObj.origin;
-        const hostname = urlObj.hostname;
-        if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".run.app") && !hostname.includes("aistudio")) {
-          hasCustomDomain = true;
-        }
-      }
+      const appUrlObj = new URL(appUrl);
+      origin = appUrlObj.origin;
     } catch (e) {}
-  }
-
-  try {
-    const cleanHost = host.split(":")[0];
-    if (cleanHost !== "localhost" && cleanHost !== "127.0.0.1" && !cleanHost.endsWith(".run.app") && !cleanHost.includes("aistudio")) {
-      hasCustomDomain = true;
-    }
-  } catch (e) {}
-
-  // If a custom domain is NOT active, fall back to the APP_URL override if present
-  if (!hasCustomDomain) {
-    const appUrl = process.env.APP_URL;
-    if (appUrl && appUrl !== "MY_APP_URL") {
-      try {
-        const appUrlObj = new URL(appUrl);
-        origin = appUrlObj.origin;
-      } catch (e) {}
-    }
   }
 
   return `${origin}/auth/callback`;
@@ -221,7 +198,7 @@ const getRedirectUri = (req: any, clientOrigin?: string): string => {
 app.get("/api/auth/google/url", (req, res) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientOrigin = req.query.origin as string;
-  const redirectUri = getRedirectUri(req, clientOrigin);
+  const redirectUri = getRedirectUri(req);
 
   if (clientId) {
     const params = new URLSearchParams({
@@ -235,8 +212,11 @@ app.get("/api/auth/google/url", (req, res) => {
     });
     res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`, isMock: false });
   } else {
-    // Redirect to local simulator with the computed redirect_uri
-    res.json({ url: `/auth/google/simulator?redirect_uri=${encodeURIComponent(redirectUri)}`, isMock: true });
+    // Redirect to local simulator with the computed redirect_uri (ensuring it is an absolute URL pointing to the backend)
+    const protocol = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+    const backendOrigin = `${protocol}://${host}`;
+    res.json({ url: `${backendOrigin}/auth/google/simulator?redirect_uri=${encodeURIComponent(redirectUri)}`, isMock: true });
   }
 });
 
@@ -366,7 +346,7 @@ app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
   let finalSub = (sub as string) || "";
   let errorDetails = "";
 
-  const redirectUri = getRedirectUri(req, state as string);
+  const redirectUri = getRedirectUri(req);
 
   // If there is no mock user query parameters, and we have a real Google Client ID, run the real token exchange
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -482,7 +462,7 @@ app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
               console.error('Failed to close window:', e);
             }
           } else {
-            window.location.href = '/';
+            window.location.href = "${(state as string) || '/'}";
           }
         </script>
       </body>
