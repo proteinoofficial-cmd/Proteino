@@ -37,6 +37,8 @@ import AdminPanel from './components/AdminPanel';
 import { PRODUCTS, GYMS } from './data';
 import { Product, UserProfile, ActiveSubscription, Order, CartItem } from './types';
 import { apiFetch } from './utils/api';
+import { auth, googleProvider } from './lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 export default function App() {
   // --- Profile State ---
@@ -270,9 +272,6 @@ export default function App() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const { auth, googleProvider } = await import('./lib/firebase');
-      const { signInWithPopup } = await import('firebase/auth');
-      
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
