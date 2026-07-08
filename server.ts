@@ -184,12 +184,18 @@ const getRedirectUri = (req: any): string => {
   const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
   let origin = `${protocol}://${host}`;
 
-  const appUrl = process.env.APP_URL;
-  if (appUrl && appUrl !== "MY_APP_URL" && !host.includes("localhost") && !host.includes("127.0.0.1")) {
-    try {
-      const appUrlObj = new URL(appUrl);
-      origin = appUrlObj.origin;
-    } catch (e) {}
+  // If the user is on a custom domain (not run.app, localhost, or 127.0.0.1), use the request origin directly
+  // Otherwise, fall back to the configured APP_URL env variable if present.
+  const isCustomDomain = !host.includes("run.app") && !host.includes("localhost") && !host.includes("127.0.0.1");
+
+  if (!isCustomDomain) {
+    const appUrl = process.env.APP_URL;
+    if (appUrl && appUrl !== "MY_APP_URL") {
+      try {
+        const appUrlObj = new URL(appUrl);
+        origin = appUrlObj.origin;
+      } catch (e) {}
+    }
   }
 
   return `${origin}/auth/callback`;

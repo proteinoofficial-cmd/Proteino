@@ -133,5 +133,29 @@
       "timeSlot": "2 PM",
       "isPaused": false
     }
+  ],
+  "users": [
+    {
+      "name": "Sarah Connor",
+      "phone": "9876543210",
+      "password": "1234",
+      "goal": "gain",
+      "weight": 70,
+      "height": 175,
+      "dailyCalorieGoal": 2100,
+      "dailyProteinGoal": 126,
+      "email": "9876543210@proteino.com"
+    },
+    {
+      "name": "Test",
+      "phone": "1234567890",
+      "password": "pass",
+      "email": "1234567890@proteino.com",
+      "goal": "gain",
+      "weight": 70,
+      "height": 175,
+      "dailyCalorieGoal": 2100,
+      "dailyProteinGoal": 126
+    }
   ]
 }
