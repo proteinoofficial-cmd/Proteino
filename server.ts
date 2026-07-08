@@ -20,7 +20,9 @@ const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCpwOfxePPlKe6XMI-q_yIVxpPvXhk9wcU",
   authDomain: process.env.FIREBASE_AUTH_DOMAIN || "gen-lang-client-0877049752.firebaseapp.com",
   projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0877049752",
-  storageBucket: process.env.FIREBASE_PROJECT_ID ? `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app` : "gen-lang-client-0877049752.firebasestorage.app",
+  storageBucket: process.env.FIREBASE_PROJECT_ID 
+    ? `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app` 
+    : "gen-lang-client-0877049752.firebasestorage.app",
   appId: process.env.FIREBASE_APP_ID || "1:192728686515:web:8f5ec0dda9f7d6351135c6"
 };
 
@@ -29,7 +31,13 @@ let db: any = null;
 if (firebaseConfig.apiKey && firebaseConfig.projectId) {
   try {
     const firebaseApp = initializeApp(firebaseConfig);
-    const databaseId = process.env.FIREBASE_DATABASE_ID || "ai-studio-proteino-92e8528c-0985-4bdc-91be-6336ab0ac867";
+    
+    // Dynamic database ID selection: use custom db ID only on default AI Studio project
+    const defaultDbId = firebaseConfig.projectId === "gen-lang-client-0877049752" 
+      ? "ai-studio-proteino-92e8528c-0985-4bdc-91be-6336ab0ac867" 
+      : "";
+    const databaseId = process.env.FIREBASE_DATABASE_ID || defaultDbId;
+    
     if (databaseId) {
       db = initializeFirestore(firebaseApp, {
         experimentalForceLongPolling: true,
@@ -39,7 +47,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
         experimentalForceLongPolling: true,
       });
     }
-    console.log("Firebase initialized successfully with project ID:", firebaseConfig.projectId, "and database ID:", databaseId);
+    console.log("Firebase initialized successfully with project ID:", firebaseConfig.projectId, "and database ID:", databaseId || "(default)");
   } catch (err) {
     console.error("Failed to initialize Firebase:", err);
   }

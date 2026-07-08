@@ -272,11 +272,15 @@ export default function App() {
 
   const handleGoogleSignIn = async () => {
     try {
+      // 1. Try native Firebase Auth first (extremely robust on custom domains & new tab)
+      const { signInWithPopup } = await import('firebase/auth');
+      const { auth, googleProvider } = await import('./lib/firebase');
+      
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
       if (!user.email) {
-        return { success: false, error: 'Failed to retrieve email from Google Account.' };
+        throw new Error('Failed to retrieve email from Google Account.');
       }
       
       const response = await apiFetch('/api/auth/google', {
@@ -292,7 +296,7 @@ export default function App() {
       
       const data = await response.json();
       if (!response.ok) {
-        return { success: false, error: data.error || 'Authentication with database failed' };
+        throw new Error(data.error || 'Authentication with database failed');
       }
       
       setProfile(data);
@@ -300,13 +304,80 @@ export default function App() {
       setCurrentView('dashboard');
       return { success: true };
     } catch (err: any) {
-      console.error("Firebase Auth Error:", err);
-      if (err.code === 'auth/popup-blocked') {
-        return { success: false, error: 'Popup blocked by browser. Please allow popups for this site.' };
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        return { success: false, error: 'Sign-in window was closed before completion.' };
+      console.warn("Native Firebase Google Sign-In skipped or failed. Falling back to OAuth/Simulator popup flow. Error details:", err);
+      
+      // If native popup failed due to iframe constraints, cookie policy, or not running in a top-level window,
+      // fallback to our custom server-side OAuth / Sandbox Simulator popup flow!
+      try {
+        const resUrl = await apiFetch(`/api/auth/google/url?origin=${encodeURIComponent(window.location.origin)}`);
+        if (!resUrl.ok) {
+          throw new Error('Failed to fetch Google login URL from backend');
+        }
+        const { url, isMock } = await resUrl.json();
+        
+        // Open the popup window perfectly centered
+        const popupWidth = 500;
+        const popupHeight = 600;
+        const left = window.screenX + (window.outerWidth - popupWidth) / 2;
+        const top = window.screenY + (window.outerHeight - popupHeight) / 2;
+        
+        const popup = window.open(
+          url,
+          'google_oauth_popup',
+          `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,status=no`
+        );
+        
+        if (!popup) {
+          return { success: false, error: 'Popup blocked by browser. Please allow popups for this site.' };
+        }
+        
+        return new Promise<{ success: boolean; error?: string }>((resolve) => {
+          let resolved = false;
+          
+          const messageHandler = (event: MessageEvent) => {
+            if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data?.profile) {
+              cleanup();
+              resolved = true;
+              
+              const profileData = event.data.profile;
+              setProfile(profileData);
+              localStorage.setItem('proteino_profile', JSON.stringify(profileData));
+              setCurrentView('dashboard');
+              resolve({ success: true });
+            }
+          };
+          
+          const timer = setInterval(() => {
+            if (popup.closed) {
+              cleanup();
+              if (!resolved) {
+                const saved = localStorage.getItem('proteino_profile');
+                if (saved) {
+                  setProfile(JSON.parse(saved));
+                  setCurrentView('dashboard');
+                  resolve({ success: true });
+                } else {
+                  // If it's not mock and failed, give a specific helpful tip about deleting custom client ID
+                  const customClientIdTip = !isMock 
+                    ? '. (Tip: If you see "deleted_client", please delete GOOGLE_CLIENT_ID from Secrets settings to use the sandbox simulator inside the preview)'
+                    : '';
+                  resolve({ success: false, error: 'Sign-in window was closed before completion' + customClientIdTip + '.' });
+                }
+              }
+            }
+          }, 500);
+          
+          const cleanup = () => {
+            window.removeEventListener('message', messageHandler);
+            clearInterval(timer);
+          };
+          
+          window.addEventListener('message', messageHandler);
+        });
+      } catch (fallbackErr: any) {
+        console.error("Popup Fallback Error:", fallbackErr);
+        return { success: false, error: fallbackErr.message || 'Failed to authenticate via Google.' };
       }
-      return { success: false, error: err.message || 'Failed to authenticate via Google.' };
     }
   };
 
