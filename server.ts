@@ -2,12 +2,52 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import dotenv from "dotenv";
+import { initializeApp } from "firebase/app";
+import { initializeFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+
+// Load environment variables from .env
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
 const DATA_FILE = path.join(process.cwd(), "data-store.json");
 
 app.use(express.json());
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCpwOfxePPlKe6XMI-q_yIVxpPvXhk9wcU",
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "gen-lang-client-0877049752.firebaseapp.com",
+  projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0877049752",
+  storageBucket: process.env.FIREBASE_PROJECT_ID ? `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app` : "gen-lang-client-0877049752.firebasestorage.app",
+  appId: process.env.FIREBASE_APP_ID || "1:192728686515:web:8f5ec0dda9f7d6351135c6"
+};
+
+let db: any = null;
+
+if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+  try {
+    const firebaseApp = initializeApp(firebaseConfig);
+    const databaseId = process.env.FIREBASE_DATABASE_ID || "ai-studio-proteino-92e8528c-0985-4bdc-91be-6336ab0ac867";
+    if (databaseId) {
+      db = initializeFirestore(firebaseApp, {
+        experimentalForceLongPolling: true,
+      }, databaseId);
+    } else {
+      db = initializeFirestore(firebaseApp, {
+        experimentalForceLongPolling: true,
+      });
+    }
+    console.log("Firebase initialized successfully with project ID:", firebaseConfig.projectId, "and database ID:", databaseId);
+  } catch (err) {
+    console.error("Failed to initialize Firebase:", err);
+  }
+} else {
+  console.log("Firebase credentials not fully provided. Running in local JSON storage fallback mode.");
+}
+
+
 
 // CORS Middleware to support cross-origin requests from custom domains (Vercel)
 app.use((req, res, next) => {
@@ -105,13 +145,53 @@ if (!store.users || store.users.length === 0) {
   ];
 }
 
+async function loadStoreFromFirebase() {
+  if (!db) return;
+  try {
+    console.log("Attempting to load data store from Firebase...");
+    const docRef = doc(db, "app_state", "proteino_store");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const dbStore = docSnap.data().data;
+      if (dbStore) {
+        if (Array.isArray(dbStore.orders)) store.orders = dbStore.orders;
+        if (Array.isArray(dbStore.subscriptions)) store.subscriptions = dbStore.subscriptions;
+        if (Array.isArray(dbStore.users)) store.users = dbStore.users;
+        console.log(`Successfully synced state from Firebase! Loaded:
+          - ${store.orders.length} orders
+          - ${store.subscriptions.length} subscriptions
+          - ${store.users.length} users`);
+      }
+    } else {
+      console.log("No existing data found in Firestore for document 'app_state/proteino_store'.");
+    }
+  } catch (err: any) {
+    console.error("Failed to load store from Firebase:", err.message || err);
+  }
+}
+
 function saveStore() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), "utf-8");
   } catch (err) {
     console.error("Failed to write data-store.json:", err);
   }
+
+  if (db) {
+    const docRef = doc(db, "app_state", "proteino_store");
+    setDoc(docRef, {
+      data: store,
+      updated_at: new Date().toISOString()
+    })
+    .then(() => {
+      console.log("Successfully synced store to Firebase Firestore!");
+    })
+    .catch((err: any) => {
+      console.error("Failed to sync store to Firebase:", err.message || err);
+    });
+  }
 }
+
 
 // API Routes
 app.post("/api/auth/register", (req, res) => {
@@ -156,6 +236,34 @@ app.post("/api/auth/login", (req, res) => {
 
   if (user.password !== password) {
     return res.status(400).json({ error: "Incorrect password. Please try again." });
+  }
+
+  res.json(user);
+});
+
+app.post("/api/auth/google", (req, res) => {
+  const { name, email, uid, avatar } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  let user = store.users.find(u => u.email === email);
+  if (!user) {
+    const generatedPhone = `G-${uid ? uid.slice(0, 8) : Math.floor(100000 + Math.random() * 900000)}`;
+    user = {
+      name: name || "Google Athlete",
+      phone: generatedPhone,
+      password: `google_${uid || Date.now()}`,
+      email: email,
+      goal: "gain",
+      weight: 70,
+      height: 175,
+      dailyCalorieGoal: 2100,
+      dailyProteinGoal: 126,
+      avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"
+    };
+    store.users.push(user);
+    saveStore();
   }
 
   res.json(user);
@@ -621,6 +729,9 @@ app.all("/api/*", (req, res) => {
 
 // Start dev server helper
 async function startServer() {
+  // Sync initial state from Firebase Firestore before starting up the server
+  await loadStoreFromFirebase();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

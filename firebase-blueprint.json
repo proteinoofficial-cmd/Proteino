@@ -1,0 +1,26 @@
+{
+  "collections": {
+    "app_state": {
+      "documents": {
+        "proteino_store": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "orders": { "type": "array" },
+                  "subscriptions": { "type": "array" },
+                  "users": { "type": "array" }
+                },
+                "required": ["orders", "subscriptions", "users"]
+              },
+              "updated_at": { "type": "string" }
+            },
+            "required": ["data", "updated_at"]
+          }
+        }
+      }
+    }
+  }
+}

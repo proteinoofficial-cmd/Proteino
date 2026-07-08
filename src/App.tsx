@@ -268,6 +268,49 @@ export default function App() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const { auth, googleProvider } = await import('./lib/firebase');
+      const { signInWithPopup } = await import('firebase/auth');
+      
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      if (!user.email) {
+        return { success: false, error: 'Failed to retrieve email from Google Account.' };
+      }
+      
+      const response = await apiFetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: user.displayName,
+          email: user.email,
+          uid: user.uid,
+          avatar: user.photoURL
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Authentication with database failed' };
+      }
+      
+      setProfile(data);
+      localStorage.setItem('proteino_profile', JSON.stringify(data));
+      setCurrentView('dashboard');
+      return { success: true };
+    } catch (err: any) {
+      console.error("Firebase Auth Error:", err);
+      if (err.code === 'auth/popup-blocked') {
+        return { success: false, error: 'Popup blocked by browser. Please allow popups for this site.' };
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        return { success: false, error: 'Sign-in window was closed before completion.' };
+      }
+      return { success: false, error: err.message || 'Failed to authenticate via Google.' };
+    }
+  };
+
   // --- Favorites Toggle ---
   const handleToggleFavorite = (id: string) => {
     setFavorites(prev => {
@@ -537,6 +580,7 @@ export default function App() {
             onRegister={handleRegister} 
             onLogin={handleLogin} 
             onResetPassword={handleResetPassword} 
+            onGoogleSignIn={handleGoogleSignIn}
           />
         </div>
       </div>
