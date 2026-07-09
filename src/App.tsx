@@ -258,11 +258,11 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, password: pass })
       });
+      const text = await response.text();
       let data: any = {};
       try {
-        data = await response.json();
+        data = text ? JSON.parse(text) : {};
       } catch (jsonErr) {
-        const text = await response.text();
         console.error("Non-JSON register response:", text);
         return { success: false, error: `Server error (${response.status}): ${text.slice(0, 150)}` };
       }
@@ -287,11 +287,11 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: pass })
       });
+      const text = await response.text();
       let data: any = {};
       try {
-        data = await response.json();
+        data = text ? JSON.parse(text) : {};
       } catch (jsonErr) {
-        const text = await response.text();
         console.error("Non-JSON login response:", text);
         return { success: false, error: `Server error (${response.status}): ${text.slice(0, 150)}` };
       }
@@ -316,11 +316,11 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: pass })
       });
+      const text = await response.text();
       let data: any = {};
       try {
-        data = await response.json();
+        data = text ? JSON.parse(text) : {};
       } catch (jsonErr) {
-        const text = await response.text();
         console.error("Non-JSON reset response:", text);
         return { success: false, error: `Server error (${response.status}): ${text.slice(0, 150)}` };
       }
