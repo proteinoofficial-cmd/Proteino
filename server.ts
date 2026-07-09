@@ -5,7 +5,16 @@ import fs from "fs";
 import dotenv from "dotenv";
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import fileConfig from "./firebase-applet-config.json";
+// Load firebase config from json file if exists
+let fileConfig: any = {};
+try {
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (fs.existsSync(configPath)) {
+    fileConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  }
+} catch (e) {
+  console.warn("Failed to load firebase-applet-config.json:", e);
+}
 
 // Load environment variables from .env
 dotenv.config();
@@ -794,9 +803,6 @@ async function startServer() {
 // Only start the server directly if not running as a Vercel Serverless Function
 if (!process.env.VERCEL) {
   startServer();
-} else {
-  // In serverless, load store from Firebase on startup of the function instance
-  loadStoreFromFirebase().catch(err => console.error("Firebase startup sync failed:", err));
 }
 
 export default app;
