@@ -17,8 +17,9 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore with experimentalForceLongPolling to prevent stream disconnect issues
 const isDefaultProject = firebaseConfig.projectId === "gen-lang-client-0877049752";
 const databaseId = fileConfig.firestoreDatabaseId || (isDefaultProject ? "ai-studio-proteino-92e8528c-0985-4bdc-91be-6336ab0ac867" : undefined);
+const shouldUseDbId = databaseId && databaseId !== "(default)" && databaseId !== "";
 
-export const db = databaseId 
+export const db = shouldUseDbId 
   ? initializeFirestore(app, { experimentalForceLongPolling: true }, databaseId)
   : initializeFirestore(app, { experimentalForceLongPolling: true });
 

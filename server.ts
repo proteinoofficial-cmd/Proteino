@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import fileConfig from "./firebase-applet-config.json";
 
 // Load environment variables from .env
 dotenv.config();
@@ -15,17 +16,6 @@ const PORT = 3000;
 const DATA_FILE = path.join(process.cwd(), "data-store.json");
 
 app.use(express.json());
-
-// Load firebase config from json file if exists
-let fileConfig: any = {};
-try {
-  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-  if (fs.existsSync(configPath)) {
-    fileConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-  }
-} catch (e) {
-  console.warn("Failed to load firebase-applet-config.json:", e);
-}
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -50,7 +40,10 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
       : "");
     const databaseId = process.env.FIREBASE_DATABASE_ID || defaultDbId;
     
-    if (databaseId) {
+    // Treat "(default)" or empty string as default database
+    const shouldUseDbId = databaseId && databaseId !== "(default)" && databaseId !== "";
+    
+    if (shouldUseDbId) {
       db = initializeFirestore(firebaseApp, {
         experimentalForceLongPolling: true,
       }, databaseId);
@@ -59,7 +52,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
         experimentalForceLongPolling: true,
       });
     }
-    console.log("Firebase initialized successfully with project ID:", firebaseConfig.projectId, "and database ID:", databaseId || "(default)");
+    console.log("Firebase initialized successfully with project ID:", firebaseConfig.projectId, "and database ID:", shouldUseDbId ? databaseId : "(default)");
   } catch (err) {
     console.error("Failed to initialize Firebase:", err);
   }
