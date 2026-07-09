@@ -7,15 +7,8 @@ export function getApiUrl(path: string): string {
       return `${BACKEND_URL}${path}`;
     }
     
-    // If we're on a custom domain or localhost, and VITE_API_URL is not set, 
-    // it means the frontend and backend are hosted together (e.g., on Render).
-    // In this case, use relative paths so they hit the same domain.
-    const isGoogleCloudRun = window.location.hostname.includes('run.app');
-    if (isGoogleCloudRun) {
-      // Use the current environment's origin dynamically (dev vs pre) instead of a hardcoded pre domain.
-      // This prevents "Failed to fetch" (CORS/discrepancy) errors in development and testing.
-      return `${window.location.origin}${path}`;
-    }
+    // Use the current origin dynamically so that it works across dev, pre, custom domains, and local environments.
+    return `${window.location.origin}${path}`;
   }
   return path;
 }

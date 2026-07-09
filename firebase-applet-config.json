@@ -3,7 +3,7 @@
   "appId": "1:468454020261:web:fd7a24042880fe455c294c",
   "apiKey": "AIzaSyDYfAZi9ALkwrzXbXenZpJ7yIjoY_T65Ho",
   "authDomain": "proteino-b0e5f.firebaseapp.com",
-  "firestoreDatabaseId": "",
+  "firestoreDatabaseId": "(default)",
   "storageBucket": "proteino-b0e5f.firebasestorage.app",
   "messagingSenderId": "468454020261",
   "measurementId": ""
