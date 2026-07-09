@@ -1,10 +1,10 @@
 {
-  "projectId": "gen-lang-client-0877049752",
-  "appId": "1:192728686515:web:8f5ec0dda9f7d6351135c6",
-  "apiKey": "AIzaSyCpwOfxePPlKe6XMI-q_yIVxpPvXhk9wcU",
-  "authDomain": "gen-lang-client-0877049752.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-proteino-92e8528c-0985-4bdc-91be-6336ab0ac867",
-  "storageBucket": "gen-lang-client-0877049752.firebasestorage.app",
-  "messagingSenderId": "192728686515",
+  "projectId": "proteino-b0e5f",
+  "appId": "1:468454020261:web:fd7a24042880fe455c294c",
+  "apiKey": "AIzaSyDYfAZi9ALkwrzXbXenZpJ7yIjoY_T65Ho",
+  "authDomain": "proteino-b0e5f.firebaseapp.com",
+  "firestoreDatabaseId": "",
+  "storageBucket": "proteino-b0e5f.firebasestorage.app",
+  "messagingSenderId": "468454020261",
   "measurementId": ""
 }
