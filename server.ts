@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
@@ -13,6 +14,7 @@ const app = express();
 const PORT = 3000;
 const DATA_FILE = path.join(process.cwd(), "data-store.json");
 
+app.use(cors());
 app.use(express.json());
 
 // Load firebase config from json file if exists
