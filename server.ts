@@ -5,16 +5,7 @@ import fs from "fs";
 import dotenv from "dotenv";
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-// Load firebase config from json file if exists
-let fileConfig: any = {};
-try {
-  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-  if (fs.existsSync(configPath)) {
-    fileConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-  }
-} catch (e) {
-  console.warn("Failed to load firebase-applet-config.json:", e);
-}
+import fileConfig from "./firebase-applet-config.json";
 
 // Load environment variables from .env
 dotenv.config();
@@ -52,13 +43,9 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     const shouldUseDbId = databaseId && databaseId !== "(default)" && databaseId !== "";
     
     if (shouldUseDbId) {
-      db = initializeFirestore(firebaseApp, {
-        experimentalForceLongPolling: true,
-      }, databaseId);
+      db = initializeFirestore(firebaseApp, {}, databaseId);
     } else {
-      db = initializeFirestore(firebaseApp, {
-        experimentalForceLongPolling: true,
-      });
+      db = initializeFirestore(firebaseApp, {});
     }
     console.log("Firebase initialized successfully with project ID:", firebaseConfig.projectId, "and database ID:", shouldUseDbId ? databaseId : "(default)");
   } catch (err) {
