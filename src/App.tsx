@@ -122,6 +122,46 @@ export default function App() {
     }
   }, [profile]);
 
+  // Handle Firebase Google Sign-In redirect results on page load (essential for mobile devices!)
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        const { auth } = await import('./lib/firebase');
+        const { getRedirectResult } = await import('firebase/auth');
+        const result = await getRedirectResult(auth);
+        
+        if (result && result.user) {
+          const user = result.user;
+          if (user.email) {
+            console.log("Firebase Google Redirect Sign-In success:", user.email);
+            const response = await apiFetch('/api/auth/google', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: user.displayName,
+                email: user.email,
+                uid: user.uid,
+                avatar: user.photoURL
+              })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              setProfile(data);
+              localStorage.setItem('proteino_profile', JSON.stringify(data));
+              setCurrentView('dashboard');
+            } else {
+              console.error("Backend failed to authenticate user after redirect");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to handle Firebase Google Redirect Sign-In:", err);
+      }
+    };
+    handleRedirect();
+  }, []);
+
   // Listen for Google Auth / OAuth success messages from the popup, storage events, and window focus
   useEffect(() => {
     const handleOAuthSuccess = (uProfile: any) => {
@@ -272,10 +312,10 @@ export default function App() {
 
   const handleGoogleSignIn = async () => {
     try {
-      // 1. Try native Firebase Auth first (extremely robust on custom domains & new tab)
-      const { signInWithPopup } = await import('firebase/auth');
       const { auth, googleProvider } = await import('./lib/firebase');
       
+      console.log("Initiating Firebase Google Sign-In with popup...");
+      const { signInWithPopup } = await import('firebase/auth');
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
@@ -304,10 +344,10 @@ export default function App() {
       setCurrentView('dashboard');
       return { success: true };
     } catch (err: any) {
-      console.warn("Native Firebase Google Sign-In skipped or failed. Falling back to OAuth/Simulator popup flow. Error details:", err);
+      console.warn("Native Firebase Google Sign-In failed or was skipped. Falling back to robust backend OAuth / Simulator flow. Details:", err);
       
-      // If native popup failed due to iframe constraints, cookie policy, or not running in a top-level window,
-      // fallback to our custom server-side OAuth / Sandbox Simulator popup flow!
+      // If native popup failed due to domain whitelisting, iframe constraints, cookie policy, or not running in a top-level window,
+      // fallback to our custom server-side OAuth / Sandbox Simulator flow!
       try {
         const resUrl = await apiFetch(`/api/auth/google/url?origin=${encodeURIComponent(window.location.origin)}`);
         if (!resUrl.ok) {
@@ -315,67 +355,77 @@ export default function App() {
         }
         const { url, isMock } = await resUrl.json();
         
-        // Open the popup window perfectly centered
-        const popupWidth = 500;
-        const popupHeight = 600;
-        const left = window.screenX + (window.outerWidth - popupWidth) / 2;
-        const top = window.screenY + (window.outerHeight - popupHeight) / 2;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        const popup = window.open(
-          url,
-          'google_oauth_popup',
-          `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,status=no`
-        );
-        
-        if (!popup) {
-          return { success: false, error: 'Popup blocked by browser. Please allow popups for this site.' };
-        }
-        
-        return new Promise<{ success: boolean; error?: string }>((resolve) => {
-          let resolved = false;
+        if (isMobile) {
+          // On mobile, direct window redirect is 100% reliable, never blocked by popup blockers,
+          // and works flawlessly since the backend callback will redirect the user back on success!
+          console.log("Mobile browser detected for fallback. Redirecting page to:", url);
+          window.location.href = url;
+          // Return a pending promise to keep the button loading state active
+          return new Promise<{ success: boolean }>(() => {});
+        } else {
+          // Open the popup window perfectly centered on desktop
+          const popupWidth = 500;
+          const popupHeight = 600;
+          const left = window.screenX + (window.outerWidth - popupWidth) / 2;
+          const top = window.screenY + (window.outerHeight - popupHeight) / 2;
           
-          const messageHandler = (event: MessageEvent) => {
-            if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data?.profile) {
-              cleanup();
-              resolved = true;
-              
-              const profileData = event.data.profile;
-              setProfile(profileData);
-              localStorage.setItem('proteino_profile', JSON.stringify(profileData));
-              setCurrentView('dashboard');
-              resolve({ success: true });
-            }
-          };
+          const popup = window.open(
+            url,
+            'google_oauth_popup',
+            `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,status=no`
+          );
           
-          const timer = setInterval(() => {
-            if (popup.closed) {
-              cleanup();
-              if (!resolved) {
-                const saved = localStorage.getItem('proteino_profile');
-                if (saved) {
-                  setProfile(JSON.parse(saved));
-                  setCurrentView('dashboard');
-                  resolve({ success: true });
-                } else {
-                  // If it's not mock and failed, give a specific helpful tip about deleting custom client ID
-                  const customClientIdTip = !isMock 
-                    ? '. (Tip: If you see "deleted_client", please delete GOOGLE_CLIENT_ID from Secrets settings to use the sandbox simulator inside the preview)'
-                    : '';
-                  resolve({ success: false, error: 'Sign-in window was closed before completion' + customClientIdTip + '.' });
+          if (!popup) {
+            return { success: false, error: 'Popup blocked by browser. Please allow popups or use a mobile device.' };
+          }
+          
+          return new Promise<{ success: boolean; error?: string }>((resolve) => {
+            let resolved = false;
+            
+            const messageHandler = (event: MessageEvent) => {
+              if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data?.profile) {
+                cleanup();
+                resolved = true;
+                
+                const profileData = event.data.profile;
+                setProfile(profileData);
+                localStorage.setItem('proteino_profile', JSON.stringify(profileData));
+                setCurrentView('dashboard');
+                resolve({ success: true });
+              }
+            };
+            
+            const timer = setInterval(() => {
+              if (popup.closed) {
+                cleanup();
+                if (!resolved) {
+                  const saved = localStorage.getItem('proteino_profile');
+                  if (saved) {
+                    setProfile(JSON.parse(saved));
+                    setCurrentView('dashboard');
+                    resolve({ success: true });
+                  } else {
+                    const customClientIdTip = !isMock 
+                      ? '. (Tip: If you see "deleted_client", please delete GOOGLE_CLIENT_ID from Secrets settings to use the sandbox simulator inside the preview)'
+                      : '';
+                    resolve({ success: false, error: 'Sign-in window was closed before completion' + customClientIdTip + '.' });
+                  }
                 }
               }
-            }
-          }, 500);
-          
-          const cleanup = () => {
-            window.removeEventListener('message', messageHandler);
-            clearInterval(timer);
-          };
-          
-          window.addEventListener('message', messageHandler);
-        });
+            }, 500);
+            
+            const cleanup = () => {
+              window.removeEventListener('message', messageHandler);
+              clearInterval(timer);
+            };
+            
+            window.addEventListener('message', messageHandler);
+          });
+        }
       } catch (fallbackErr: any) {
-        console.error("Popup Fallback Error:", fallbackErr);
+        console.error("Popup/Redirect Fallback Error:", fallbackErr);
         return { success: false, error: fallbackErr.message || 'Failed to authenticate via Google.' };
       }
     }

@@ -15,15 +15,26 @@ const DATA_FILE = path.join(process.cwd(), "data-store.json");
 
 app.use(express.json());
 
+// Load firebase config from json file if exists
+let fileConfig: any = {};
+try {
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (fs.existsSync(configPath)) {
+    fileConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  }
+} catch (e) {
+  console.warn("Failed to load firebase-applet-config.json:", e);
+}
+
 // Firebase Configuration
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCpwOfxePPlKe6XMI-q_yIVxpPvXhk9wcU",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "gen-lang-client-0877049752.firebaseapp.com",
-  projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0877049752",
-  storageBucket: process.env.FIREBASE_PROJECT_ID 
-    ? `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app` 
+  apiKey: process.env.FIREBASE_API_KEY || fileConfig.apiKey || "AIzaSyCpwOfxePPlKe6XMI-q_yIVxpPvXhk9wcU",
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN || fileConfig.authDomain || "gen-lang-client-0877049752.firebaseapp.com",
+  projectId: process.env.FIREBASE_PROJECT_ID || fileConfig.projectId || "gen-lang-client-0877049752",
+  storageBucket: process.env.FIREBASE_PROJECT_ID || fileConfig.projectId
+    ? `${process.env.FIREBASE_PROJECT_ID || fileConfig.projectId}.firebasestorage.app` 
     : "gen-lang-client-0877049752.firebasestorage.app",
-  appId: process.env.FIREBASE_APP_ID || "1:192728686515:web:8f5ec0dda9f7d6351135c6"
+  appId: process.env.FIREBASE_APP_ID || fileConfig.appId || "1:192728686515:web:8f5ec0dda9f7d6351135c6"
 };
 
 let db: any = null;
@@ -32,10 +43,10 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
   try {
     const firebaseApp = initializeApp(firebaseConfig);
     
-    // Dynamic database ID selection: use custom db ID only on default AI Studio project
-    const defaultDbId = firebaseConfig.projectId === "gen-lang-client-0877049752" 
+    // Dynamic database ID selection: use custom db ID from config file or default back
+    const defaultDbId = fileConfig.firestoreDatabaseId || (firebaseConfig.projectId === "gen-lang-client-0877049752" 
       ? "ai-studio-proteino-92e8528c-0985-4bdc-91be-6336ab0ac867" 
-      : "";
+      : "");
     const databaseId = process.env.FIREBASE_DATABASE_ID || defaultDbId;
     
     if (databaseId) {
@@ -81,6 +92,18 @@ app.use((req, res, next) => {
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
+  }
+  next();
+});
+
+// Middleware to ensure the Firestore data is loaded on serverless cold starts
+app.use(async (req, res, next) => {
+  if (db && req.path.startsWith("/api/")) {
+    try {
+      await loadStoreFromFirebase();
+    } catch (e) {
+      console.error("Failed to load store during request:", e);
+    }
   }
   next();
 });
@@ -153,8 +176,15 @@ if (!store.users || store.users.length === 0) {
   ];
 }
 
-async function loadStoreFromFirebase() {
+let lastLoadTime = 0;
+const CACHE_TTL_MS = 10000; // 10 seconds cache
+
+async function loadStoreFromFirebase(force = false) {
   if (!db) return;
+  const now = Date.now();
+  if (!force && lastLoadTime && (now - lastLoadTime < CACHE_TTL_MS)) {
+    return;
+  }
   try {
     console.log("Attempting to load data store from Firebase...");
     const docRef = doc(db, "app_state", "proteino_store");
@@ -165,6 +195,7 @@ async function loadStoreFromFirebase() {
         if (Array.isArray(dbStore.orders)) store.orders = dbStore.orders;
         if (Array.isArray(dbStore.subscriptions)) store.subscriptions = dbStore.subscriptions;
         if (Array.isArray(dbStore.users)) store.users = dbStore.users;
+        lastLoadTime = Date.now();
         console.log(`Successfully synced state from Firebase! Loaded:
           - ${store.orders.length} orders
           - ${store.subscriptions.length} subscriptions
@@ -192,6 +223,7 @@ function saveStore() {
       updated_at: new Date().toISOString()
     })
     .then(() => {
+      lastLoadTime = Date.now(); // Mark as up-to-date since we just wrote our state
       console.log("Successfully synced store to Firebase Firestore!");
     })
     .catch((err: any) => {
@@ -759,4 +791,12 @@ async function startServer() {
   });
 }
 
-startServer();
+// Only start the server directly if not running as a Vercel Serverless Function
+if (!process.env.VERCEL) {
+  startServer();
+} else {
+  // In serverless, load store from Firebase on startup of the function instance
+  loadStoreFromFirebase().catch(err => console.error("Firebase startup sync failed:", err));
+}
+
+export default app;
