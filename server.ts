@@ -182,8 +182,14 @@ async function loadStoreFromFirebase(force = false) {
   try {
     console.log("Attempting to load data store from Firebase...");
     const docRef = doc(db, "app_state", "proteino_store");
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    
+    // Add a 4-second safety timeout so we don't hang requests on serverless environments
+    const docSnap: any = await Promise.race([
+      getDoc(docRef),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore sync timeout (4s exceeded)")), 4000))
+    ]);
+    
+    if (docSnap && docSnap.exists()) {
       const dbStore = docSnap.data().data;
       if (dbStore) {
         if (Array.isArray(dbStore.orders)) store.orders = dbStore.orders;

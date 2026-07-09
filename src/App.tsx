@@ -258,7 +258,14 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, password: pass })
       });
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        const text = await response.text();
+        console.error("Non-JSON register response:", text);
+        return { success: false, error: `Server error (${response.status}): ${text.slice(0, 150)}` };
+      }
       if (!response.ok) {
         return { success: false, error: data.error || 'Registration failed' };
       }
@@ -267,8 +274,9 @@ export default function App() {
       localStorage.setItem('proteino_profile', JSON.stringify(data));
       setCurrentView('dashboard');
       return { success: true };
-    } catch (err) {
-      return { success: false, error: 'Network error. Please try again.' };
+    } catch (err: any) {
+      console.error("Register catch error:", err);
+      return { success: false, error: `Network/Server error: ${err.message || 'Please try again.'}` };
     }
   };
 
@@ -279,7 +287,14 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: pass })
       });
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        const text = await response.text();
+        console.error("Non-JSON login response:", text);
+        return { success: false, error: `Server error (${response.status}): ${text.slice(0, 150)}` };
+      }
       if (!response.ok) {
         return { success: false, error: data.error || 'Login failed' };
       }
@@ -288,8 +303,9 @@ export default function App() {
       localStorage.setItem('proteino_profile', JSON.stringify(data));
       setCurrentView('dashboard');
       return { success: true };
-    } catch (err) {
-      return { success: false, error: 'Network error. Please try again.' };
+    } catch (err: any) {
+      console.error("Login catch error:", err);
+      return { success: false, error: `Network/Server error: ${err.message || 'Please try again.'}` };
     }
   };
 
@@ -300,13 +316,21 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: pass })
       });
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        const text = await response.text();
+        console.error("Non-JSON reset response:", text);
+        return { success: false, error: `Server error (${response.status}): ${text.slice(0, 150)}` };
+      }
       if (!response.ok) {
         return { success: false, error: data.error || 'Password reset failed' };
       }
       return { success: true };
-    } catch (err) {
-      return { success: false, error: 'Network error. Please try again.' };
+    } catch (err: any) {
+      console.error("Reset password catch error:", err);
+      return { success: false, error: `Network/Server error: ${err.message || 'Please try again.'}` };
     }
   };
 
