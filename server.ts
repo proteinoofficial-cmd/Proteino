@@ -5,7 +5,7 @@ import fs from "fs";
 import dotenv from "dotenv";
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import fileConfig from "./firebase-applet-config.json";
+import fileConfig from "./firebase-applet-config.json" with { type: "json" };
 
 // Load environment variables from .env
 dotenv.config();
