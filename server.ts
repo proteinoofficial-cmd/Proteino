@@ -214,9 +214,9 @@ function saveStore() {
   if (db) {
     const docRef = doc(db, "app_state", "proteino_store");
     setDoc(docRef, {
-      data: store,
-      updated_at: new Date().toISOString()
-    })
+  data: JSON.parse(JSON.stringify(store)),
+  updated_at: new Date().toISOString()
+})
     .then(() => {
       lastLoadTime = Date.now(); // Mark as up-to-date since we just wrote our state
       console.log("Successfully synced store to Firebase Firestore!");
