@@ -79,6 +79,11 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showCart, setShowCart] = useState(false);
 
+  // --- Auth Modal Overlay State ---
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalStep, setAuthModalStep] = useState<'welcome' | 'register' | 'login' | 'forgot'>('welcome');
+  const [authModalNotice, setAuthModalNotice] = useState<string>('');
+
   // --- Checkout Form States ---
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
@@ -167,6 +172,8 @@ export default function App() {
     const handleOAuthSuccess = (uProfile: any) => {
       setProfile(uProfile);
       localStorage.setItem('proteino_profile', JSON.stringify(uProfile));
+      setShowAuthModal(false);
+      setAuthModalNotice('');
       setCurrentView('dashboard');
     };
 
@@ -272,6 +279,8 @@ export default function App() {
       // Success: Save user profile locally and update state
       setProfile(data);
       localStorage.setItem('proteino_profile', JSON.stringify(data));
+      setShowAuthModal(false);
+      setAuthModalNotice('');
       setCurrentView('dashboard');
       return { success: true };
     } catch (err: any) {
@@ -301,6 +310,8 @@ export default function App() {
       // Success: Save user profile locally and update state
       setProfile(data);
       localStorage.setItem('proteino_profile', JSON.stringify(data));
+      setShowAuthModal(false);
+      setAuthModalNotice('');
       setCurrentView('dashboard');
       return { success: true };
     } catch (err: any) {
@@ -365,6 +376,8 @@ export default function App() {
       
       setProfile(data);
       localStorage.setItem('proteino_profile', JSON.stringify(data));
+      setShowAuthModal(false);
+      setAuthModalNotice('');
       setCurrentView('dashboard');
       return { success: true };
     } catch (err: any) {
@@ -416,6 +429,8 @@ export default function App() {
                 const profileData = event.data.profile;
                 setProfile(profileData);
                 localStorage.setItem('proteino_profile', JSON.stringify(profileData));
+                setShowAuthModal(false);
+                setAuthModalNotice('');
                 setCurrentView('dashboard');
                 resolve({ success: true });
               }
@@ -514,6 +529,14 @@ export default function App() {
 
   // --- Checkout Action ---
   const handleCheckout = async () => {
+    // If not authenticated, require authentication before placing the order
+    if (!profile) {
+      setAuthModalNotice('Please sign in or create an account to confirm and place your order.');
+      setAuthModalStep('welcome');
+      setShowAuthModal(true);
+      return;
+    }
+
     if (!checkoutName.trim()) {
       setCheckoutError('Please enter recipient name');
       return;
@@ -646,6 +669,13 @@ export default function App() {
 
   // --- Subscription Controls ---
   const handleBuySubscriptionDirect = async (newSub: ActiveSubscription) => {
+    if (!profile) {
+      setAuthModalNotice('Please sign in or create an account to activate your gym meal subscription.');
+      setAuthModalStep('welcome');
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       const res = await apiFetch('/api/subscriptions', {
         method: 'POST',
@@ -716,21 +746,6 @@ export default function App() {
   }, 0);
 
   // --- ROOT SWITCH RENDER ---
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex flex-col justify-between select-none">
-        <div className="w-full max-w-md mx-auto bg-[#FAF9F6] min-h-screen shadow-2xl flex flex-col relative overflow-x-hidden border-x border-slate-200/50">
-          <Onboarding 
-            onRegister={handleRegister} 
-            onLogin={handleLogin} 
-            onResetPassword={handleResetPassword} 
-            onGoogleSignIn={handleGoogleSignIn}
-          />
-        </div>
-      </div>
-    );
-  }
-
   if (currentView === 'admin') {
     return (
       <AdminPanel 
@@ -758,15 +773,21 @@ export default function App() {
               }}
               onAddToCart={handleDashboardAddToCart}
               cartCount={cartCount}
-              userGoal={profile.goal}
-              userName={profile.name}
+              userGoal={profile?.goal || 'gain'}
+              userName={profile?.name || ''}
+              isGuest={!profile}
+              onSignInClick={() => {
+                setAuthModalNotice('');
+                setAuthModalStep('welcome');
+                setShowAuthModal(true);
+              }}
               onCartClick={() => setShowCart(true)}
               activeSubscriptions={activeSubscriptions}
               onViewActivePlans={() => setCurrentView('active_plans')}
             />
           )}
 
-          {currentView === 'product_details' && selectedProduct && profile && (
+          {currentView === 'product_details' && selectedProduct && (
             <ProductDetails 
               product={selectedProduct}
               profile={profile}
@@ -775,12 +796,23 @@ export default function App() {
               onSubscribeDirect={handleBuySubscriptionDirect}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              onRequireAuth={(msg) => {
+                setAuthModalNotice(msg || 'Please sign in or create an account to continue.');
+                setAuthModalStep('welcome');
+                setShowAuthModal(true);
+              }}
             />
           )}
 
           {currentView === 'active_plans' && (
             <ActivePlans 
-              activeSubscriptions={activeSubscriptions} 
+              activeSubscriptions={activeSubscriptions}
+              isGuest={!profile}
+              onSignInClick={() => {
+                setAuthModalNotice('');
+                setAuthModalStep('welcome');
+                setShowAuthModal(true);
+              }}
             />
           )}
 
@@ -788,6 +820,12 @@ export default function App() {
             <OrdersTracker 
               orders={orders}
               onOrderUpdate={handleOrdersUpdate}
+              isGuest={!profile}
+              onSignInClick={() => {
+                setAuthModalNotice('');
+                setAuthModalStep('welcome');
+                setShowAuthModal(true);
+              }}
             />
           )}
 
@@ -799,6 +837,11 @@ export default function App() {
                 setSelectedProduct(p);
                 setCurrentView('product_details');
               }}
+              onSignInClick={() => {
+                setAuthModalNotice('');
+                setAuthModalStep('welcome');
+                setShowAuthModal(true);
+              }}
             />
           )}
 
@@ -809,6 +852,11 @@ export default function App() {
               onBuySubscription={handleBuySubscriptionDirect}
               onCancelSubscription={handleCancelSubscriptionDirect}
               onTogglePause={handleTogglePauseDirect}
+              onRequireAuth={(msg) => {
+                setAuthModalNotice(msg || 'Please sign in or create an account to activate your gym subscription.');
+                setAuthModalStep('welcome');
+                setShowAuthModal(true);
+              }}
             />
           )}
         </div>
@@ -867,7 +915,7 @@ export default function App() {
         )}
 
         {/* --- Floating Logout Button in Profile screen only --- */}
-        {currentView === 'profile' && (
+        {currentView === 'profile' && profile && (
           <div className="px-5 mt-4 mb-24 shrink-0">
             <button
               onClick={handleLogout}
@@ -1142,6 +1190,43 @@ export default function App() {
                   </div>
                 )}
 
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* =========================================================
+            POPUP AUTH / ONBOARDING MODAL OVERLAY (Guest Sign In & Ordering)
+            ========================================================= */}
+        <AnimatePresence>
+          {showAuthModal && (
+            <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-0 sm:p-4">
+              {/* Backdrop */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowAuthModal(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer z-40"
+              />
+
+              {/* Modal Container */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="relative w-full max-w-md bg-[#FAF9F6] sm:rounded-3xl shadow-2xl z-50 min-h-screen sm:min-h-0 sm:max-h-[92vh] overflow-y-auto flex flex-col border border-slate-200/60"
+              >
+                <Onboarding 
+                  onRegister={handleRegister} 
+                  onLogin={handleLogin} 
+                  onResetPassword={handleResetPassword} 
+                  onGoogleSignIn={handleGoogleSignIn}
+                  onClose={() => setShowAuthModal(false)}
+                  initialStep={authModalStep}
+                  noticeMessage={authModalNotice}
+                />
               </motion.div>
             </div>
           )}

@@ -24,12 +24,13 @@ import { GYMS } from '../data';
 
 interface ProductDetailsProps {
   product: Product;
-  profile: UserProfile;
+  profile: UserProfile | null;
   onBack: () => void;
   onAddToCart: (item: CartItem) => void;
   onSubscribeDirect: (sub: any) => Promise<void>;
   favorites: string[];
   onToggleFavorite: (id: string) => void;
+  onRequireAuth?: (message?: string) => void;
 }
 
 export default function ProductDetails({ 
@@ -39,7 +40,8 @@ export default function ProductDetails({
   onAddToCart,
   onSubscribeDirect,
   favorites,
-  onToggleFavorite
+  onToggleFavorite,
+  onRequireAuth
 }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState(1);
   const [purchaseOption, setPurchaseOption] = useState<'single' | 'subscription'>('single');
@@ -49,12 +51,12 @@ export default function ProductDetails({
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('2 PM');
   
   // Subscriber info (linked directly to user details)
-  const [customerName, setCustomerName] = useState(profile.name || '');
-  const [customerPhone, setCustomerPhone] = useState(profile.phone || '');
+  const [customerName, setCustomerName] = useState(profile?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(profile?.phone || '');
 
   useEffect(() => {
-    setCustomerName(profile.name || '');
-    setCustomerPhone(profile.phone || '');
+    setCustomerName(profile?.name || '');
+    setCustomerPhone(profile?.phone || '');
   }, [profile]);
 
   const [isAdded, setIsAdded] = useState(false);
@@ -93,6 +95,13 @@ export default function ProductDetails({
       }, 1500);
     } else {
       // Handle subscription checkout directly!
+      if (!profile) {
+        if (onRequireAuth) {
+          onRequireAuth('Please sign in or create an account to activate your 26-day gym subscription.');
+        }
+        return;
+      }
+
       if (!customerName.trim()) {
         setErrorMsg('Please enter recipient name');
         return;

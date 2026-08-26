@@ -16,9 +16,11 @@ import { Order } from '../types';
 interface OrdersTrackerProps {
   orders: Order[];
   onOrderUpdate: (orders: Order[]) => void;
+  isGuest?: boolean;
+  onSignInClick?: () => void;
 }
 
-export default function OrdersTracker({ orders, onOrderUpdate }: OrdersTrackerProps) {
+export default function OrdersTracker({ orders, onOrderUpdate, isGuest, onSignInClick }: OrdersTrackerProps) {
   // Simulator ticking effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -66,14 +68,26 @@ export default function OrdersTracker({ orders, onOrderUpdate }: OrdersTrackerPr
       </div>
 
       {orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-brand-navy/5 rounded-3xl p-6">
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-white border border-brand-navy/5 rounded-3xl p-6 shadow-sm">
           <div className="w-16 h-16 rounded-full bg-[#EBF4E0] flex items-center justify-center text-3xl mb-4">
             🍱
           </div>
-          <h3 className="font-extrabold text-base text-brand-navy">No active orders found</h3>
-          <p className="text-xs text-brand-navy/55 max-w-[200px] mt-1.5 leading-relaxed">
-            Choose a customized bulk or lean plan to jumpstart your daily fitness goals!
+          <h3 className="font-extrabold text-base text-brand-navy">
+            {isGuest ? 'Track Live Meal Orders' : 'No active orders found'}
+          </h3>
+          <p className="text-xs text-brand-navy/55 max-w-[240px] mt-1.5 leading-relaxed">
+            {isGuest 
+              ? 'Sign in to access your placed meal orders, live kitchen timers, and gym delivery desk drop-offs.'
+              : 'Choose a customized bulk or lean plan to jumpstart your daily fitness goals!'}
           </p>
+          {isGuest && (
+            <button
+              onClick={onSignInClick}
+              className="mt-4 px-5 py-2.5 bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black rounded-xl shadow-sm cursor-pointer transition-all active:scale-95"
+            >
+              Sign In to View Orders
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-6">

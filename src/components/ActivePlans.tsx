@@ -18,9 +18,11 @@ import { PRODUCTS } from '../data';
 
 interface ActivePlansProps {
   activeSubscriptions: ActiveSubscription[];
+  isGuest?: boolean;
+  onSignInClick?: () => void;
 }
 
-export default function ActivePlans({ activeSubscriptions }: ActivePlansProps) {
+export default function ActivePlans({ activeSubscriptions, isGuest, onSignInClick }: ActivePlansProps) {
   const [now, setNow] = useState<number>(Date.now());
 
   // Ticking state update for the live timer
@@ -77,11 +79,23 @@ export default function ActivePlans({ activeSubscriptions }: ActivePlansProps) {
             <AlertCircle className="w-8 h-8 text-slate-400" />
           </div>
           <div>
-            <h3 className="font-extrabold text-sm text-brand-navy">No Subscriptions Found</h3>
-            <p className="text-xs text-brand-navy/40 font-semibold mt-1 max-w-xs">
-              Configure or checkout a subscription plan from the "Gym Plans" tab to view real-time countdown delivery tracking.
+            <h3 className="font-extrabold text-sm text-brand-navy">
+              {isGuest ? 'Track Active Gym Subscriptions' : 'No Subscriptions Found'}
+            </h3>
+            <p className="text-xs text-brand-navy/50 font-medium mt-1.5 max-w-xs leading-relaxed">
+              {isGuest 
+                ? 'Sign in to view and manage your 26-day gym meal subscriptions, daily countdown delivery timers, and pause controls.'
+                : 'Configure or checkout a subscription plan from the "Gym Plans" tab to view real-time countdown delivery tracking.'}
             </p>
           </div>
+          {isGuest && (
+            <button
+              onClick={onSignInClick}
+              className="px-5 py-2.5 bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black rounded-xl shadow-sm cursor-pointer transition-all active:scale-95"
+            >
+              Sign In to View Plans
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-6">

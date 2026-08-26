@@ -11,7 +11,8 @@ import {
   EyeOff, 
   ChevronLeft,
   CheckCircle2,
-  LogIn
+  LogIn,
+  X
 } from 'lucide-react';
 import mascotImg from '../assets/images/mascot_illustration_1783093311674.jpg';
 import proteinoLogo from '../assets/images/proteino_logo_1783248797173.jpg';
@@ -22,10 +23,21 @@ interface OnboardingProps {
   onLogin: (phone: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   onResetPassword: (phone: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   onGoogleSignIn?: () => Promise<{ success: boolean; error?: string }>;
+  onClose?: () => void;
+  initialStep?: 'welcome' | 'register' | 'login' | 'forgot';
+  noticeMessage?: string;
 }
 
-export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoogleSignIn }: OnboardingProps) {
-  const [step, setStep] = useState<'welcome' | 'register' | 'login' | 'forgot'>('welcome');
+export default function Onboarding({ 
+  onRegister, 
+  onLogin, 
+  onResetPassword, 
+  onGoogleSignIn,
+  onClose,
+  initialStep = 'welcome',
+  noticeMessage
+}: OnboardingProps) {
+  const [step, setStep] = useState<'welcome' | 'register' | 'login' | 'forgot'>(initialStep);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [pass, setPass] = useState('');
@@ -35,6 +47,13 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoo
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sync initialStep if it changes externally
+  React.useEffect(() => {
+    if (initialStep) {
+      setStep(initialStep);
+    }
+  }, [initialStep]);
 
   const handleGoogleSignInClick = async () => {
     if (!onGoogleSignIn || isLoading) return;
@@ -154,7 +173,27 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoo
   };
 
   return (
-    <div className="flex flex-col justify-between min-h-screen bg-[#FAF9F6] p-6 select-none overflow-y-auto">
+    <div className="flex flex-col justify-between min-h-screen bg-[#FAF9F6] p-6 select-none overflow-y-auto relative">
+      {/* Top Floating Close Button if rendered inside a modal */}
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/80 hover:bg-white text-slate-400 hover:text-brand-navy shadow-xs border border-slate-200/60 cursor-pointer transition-all active:scale-95"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* Notice Message Banner (e.g. Please sign in to complete your meal order) */}
+      {noticeMessage && (
+        <div className="mt-2 mb-4 bg-brand-green/10 border border-brand-green/30 text-brand-navy rounded-2xl p-3.5 text-xs font-bold flex items-center gap-2.5 shadow-xs">
+          <span className="text-base shrink-0">🥗</span>
+          <span>{noticeMessage}</span>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {step === 'welcome' && (
           <motion.div
@@ -166,9 +205,9 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoo
             className="flex flex-col justify-between h-full flex-grow"
           >
             {/* Top Section: Logo & Branding */}
-            <div className="flex flex-col items-center mt-6 text-center">
+            <div className="flex flex-col items-center mt-4 text-center">
               {/* Custom Brand Logo */}
-              <div className="relative mb-4 w-32 h-32 rounded-3xl overflow-hidden shadow-lg border-2 border-brand-green/20 bg-[#0F1E36]">
+              <div className="relative mb-4 w-28 h-28 rounded-3xl overflow-hidden shadow-lg border-2 border-brand-green/20 bg-[#0F1E36]">
                 <img 
                   src={proteinoLogo} 
                   alt="Proteino Logo" 
@@ -185,17 +224,17 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoo
               </div>
 
               {/* Brand Typography */}
-              <h1 className="text-4xl font-extrabold tracking-wider text-brand-green font-display italic">
+              <h1 className="text-3xl font-extrabold tracking-wider text-brand-green font-display italic">
                 PROTEINO
               </h1>
-              <p className="mt-2 text-base font-semibold text-brand-navy/60">
+              <p className="mt-1.5 text-sm font-semibold text-brand-navy/60">
                 Healthy meals. Delivered to you.
               </p>
             </div>
 
             {/* Middle Section: Mascot/Illustration */}
-            <div className="my-auto flex flex-col items-center justify-center p-4">
-              <div className="relative max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-sm border border-brand-navy/5 bg-white p-2">
+            <div className="my-auto flex flex-col items-center justify-center p-3">
+              <div className="relative max-w-[240px] aspect-square rounded-3xl overflow-hidden shadow-sm border border-brand-navy/5 bg-white p-2">
                 <img 
                   src={mascotImg} 
                   alt="Proteino Fitness Mascot" 
@@ -215,11 +254,11 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoo
             </div>
 
             {/* Bottom Section: Actions */}
-            <div className="flex flex-col gap-3 mb-6">
+            <div className="flex flex-col gap-2.5 mb-4">
               <button
                 onClick={() => { setStep('register'); setError(''); }}
                 id="btn-get-started"
-                className="group relative flex items-center justify-center gap-2 w-full py-4 bg-brand-green hover:bg-brand-green-hover text-white font-bold text-lg rounded-2xl shadow-md active:scale-95 transition-all duration-200 cursor-pointer border-0"
+                className="group relative flex items-center justify-center gap-2 w-full py-3.5 bg-brand-green hover:bg-brand-green-hover text-white font-bold text-base rounded-2xl shadow-md active:scale-95 transition-all duration-200 cursor-pointer border-0"
               >
                 <span>Get Started</span>
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -251,6 +290,19 @@ export default function Onboarding({ onRegister, onLogin, onResetPassword, onGoo
                   </button>
                 </p>
               </div>
+
+              {/* Skip / Continue as guest link if in modal */}
+              {onClose && (
+                <div className="text-center mt-1">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="text-xs text-slate-400 hover:text-brand-navy font-semibold hover:underline bg-transparent border-none cursor-pointer p-1"
+                  >
+                    Continue exploring menu as guest →
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

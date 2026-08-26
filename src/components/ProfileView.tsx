@@ -20,12 +20,78 @@ import { UserProfile, Product } from '../types';
 import { PRODUCTS } from '../data';
 
 interface ProfileViewProps {
-  profile: UserProfile;
+  profile: UserProfile | null;
   onUpdateProfile: (profile: UserProfile) => void;
   onSelectProduct: (product: Product) => void;
+  onSignInClick?: () => void;
 }
 
-export default function ProfileView({ profile, onUpdateProfile, onSelectProduct }: ProfileViewProps) {
+export default function ProfileView({ profile, onUpdateProfile, onSelectProduct, onSignInClick }: ProfileViewProps) {
+  if (!profile) {
+    return (
+      <div className="flex flex-col h-full bg-[#FAF9F6] p-5 pb-28 overflow-y-auto select-none">
+        <div className="mb-6">
+          <h2 className="text-2xl font-black text-brand-navy tracking-tight">Fitness Profile</h2>
+          <p className="text-xs font-semibold text-brand-navy/50 mt-0.5">Explore Proteino macro intelligence</p>
+        </div>
+
+        <div className="bg-white border border-brand-navy/5 rounded-3xl p-6 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="w-16 h-16 rounded-3xl bg-brand-green/10 text-brand-green flex items-center justify-center border border-brand-green/20">
+            <User className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-brand-navy">Guest Explorer</h3>
+            <p className="text-xs text-brand-navy/60 mt-1 max-w-xs leading-relaxed">
+              Create an account or sign in to calculate your custom daily calorie & protein targets, save fitness goals, and track your gym delivery orders.
+            </p>
+          </div>
+
+          <button
+            onClick={onSignInClick}
+            className="w-full py-4 bg-brand-green hover:bg-brand-green-hover text-white font-extrabold text-sm rounded-2xl shadow-md active:scale-95 transition-all duration-200 cursor-pointer mt-2"
+          >
+            Sign In / Create Account
+          </button>
+        </div>
+
+        {/* Feature Highlights */}
+        <div className="mt-6 flex flex-col gap-3">
+          <h4 className="text-xs font-black uppercase tracking-wider text-brand-navy/40 px-1">Why Sign In?</h4>
+          
+          <div className="bg-white border border-brand-navy/5 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+            <div className="p-2.5 rounded-xl bg-orange-50 text-orange-500 shrink-0">
+              <Flame className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-brand-navy">Personalized Macro Targets</p>
+              <p className="text-[10px] text-brand-navy/50">Auto-calculate exact protein & calorie intake based on your weight goals.</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-brand-navy/5 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+            <div className="p-2.5 rounded-xl bg-brand-green/10 text-brand-green shrink-0">
+              <Beef className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-brand-navy">Daily Protein Log & Streak</p>
+              <p className="text-[10px] text-brand-navy/50">Keep track of your muscle building and fat loss journey with real-time logs.</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-brand-navy/5 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-500 shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-brand-navy">26-Day Gym Subscriptions</p>
+              <p className="text-[10px] text-brand-navy/50">Enjoy 15% subscriber discounts and effortless daily desk drop-offs at your gym.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [name, setName] = useState(profile.name);
   const [weight, setWeight] = useState(profile.weight);
   const [height, setHeight] = useState(profile.height);

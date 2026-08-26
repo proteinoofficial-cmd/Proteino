@@ -13,7 +13,9 @@ import {
   Leaf,
   Filter,
   ShoppingBag,
-  Clock
+  Clock,
+  LogIn,
+  User
 } from 'lucide-react';
 import { Product, ActiveSubscription } from '../types';
 import { PRODUCTS } from '../data';
@@ -22,8 +24,10 @@ interface DashboardProps {
   onProductClick: (product: Product) => void;
   onAddToCart: (product: Product) => void;
   cartCount: number;
-  userGoal: 'gain' | 'loss' | 'maintain';
-  userName: string;
+  userGoal?: 'gain' | 'loss' | 'maintain';
+  userName?: string;
+  isGuest?: boolean;
+  onSignInClick?: () => void;
   onCartClick?: () => void;
   activeSubscriptions: ActiveSubscription[];
   onViewActivePlans: () => void;
@@ -33,8 +37,10 @@ export default function Dashboard({
   onProductClick, 
   onAddToCart, 
   cartCount,
-  userGoal,
-  userName,
+  userGoal = 'gain',
+  userName = '',
+  isGuest = false,
+  onSignInClick,
   onCartClick,
   activeSubscriptions,
   onViewActivePlans
@@ -67,15 +73,35 @@ export default function Dashboard({
   return (
     <div className="flex flex-col h-full bg-[#FAF9F6] overflow-y-auto pb-24 select-none">
       
-      {/* Top Header Section */}
+      {/* Top Header Section with Sign In button on Left/Top Header */}
       <div className="sticky top-0 bg-[#FAF9F6]/95 backdrop-blur-md z-30 px-5 pt-5 pb-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-brand-green tracking-wider font-display italic">
-            PROTEINO
-          </h1>
-          <p className="text-xs font-semibold text-brand-navy/50">
-            Hi, {userName || 'Fitness Enthusiast'} 👋
-          </p>
+        <div className="flex items-center gap-3">
+          {/* Left Corner Sign In Button for Guest exploration */}
+          {isGuest && (
+            <button 
+              onClick={onSignInClick}
+              id="btn-home-signin-left"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black shadow-sm active:scale-95 transition-all duration-200 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
+
+          <div>
+            <h1 className="text-2xl font-black text-brand-green tracking-wider font-display italic">
+              PROTEINO
+            </h1>
+            <p className="text-xs font-semibold text-brand-navy/50">
+              {isGuest ? (
+                <span>
+                  Hi, Guest Explorer 👋 • <button onClick={onSignInClick} className="text-brand-green font-bold hover:underline cursor-pointer bg-transparent border-0 p-0">Log in</button>
+                </span>
+              ) : (
+                <span>Hi, {userName || 'Fitness Enthusiast'} 👋</span>
+              )}
+            </p>
+          </div>
         </div>
         
         {/* Notification Bell & Cart Icon Row */}
@@ -141,6 +167,25 @@ export default function Dashboard({
         </div>
       </div>
     </div>
+
+      {/* Guest Welcome Banner for quick sign in / info */}
+      {isGuest && (
+        <div className="mx-5 mb-2 p-3.5 bg-[#0F1E36] text-white rounded-2xl flex items-center justify-between shadow-sm border border-brand-green/20">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🥗</span>
+            <div>
+              <p className="text-xs font-bold text-white">Explore Pure High-Protein Meals</p>
+              <p className="text-[10px] text-white/60">Sign in anytime to order single meals or gym plans</p>
+            </div>
+          </div>
+          <button
+            onClick={onSignInClick}
+            className="px-3 py-1.5 bg-brand-green hover:bg-brand-green-hover text-white text-[11px] font-black rounded-xl shadow-xs cursor-pointer transition-all shrink-0 active:scale-95"
+          >
+            Sign In
+          </button>
+        </div>
+      )}
 
       <div className="px-5 flex flex-col gap-5">
         

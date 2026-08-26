@@ -22,11 +22,12 @@ import { Product, UserProfile, ActiveSubscription, Gym } from '../types';
 import { PRODUCTS, GYMS } from '../data';
 
 interface SubscriptionManagerProps {
-  profile: UserProfile;
+  profile: UserProfile | null;
   activeSubscription: ActiveSubscription | null;
   onBuySubscription: (newSub: any) => void;
   onCancelSubscription: () => void;
   onTogglePause: () => void;
+  onRequireAuth?: (message?: string) => void;
 }
 
 export default function SubscriptionManager({
@@ -34,7 +35,8 @@ export default function SubscriptionManager({
   activeSubscription,
   onBuySubscription,
   onCancelSubscription,
-  onTogglePause
+  onTogglePause,
+  onRequireAuth
 }: SubscriptionManagerProps) {
   // Buy plan states
   const [selectedProductId, setSelectedProductId] = useState<string>(PRODUCTS[0].id);
@@ -43,14 +45,14 @@ export default function SubscriptionManager({
   const [durationWeeks, setDurationWeeks] = useState<number>(4); // Default 4 weeks = 26 days
 
   // Client verification form
-  const [customerName, setCustomerName] = useState<string>(profile.name || '');
-  const [customerPhone, setCustomerPhone] = useState<string>(profile.phone || '');
+  const [customerName, setCustomerName] = useState<string>(profile?.name || '');
+  const [customerPhone, setCustomerPhone] = useState<string>(profile?.phone || '');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<boolean>(false);
 
   React.useEffect(() => {
-    setCustomerName(profile.name || '');
-    setCustomerPhone(profile.phone || '');
+    setCustomerName(profile?.name || '');
+    setCustomerPhone(profile?.phone || '');
   }, [profile]);
 
   const selectedProduct = PRODUCTS.find(p => p.id === selectedProductId) || PRODUCTS[0];
@@ -67,6 +69,13 @@ export default function SubscriptionManager({
 
   const handleSubscribeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile) {
+      if (onRequireAuth) {
+        onRequireAuth('Please sign in or create an account to activate your gym meal subscription.');
+      }
+      return;
+    }
+
     if (!customerName.trim()) {
       setErrorMsg('Full name is required.');
       return;
