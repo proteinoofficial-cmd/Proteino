@@ -1,207 +1,233 @@
-// Ultra-loud, multi-tier audio notification engine for kitchen & admin incoming orders
-// Combines high-gain Web Audio API oscillators + HTML5 Audio WAV fallback for 100% browser reliability.
+// Universal High-Decibel Kitchen/Admin Order Alert Sound System
+// Engineered specifically for 100% reliability on Desktop Computers (Windows, Mac, Linux) & Mobile.
 
-let sharedAudioCtx: AudioContext | null = null;
+let sharedAudioContext: AudioContext | null = null;
+let cachedBlobWavUrl: string | null = null;
+let isAudioUnlocked = false;
 
-// Call on user interaction (clicks anywhere in admin panel) to unlock browser audio policy
-export function initAudioUnlock() {
+// Create 16-bit PCM WAV binary for universal Desktop & Mobile HTML5 Audio playback
+function buildLoudChimeWavBlob(): string {
+  if (cachedBlobWavUrl) return cachedBlobWavUrl;
+
   try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
-    if (!sharedAudioCtx) {
-      sharedAudioCtx = new AudioContextClass();
+    const sampleRate = 44100;
+    const duration = 2.0; // 2 seconds
+    const totalSamples = Math.floor(sampleRate * duration);
+    const byteLength = 44 + totalSamples * 2;
+    const buffer = new ArrayBuffer(byteLength);
+    const view = new DataView(buffer);
+
+    // 1. RIFF Header
+    writeAscii(view, 0, 'RIFF');
+    view.setUint32(4, 36 + totalSamples * 2, true);
+    writeAscii(view, 8, 'WAVE');
+
+    // 2. fmt Sub-chunk
+    writeAscii(view, 12, 'fmt ');
+    view.setUint32(16, 16, true); // 16 for PCM
+    view.setUint16(20, 1, true); // PCM Format = 1
+    view.setUint16(22, 1, true); // Mono = 1
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true); // Byte rate (44100 * 2)
+    view.setUint16(32, 2, true); // Block align
+    view.setUint16(34, 16, true); // 16 bits per sample
+
+    // 3. data Sub-chunk
+    writeAscii(view, 36, 'data');
+    view.setUint32(40, totalSamples * 2, true);
+
+    // 4. Generate high-visibility, crisp restaurant bell chords
+    // Chord 1 (0.0s - 0.7s): High C Major bell (523.25Hz, 659.25Hz, 1046.5Hz, 1318.5Hz)
+    // Chord 2 (0.45s - 1.2s): High G Major resonant chime (783.99Hz, 987.77Hz, 1567.98Hz)
+    // Chord 3 (0.95s - 2.0s): High C6 triple ring (1046.5Hz, 1318.5Hz, 2093.0Hz)
+    for (let i = 0; i < totalSamples; i++) {
+      const t = i / sampleRate;
+      let sample = 0;
+
+      // Note 1
+      if (t >= 0.0 && t < 0.8) {
+        const decay = Math.exp(-t * 5.0);
+        const wave = 
+          Math.sin(2 * Math.PI * 523.25 * t) * 0.35 +
+          Math.sin(2 * Math.PI * 659.25 * t) * 0.35 +
+          Math.sin(2 * Math.PI * 1046.5 * t) * 0.30;
+        sample += wave * decay;
+      }
+
+      // Note 2 (Ding)
+      if (t >= 0.35 && t < 1.3) {
+        const t2 = t - 0.35;
+        const decay2 = Math.exp(-t2 * 4.5);
+        const wave2 = 
+          Math.sin(2 * Math.PI * 783.99 * t2) * 0.40 +
+          Math.sin(2 * Math.PI * 987.77 * t2) * 0.35 +
+          Math.sin(2 * Math.PI * 1567.98 * t2) * 0.30;
+        sample += wave2 * decay2;
+      }
+
+      // Note 3 (Dong - High Clarity Bell Finish)
+      if (t >= 0.75 && t < 2.0) {
+        const t3 = t - 0.75;
+        const decay3 = Math.exp(-t3 * 3.5);
+        const wave3 = 
+          Math.sin(2 * Math.PI * 1046.5 * t3) * 0.45 +
+          Math.sin(2 * Math.PI * 1318.5 * t3) * 0.40 +
+          Math.sin(2 * Math.PI * 2093.0 * t3) * 0.35;
+        sample += wave3 * decay3;
+      }
+
+      // Master volume boost & hard limiter
+      sample = Math.max(-0.98, Math.min(0.98, sample * 1.8));
+
+      // Convert to 16-bit signed PCM
+      const pcm16 = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(44 + i * 2, pcm16, true);
     }
-    if (sharedAudioCtx.state === "suspended") {
-      sharedAudioCtx.resume().catch(() => {});
+
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    cachedBlobWavUrl = URL.createObjectURL(blob);
+    return cachedBlobWavUrl;
+  } catch (err) {
+    console.warn("WAV Blob generation error:", err);
+    return "";
+  }
+}
+
+function writeAscii(view: DataView, offset: number, text: string) {
+  for (let i = 0; i < text.length; i++) {
+    view.setUint8(offset + i, text.charCodeAt(i));
+  }
+}
+
+// Unlock audio on any computer/mobile interaction
+export function initAudioUnlock() {
+  if (isAudioUnlocked) return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (AudioCtx) {
+      if (!sharedAudioContext) {
+        sharedAudioContext = new AudioCtx();
+      }
+      if (sharedAudioContext.state === 'suspended') {
+        sharedAudioContext.resume().then(() => {
+          isAudioUnlocked = true;
+        }).catch(() => {});
+      } else {
+        isAudioUnlocked = true;
+      }
     }
+    // Pre-create the WAV blob
+    buildLoudChimeWavBlob();
   } catch (e) {
-    console.warn("Audio unlock error:", e);
+    console.warn("Audio unlock warning:", e);
   }
 }
 
-// Generate a Loud Double-Chime WAV buffer as Data URL for HTML5 Audio fallback
-function generateLoudChimeWavUrl(): string {
-  const sampleRate = 44100;
-  const duration = 1.8; // 1.8 seconds total
-  const numSamples = Math.floor(sampleRate * duration);
-  const buffer = new ArrayBuffer(44 + numSamples * 2);
-  const view = new DataView(buffer);
-
-  // RIFF Chunk Descriptor
-  writeString(view, 0, 'RIFF');
-  view.setUint32(4, 36 + numSamples * 2, true);
-  writeString(view, 8, 'WAVE');
-  // FMT Sub-chunk
-  writeString(view, 12, 'fmt ');
-  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-  view.setUint16(20, 1, true); // AudioFormat (1 = PCM)
-  view.setUint16(22, 1, true); // NumChannels (1 = Mono)
-  view.setUint32(24, sampleRate, true); // SampleRate
-  view.setUint32(28, sampleRate * 2, true); // ByteRate (SampleRate * NumChannels * BitsPerSample/8)
-  view.setUint16(32, 2, true); // BlockAlign
-  view.setUint16(34, 16, true); // BitsPerSample (16 bits)
-  // Data Sub-chunk
-  writeString(view, 36, 'data');
-  view.setUint32(40, numSamples * 2, true);
-
-  // Generate sound samples: High-energy two-stage double chime (880Hz -> 1320Hz -> 1760Hz)
-  for (let i = 0; i < numSamples; i++) {
-    const t = i / sampleRate;
-    let sample = 0;
-
-    // First Chime (0.0s - 0.7s)
-    if (t < 0.7) {
-      const env = Math.exp(-t * 4.5);
-      const s1 = Math.sin(2 * Math.PI * 784 * t); // G5
-      const s2 = Math.sin(2 * Math.PI * 1046.5 * t); // C6
-      const s3 = Math.sin(2 * Math.PI * 1568 * t); // G6
-      sample += (s1 * 0.45 + s2 * 0.45 + s3 * 0.3) * env;
-    }
-    // Second Punchy Chime (0.5s - 1.5s)
-    if (t >= 0.45 && t < 1.6) {
-      const t2 = t - 0.45;
-      const env2 = Math.exp(-t2 * 3.8);
-      const s1 = Math.sin(2 * Math.PI * 1046.5 * t2); // C6
-      const s2 = Math.sin(2 * Math.PI * 1318.5 * t2); // E6
-      const s3 = Math.sin(2 * Math.PI * 2093 * t2); // C7 (High bell ping)
-      sample += (s1 * 0.5 + s2 * 0.4 + s3 * 0.35) * env2;
-    }
-
-    // Boost & Soft clip
-    sample = Math.max(-1, Math.min(1, sample * 1.5));
-    // 16-bit PCM integer
-    const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-    view.setInt16(44 + i * 2, intSample, true);
-  }
-
-  // Convert ArrayBuffer to Base64
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return 'data:audio/wav;base64,' + btoa(binary);
-}
-
-function writeString(view: DataView, offset: number, string: string) {
-  for (let i = 0; i < string.length; i++) {
-    view.setUint8(offset + i, string.charCodeAt(i));
-  }
-}
-
-// Cached WAV data url
-let cachedWavUrl: string | null = null;
-
+// Play sound simultaneously using Web Audio API + HTML5 Audio element for 100% desktop compatibility
 export function playOrderAlertSound(): Promise<void> {
   return new Promise(async (resolve) => {
-    let playedWithWebAudio = false;
+    initAudioUnlock();
 
-    // 1. Play via Web Audio API with Master Gain Amplifier & Harmonics
+    let playedHTML5 = false;
+
+    // --- STRATEGY 1: HTML5 Audio with WAV Blob (Most reliable on Desktop Chrome/Edge/Firefox) ---
     try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioContextClass) {
-        if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
-          sharedAudioCtx = new AudioContextClass();
+      const wavUrl = buildLoudChimeWavBlob();
+      if (wavUrl) {
+        const audio = new Audio(wavUrl);
+        audio.volume = 1.0; // Max volume
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            playedHTML5 = true;
+          }).catch((err) => {
+            console.warn("HTML5 audio autoplay prevented by browser policy:", err);
+          });
         }
-        if (sharedAudioCtx.state === "suspended") {
-          await sharedAudioCtx.resume();
-        }
-
-        const ctx = sharedAudioCtx;
-        const now = ctx.currentTime;
-
-        // Master Gain node set high for loud sound
-        const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.9, now);
-        masterGain.connect(ctx.destination);
-
-        // Dynamics Compressor to make it punchy and prevent harsh digital clipping
-        const compressor = ctx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-15, now);
-        compressor.knee.setValueAtTime(20, now);
-        compressor.ratio.setValueAtTime(12, now);
-        compressor.attack.setValueAtTime(0.003, now);
-        compressor.release.setValueAtTime(0.25, now);
-        compressor.connect(masterGain);
-
-        // Loud 4-stage restaurant notification chime:
-        // Note 1: 659.25Hz (E5), Note 2: 880Hz (A5), Note 3: 1318.5Hz (E6), Note 4: 1760Hz (A6)
-        const notes = [
-          { freq: 659.25, start: 0.0, dur: 0.35, type: 'triangle' as OscillatorType, vol: 0.8 },
-          { freq: 880.00, start: 0.12, dur: 0.45, type: 'sine' as OscillatorType, vol: 0.9 },
-          { freq: 1318.51, start: 0.35, dur: 0.65, type: 'sine' as OscillatorType, vol: 0.95 },
-          { freq: 1760.00, start: 0.48, dur: 0.95, type: 'triangle' as OscillatorType, vol: 0.85 },
-          { freq: 2637.02, start: 0.50, dur: 0.80, type: 'sine' as OscillatorType, vol: 0.4 } // High sparkle
-        ];
-
-        notes.forEach(({ freq, start, dur, type, vol }) => {
-          const osc = ctx.createOscillator();
-          const noteGain = ctx.createGain();
-
-          osc.type = type;
-          osc.frequency.setValueAtTime(freq, now + start);
-
-          noteGain.gain.setValueAtTime(0.0001, now + start);
-          noteGain.gain.linearRampToValueAtTime(vol, now + start + 0.015);
-          noteGain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
-
-          osc.connect(noteGain);
-          noteGain.connect(compressor);
-
-          osc.start(now + start);
-          osc.stop(now + start + dur);
-        });
-
-        // Second confirmation repeat chime after 1.1s
-        setTimeout(() => {
-          try {
-            if (!ctx || ctx.state === "closed") return;
-            const now2 = ctx.currentTime;
-            const repeatNotes = [
-              { freq: 880.00, start: 0.0, dur: 0.3, type: 'triangle' as OscillatorType, vol: 0.85 },
-              { freq: 1318.51, start: 0.15, dur: 0.7, type: 'sine' as OscillatorType, vol: 0.95 },
-              { freq: 1760.00, start: 0.20, dur: 0.85, type: 'sine' as OscillatorType, vol: 0.7 }
-            ];
-
-            repeatNotes.forEach(({ freq, start, dur, type, vol }) => {
-              const osc2 = ctx.createOscillator();
-              const noteGain2 = ctx.createGain();
-              osc2.type = type;
-              osc2.frequency.setValueAtTime(freq, now2 + start);
-              noteGain2.gain.setValueAtTime(0.0001, now2 + start);
-              noteGain2.gain.linearRampToValueAtTime(vol, now2 + start + 0.015);
-              noteGain2.gain.exponentialRampToValueAtTime(0.0001, now2 + start + dur);
-              osc2.connect(noteGain2);
-              noteGain2.connect(compressor);
-              osc2.start(now2 + start);
-              osc2.stop(now2 + start + dur);
-            });
-          } catch (e) {
-            console.warn("Repeat note error:", e);
-          }
-        }, 1100);
-
-        playedWithWebAudio = true;
       }
-    } catch (err) {
-      console.warn("Web Audio API chime failed:", err);
+    } catch (e) {
+      console.warn("HTML5 Audio player error:", e);
     }
 
-    // 2. Play HTML5 Audio fallback
+    // --- STRATEGY 2: Web Audio API Oscillator Bell Synthesis (Crisp, High-Gain Synth) ---
     try {
-      if (!cachedWavUrl) {
-        cachedWavUrl = generateLoudChimeWavUrl();
-      }
-      const audio = new Audio(cachedWavUrl);
-      audio.volume = 1.0;
-      audio.play().catch((e) => {
-        if (!playedWithWebAudio) {
-          console.warn("HTML5 audio playback blocked by browser:", e);
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) {
+        // Always instantiate or resume context
+        let ctx = sharedAudioContext;
+        if (!ctx || ctx.state === 'closed') {
+          ctx = new AudioCtx();
+          sharedAudioContext = ctx;
         }
-      });
-    } catch (fallbackErr) {
-      console.warn("HTML5 audio fallback error:", fallbackErr);
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
+        const now = ctx.currentTime + 0.02; // Small offset to avoid past-timestamp dropouts
+
+        // Primary Master Output
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(1.0, now);
+        master.connect(ctx.destination);
+
+        // Bell Frequencies (Restaurant Chime: D5, A5, D6, F#6, A6)
+        const chimeNotes = [
+          { freq: 587.33, start: 0.00, dur: 0.50, vol: 0.6 },  // D5
+          { freq: 880.00, start: 0.12, dur: 0.65, vol: 0.75 }, // A5
+          { freq: 1174.66, start: 0.35, dur: 0.85, vol: 0.85 }, // D6
+          { freq: 1479.98, start: 0.48, dur: 0.95, vol: 0.75 }, // F#6
+          { freq: 1760.00, start: 0.52, dur: 1.10, vol: 0.90 }, // A6
+        ];
+
+        chimeNotes.forEach((n) => {
+          if (!ctx) return;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(n.freq, now + n.start);
+
+          // Linear rise, exponential decay
+          gain.gain.setValueAtTime(0.001, now + n.start);
+          gain.gain.linearRampToValueAtTime(n.vol, now + n.start + 0.015);
+          gain.gain.setTargetAtTime(0.0001, now + n.start + 0.03, n.dur / 4);
+
+          osc.connect(gain);
+          gain.connect(master);
+
+          osc.start(now + n.start);
+          osc.stop(now + n.start + n.dur);
+        });
+
+        // Second Repeat Bell (Echo chime for loud recognition)
+        const repeatTime = now + 0.95;
+        const repeatNotes = [
+          { freq: 880.00, start: 0.00, dur: 0.5, vol: 0.7 },
+          { freq: 1174.66, start: 0.12, dur: 0.7, vol: 0.8 },
+          { freq: 1760.00, start: 0.22, dur: 0.9, vol: 0.85 }
+        ];
+
+        repeatNotes.forEach((n) => {
+          if (!ctx) return;
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+
+          osc2.type = "sine";
+          osc2.frequency.setValueAtTime(n.freq, repeatTime + n.start);
+
+          gain2.gain.setValueAtTime(0.001, repeatTime + n.start);
+          gain2.gain.linearRampToValueAtTime(n.vol, repeatTime + n.start + 0.015);
+          gain2.gain.setTargetAtTime(0.0001, repeatTime + n.start + 0.03, n.dur / 4);
+
+          osc2.connect(gain2);
+          gain2.connect(master);
+
+          osc2.start(repeatTime + n.start);
+          osc2.stop(repeatTime + n.start + n.dur);
+        });
+      }
+    } catch (synthErr) {
+      console.warn("Web Audio synth alert warning:", synthErr);
     }
 
     resolve();

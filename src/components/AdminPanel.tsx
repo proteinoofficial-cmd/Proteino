@@ -130,6 +130,16 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     setActiveAlerts(prev => prev.filter(a => a.id !== alertId));
   };
 
+  // Toggle sound with instant feedback
+  const toggleSound = () => {
+    initAudioUnlock();
+    const nextState = !isSoundEnabled;
+    setIsSoundEnabled(nextState);
+    if (nextState) {
+      playOrderAlertSound();
+    }
+  };
+
   // Test sound function for admin
   const testAlertSound = () => {
     initAudioUnlock();
@@ -654,7 +664,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         <div className="flex items-center gap-2.5">
           {/* Live Sound Toggle Button */}
           <button
-            onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+            onClick={toggleSound}
             className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
               isSoundEnabled 
                 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-xs" 
