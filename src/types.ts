@@ -41,6 +41,7 @@ export interface CartItem {
 export interface Order {
   id: string;
   date: string;
+  createdAt?: string;
   items: CartItem[];
   total: number;
   status: 'cooking' | 'out_for_delivery' | 'delivered';
@@ -78,6 +79,8 @@ export interface ActiveSubscription {
   price: number;
   durationDays: number;
   startDate: string;
+  createdAt?: string;
+  date?: string;
   expiryDate: string;
   customerName: string;
   customerPhone: string;

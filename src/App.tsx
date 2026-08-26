@@ -571,6 +571,19 @@ export default function App() {
     const singleMealItems = cart.filter(item => item.purchaseOption === 'single');
 
     try {
+      const nowObj = new Date();
+      const formattedDateStr = nowObj.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+      const formattedTimeStr = nowObj.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+      const orderDateDisplay = `${formattedTimeStr}, ${formattedDateStr}`;
+
       // 1. If we have single meal items, place a single order on the server
       if (singleMealItems.length > 0) {
         const orderPayload = {
@@ -582,7 +595,9 @@ export default function App() {
           customerPhone: checkoutPhone,
           gymName: gym.name,
           gymLocation: gym.location,
-          deliveryTimeSlot: checkoutTimeSlot
+          deliveryTimeSlot: checkoutTimeSlot,
+          createdAt: nowObj.toISOString(),
+          date: orderDateDisplay
         };
 
         const orderRes = await apiFetch('/api/orders', {
@@ -613,7 +628,10 @@ export default function App() {
               gymName: gym.name,
               gymLocation: gym.location,
               timeSlot: checkoutTimeSlot,
-              isPaused: false
+              isPaused: false,
+              startDate: nowObj.toISOString(),
+              createdAt: nowObj.toISOString(),
+              date: orderDateDisplay
             };
 
             const subRes = await apiFetch('/api/subscriptions', {

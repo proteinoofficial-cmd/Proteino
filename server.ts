@@ -643,6 +643,9 @@ app.post("/api/orders", (req, res) => {
   if (!newOrder.date) {
     newOrder.date = new Date().toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString("en-IN", { day: '2-digit', month: 'short' });
   }
+  if (!newOrder.createdAt) {
+    newOrder.createdAt = new Date().toISOString();
+  }
   store.orders.unshift(newOrder); // Add to beginning
   saveStore();
   res.status(201).json(newOrder);
@@ -692,8 +695,22 @@ app.post("/api/subscriptions", (req, res) => {
   }
 
   const now = new Date();
-  const expiryDate = new Date();
+  const startDate = req.body.startDate || now.toISOString();
+  const startDateObj = new Date(startDate);
+  const expiryDate = new Date(startDateObj);
   expiryDate.setDate(expiryDate.getDate() + durationDays);
+
+  const formattedDateStr = startDateObj.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+  const formattedTimeStr = startDateObj.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+  const defaultDateStr = `${formattedTimeStr}, ${formattedDateStr}`;
 
   const newSub = {
     id: `SUB-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -701,7 +718,9 @@ app.post("/api/subscriptions", (req, res) => {
     planName,
     price,
     durationDays,
-    startDate: now.toISOString(),
+    startDate: startDate,
+    createdAt: req.body.createdAt || startDate,
+    date: req.body.date || defaultDateStr,
     expiryDate: expiryDate.toISOString(),
     customerName,
     customerPhone,
