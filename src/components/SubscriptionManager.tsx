@@ -59,13 +59,12 @@ export default function SubscriptionManager({
   const selectedGym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
 
   // Subscription calculation
-  // Standard 26 days (excluding Sundays) at 15% discount
-  const unitPrice = selectedProduct.price;
+  // Base 26-day monthly cycle with exact plan pricing from menu
   const numDeliveryDays = durationWeeks === 4 ? 26 : durationWeeks === 8 ? 52 : 104;
-  const originalTotalPrice = unitPrice * numDeliveryDays;
-  const subscriptionDiscountFactor = 0.85; // 15% discount
-  const finalPrice = Math.round(originalTotalPrice * subscriptionDiscountFactor);
-  const moneySaved = originalTotalPrice - finalPrice;
+  const cycleMultiplier = durationWeeks / 4;
+  const originalTotalPrice = selectedProduct.price * numDeliveryDays;
+  const finalPrice = Math.round((selectedProduct.monthlyPrice || Math.round(selectedProduct.price * 26 * 0.85)) * cycleMultiplier);
+  const moneySaved = Math.max(0, originalTotalPrice - finalPrice);
 
   const handleSubscribeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,15 +140,15 @@ export default function SubscriptionManager({
             <div className="bg-[#FAF9F6] p-3 rounded-2xl flex flex-col gap-1 border border-slate-200/20">
               <span className="text-[9px] font-black uppercase text-brand-navy/40">Preferred Time Slot</span>
               <p className="text-brand-navy font-black text-[11px]">🕒 {activeSubscription.timeSlot}</p>
-              <p className="text-[10px] text-brand-green font-bold">Mon - Sat Deliveries</p>
+              <p className="text-[10px] text-brand-green font-bold">Mon - Sat (Excl. Sundays)</p>
             </div>
           </div>
 
           <div className="bg-[#0F1E36] text-white p-4 rounded-2xl flex items-center justify-between relative overflow-hidden border border-brand-green/20 shadow-xs">
             <div>
               <p className="text-[8px] text-brand-green font-black tracking-wider uppercase">Subscription Status</p>
-              <p className="text-xs font-black mt-1">26 Days Delivery Cycle</p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Your daily muscle nutrition plan is active and synchronized.</p>
+              <p className="text-xs font-black mt-1">26 Days Cycle • Monday to Saturday</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Fresh daily gym drop-offs active (Excluding Sundays).</p>
             </div>
           </div>
         </div>
@@ -183,9 +182,16 @@ export default function SubscriptionManager({
                       <p className="text-[10px] text-brand-navy/50 font-semibold mt-0.5">💪 {product.protein}g Protein | {product.calories} Kcal</p>
                     </div>
                   </div>
-                  <span className="font-black text-xs text-brand-navy">₹{product.price}/meal</span>
+                  <div className="text-right">
+                    <span className="font-black text-xs text-brand-green block">₹{product.monthlyPrice}/mo</span>
+                    <span className="text-[9px] text-brand-navy/40 font-bold block">One-time: ₹{product.price}</span>
+                  </div>
                 </div>
               ))}
+            </div>
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] font-semibold mt-1">
+              <span>🍗</span>
+              <span>Non-Veg gym meal subscriptions coming soon in 1–2 months!</span>
             </div>
           </div>
 
@@ -212,24 +218,35 @@ export default function SubscriptionManager({
           </div>
 
           {/* 3. Duration Select */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">
-              3. Select Plan Duration
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">
+                3. Select Plan Duration
+              </label>
+              <span className="text-[9px] font-black text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md">
+                Excluding Sundays 🚫
+              </span>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-200/80 text-emerald-950 p-2.5 rounded-xl flex items-center gap-2 text-[11px] font-bold">
+              <Calendar className="w-4 h-4 text-brand-green shrink-0" />
+              <span>Deliveries: <strong className="text-brand-navy">Monday to Saturday (Excluding Sundays)</strong></span>
+            </div>
+
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: '26 Days', weeks: 4, desc: '1 Month Cycle' },
-                { label: '52 Days', weeks: 8, desc: '2 Months Cycle' },
-                { label: '104 Days', weeks: 16, desc: '4 Months Cycle' },
+                { label: '26 Days', weeks: 4, desc: '1 Mo (Excl. Sun)' },
+                { label: '52 Days', weeks: 8, desc: '2 Mo (Excl. Sun)' },
+                { label: '104 Days', weeks: 16, desc: '4 Mo (Excl. Sun)' },
               ].map(opt => (
                 <button
                   type="button"
                   key={opt.weeks}
                   onClick={() => setDurationWeeks(opt.weeks)}
-                  className={`py-2 px-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer ${durationWeeks === opt.weeks ? 'bg-brand-navy border-brand-navy text-white' : 'bg-white border-slate-200 text-brand-navy/70'}`}
+                  className={`py-2.5 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer ${durationWeeks === opt.weeks ? 'bg-brand-navy border-brand-navy text-white shadow-xs' : 'bg-white border-slate-200 text-brand-navy/70 hover:border-slate-300'}`}
                 >
                   <span className="text-xs font-black leading-none">{opt.label}</span>
-                  <span className="text-[8px] font-bold mt-1 opacity-60 leading-none">{opt.desc}</span>
+                  <span className="text-[8px] font-bold mt-1 opacity-70 leading-none">{opt.desc}</span>
                 </button>
               ))}
             </div>
@@ -289,15 +306,18 @@ export default function SubscriptionManager({
           {/* Summary / Cost block */}
           <div className="bg-[#EBF4E0] border border-brand-green/10 rounded-2xl p-4 flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-extrabold text-brand-navy">
-              <span>Standard Cost ({numDeliveryDays} meals):</span>
+              <span>Standard Rate ({numDeliveryDays} meals • Excl. Sundays):</span>
               <span className="line-through text-slate-400">₹{originalTotalPrice}</span>
             </div>
             <div className="flex items-center justify-between text-xs font-black text-brand-green">
-              <span>15% Subscription Discount:</span>
+              <span>Subscription Discount Savings:</span>
               <span>-₹{moneySaved}</span>
             </div>
             <div className="border-t border-brand-green/10 pt-2 flex items-center justify-between">
-              <span className="font-extrabold text-xs text-brand-navy">Total Plan Price:</span>
+              <div>
+                <span className="font-extrabold text-xs text-brand-navy block">Total Plan Price:</span>
+                <span className="text-[9px] font-bold text-brand-navy/60">Delivered Mon–Sat (Excluding Sundays)</span>
+              </div>
               <span className="font-black text-base text-brand-green">₹{finalPrice}</span>
             </div>
           </div>

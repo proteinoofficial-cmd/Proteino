@@ -50,8 +50,9 @@ export default function Dashboard({
   const [vegOnly, setVegOnly] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Your fitness plan recommendation is ready! Check Profile.', read: false },
-    { id: 2, text: 'Get 15% off on our 50P Super Protein plan this week.', read: false },
+    { id: 1, text: '🍗 Non-Veg High-Protein Meals coming soon in 1–2 months! Fresh grilled chicken & egg fitness meals are in the pipeline.', read: false },
+    { id: 2, text: 'Your fitness plan recommendation is ready! Check Profile.', read: false },
+    { id: 3, text: 'Get 15% off on our 50P Super Protein plan this week.', read: false },
   ]);
 
   // Filtering products
@@ -382,10 +383,35 @@ export default function Dashboard({
           </button>
         </div>
 
+        {/* Highlighted Notice: Non-Veg High-Protein Meals Coming Soon */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 via-orange-50/70 to-amber-50 border-2 border-amber-300/80 rounded-3xl p-4.5 shadow-sm">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl shrink-0 shadow-xs">
+              🍗
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
+                  Coming Soon
+                </span>
+                <span className="text-[11px] font-extrabold text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-full">
+                  In 1–2 Months ⏳
+                </span>
+              </div>
+              <h4 className="font-black text-sm text-brand-navy mt-1.5 leading-tight">
+                Non-Veg High-Protein Meals
+              </h4>
+              <p className="text-xs text-brand-navy/70 font-medium mt-1 leading-relaxed">
+                We are currently crafting and testing chef-curated grilled chicken, whole egg, and high-bioavailability macro bowls tailored for gym athletes. Stay tuned!
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Explore Feed */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-extrabold text-base text-brand-navy tracking-tight">Explore</h3>
+            <h3 className="font-extrabold text-base text-brand-navy tracking-tight">Explore Pure Veg Menu</h3>
             <span className="text-xs font-bold text-brand-green hover:underline cursor-pointer">View all ({filteredProducts.length})</span>
           </div>
 
@@ -446,10 +472,18 @@ export default function Dashboard({
                     </div>
 
                     {/* Price and Add Button */}
-                    <div className="flex items-center justify-between mt-3.5 pt-2 border-t border-brand-navy/5">
-                      <span className="font-extrabold text-sm text-brand-navy">
-                        ₹{product.price}
-                      </span>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-brand-navy/5">
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-extrabold text-sm text-brand-navy leading-none">
+                            ₹{product.price}
+                          </span>
+                          <span className="text-[9px] font-bold text-brand-navy/40">/meal</span>
+                        </div>
+                        <span className="text-[9.5px] font-black text-brand-green leading-tight mt-0.5">
+                          Sub: ₹{product.monthlyPrice}/mo
+                        </span>
+                      </div>
                       
                       <button
                         onClick={(e) => {
@@ -458,6 +492,7 @@ export default function Dashboard({
                         }}
                         id={`btn-add-${product.id}`}
                         className="p-1.5 rounded-xl bg-[#EBF4E0] text-brand-green hover:bg-brand-green hover:text-white transition-all active:scale-90 cursor-pointer"
+                        title="View meal & subscription options"
                       >
                         <Plus className="w-4 h-4" />
                       </button>

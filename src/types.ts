@@ -15,7 +15,8 @@ export interface Product {
   id: string;
   name: string;
   category: Category;
-  price: number;
+  price: number; // One-time price (₹)
+  monthlyPrice: number; // 26-Day monthly subscription price (₹)
   protein: number; // e.g. 35 or 50
   calories: number;
   carbs: number;

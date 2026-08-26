@@ -15,6 +15,7 @@ import {
   Info,
   MapPin,
   Clock,
+  Calendar,
   User,
   Phone,
   CheckCircle2
@@ -80,7 +81,8 @@ export default function ProductDetails({
 
   // Determine pricing
   const calculatedPrice = product.price * quantity;
-  const subscriptionPrice = Math.round(product.price * 26 * 0.85); // 15% discount for 26 days
+  const subscriptionPrice = product.monthlyPrice || Math.round(product.price * 26 * 0.85); // Official 26-day monthly subscription price
+  const subscriptionSavings = Math.max(0, (product.price * 26) - subscriptionPrice);
 
   const handleActionClick = async () => {
     if (purchaseOption === 'single') {
@@ -359,9 +361,11 @@ export default function ProductDetails({
               onClick={() => setPurchaseOption('subscription')}
               className={`flex items-center justify-between p-3.5 rounded-2xl border-2 cursor-pointer transition-all relative overflow-hidden ${purchaseOption === 'subscription' ? 'bg-[#EBF4E0] border-brand-green' : 'bg-white border-slate-100 hover:border-slate-200'}`}
             >
-              <div className="absolute top-0 right-0 bg-[#0F1E36] text-brand-green text-[7px] font-black px-1.5 py-0.5 rounded-bl uppercase">
-                Save 15%
-              </div>
+              {subscriptionSavings > 0 && (
+                <div className="absolute top-0 right-0 bg-[#0F1E36] text-brand-green text-[7.5px] font-black px-2 py-0.5 rounded-bl uppercase tracking-tight">
+                  Save ₹{subscriptionSavings}
+                </div>
+              )}
               <div className="flex items-center gap-2.5">
                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${purchaseOption === 'subscription' ? 'border-brand-green bg-brand-green' : 'border-slate-300'}`}>
                   {purchaseOption === 'subscription' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -375,6 +379,7 @@ export default function ProductDetails({
               </div>
               <div className="text-right">
                 <span className="font-black text-xs text-brand-green">₹{subscriptionPrice}</span>
+                <span className="block text-[8px] text-brand-navy/40 font-bold uppercase">/ 26 Days</span>
               </div>
             </label>
           </div>
@@ -390,8 +395,18 @@ export default function ProductDetails({
               exit={{ opacity: 0, y: -10 }}
               className="bg-white p-5 rounded-3xl border border-brand-navy/10 shadow-md flex flex-col gap-4"
             >
-              <div className="bg-brand-navy text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-lg w-fit">
-                ⚡ Gym Subscription Preferences
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="bg-brand-navy text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-lg w-fit">
+                  ⚡ Gym Subscription Preferences
+                </div>
+                <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+                  Excluding Sundays 🚫
+                </span>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200/70 text-emerald-950 p-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-brand-green shrink-0" />
+                <span>26 Meals Delivery Cycle: <strong className="text-brand-navy">Monday to Saturday (Excluding Sundays)</strong></span>
               </div>
 
               {/* Gym Linker */}

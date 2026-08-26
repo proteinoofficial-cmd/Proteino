@@ -84,6 +84,16 @@ export default function App() {
   const [authModalStep, setAuthModalStep] = useState<'welcome' | 'register' | 'login' | 'forgot'>('welcome');
   const [authModalNotice, setAuthModalNotice] = useState<string>('');
 
+  // --- Floating Non-Veg Coming Soon Notice State ---
+  const [showFloatingNotice, setShowFloatingNotice] = useState<boolean>(() => {
+    return localStorage.getItem('proteino_hide_nonveg_floating_notice') !== 'true';
+  });
+
+  const handleDismissNotice = () => {
+    setShowFloatingNotice(false);
+    localStorage.setItem('proteino_hide_nonveg_floating_notice', 'true');
+  };
+
   // --- Checkout Form States ---
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
@@ -551,7 +561,8 @@ export default function App() {
     const gym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
     const totalAmount = cart.reduce((acc, item) => {
       if (item.purchaseOption === 'subscription') {
-        return acc + Math.round(item.product.price * 26 * 0.85) * item.quantity;
+        const subPrice = item.product.monthlyPrice || Math.round(item.product.price * 26 * 0.85);
+        return acc + (subPrice * item.quantity);
       }
       return acc + (item.product.price * item.quantity);
     }, 0);
@@ -589,11 +600,12 @@ export default function App() {
       const subscriptionItems = cart.filter(item => item.purchaseOption === 'subscription');
       if (subscriptionItems.length > 0) {
         for (const item of subscriptionItems) {
+          const itemSubPrice = item.product.monthlyPrice || Math.round(item.product.price * 26 * 0.85);
           for (let q = 0; q < item.quantity; q++) {
             const subPayload = {
               planId: item.product.id,
               planName: `${item.product.name} 26-Day Subscription`,
-              price: Math.round(item.product.price * 26 * 0.85),
+              price: itemSubPrice,
               durationDays: 26,
               customerName: checkoutName,
               customerPhone: checkoutPhone,
@@ -740,7 +752,8 @@ export default function App() {
   const cartCount = cart.reduce((acc, i) => acc + i.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => {
     if (item.purchaseOption === 'subscription') {
-      return acc + Math.round(item.product.price * 26 * 0.85) * item.quantity;
+      const subPrice = item.product.monthlyPrice || Math.round(item.product.price * 26 * 0.85);
+      return acc + (subPrice * item.quantity);
     }
     return acc + (item.product.price * item.quantity);
   }, 0);
@@ -860,6 +873,50 @@ export default function App() {
             />
           )}
         </div>
+
+        {/* --- Global Floating Highlighted Notice: Non-Veg Meals Coming Soon --- */}
+        <AnimatePresence>
+          {showFloatingNotice && (
+            <motion.div
+              initial={{ opacity: 0, y: 25, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className={`fixed left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[410px] z-30 transition-all duration-300 ${
+                currentView === 'product_details' ? 'bottom-22' : 'bottom-20'
+              }`}
+            >
+              <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white px-3.5 py-3 rounded-2xl shadow-xl shadow-orange-950/25 border border-amber-300/50 flex items-center justify-between gap-2.5 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0 border border-white/25 shadow-xs">
+                    🍗
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-white/25 text-white px-1.5 py-0.5 rounded-sm leading-none">
+                        Coming Soon
+                      </span>
+                      <span className="text-[10px] font-extrabold text-amber-100 leading-none">
+                        In 1–2 Months ⏳
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-bold text-white leading-tight mt-1 truncate">
+                      Non-Veg fitness meals launching soon!
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleDismissNotice}
+                  aria-label="Close notification"
+                  className="w-6 h-6 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center shrink-0 transition-all cursor-pointer active:scale-90"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* --- Sticky Tab Navigation Footer --- */}
         {currentView !== 'product_details' && (
@@ -998,7 +1055,7 @@ export default function App() {
                         {cart.map((item, idx) => {
                           const isSub = item.purchaseOption === 'subscription';
                           const itemPrice = isSub 
-                            ? Math.round(item.product.price * 26 * 0.85) 
+                            ? (item.product.monthlyPrice || Math.round(item.product.price * 26 * 0.85)) 
                             : item.product.price;
                           
                           return (
