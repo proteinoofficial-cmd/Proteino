@@ -962,7 +962,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                 : "bg-brand-green hover:bg-brand-green/90 text-white shadow-xs active:scale-95"
                             }`}
                           >
-                            Complete
+                            {order.status === "delivered" ? "Arrived" : "Mark Arrived"}
                           </button>
                         </div>
 
@@ -1595,7 +1595,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                     : "bg-brand-green hover:bg-brand-green/90 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                Complete
+                                {unifiedOrder.status === "delivered" ? "Arrived" : "Mark Arrived"}
                               </button>
                             </div>
                           ) : unifiedOrder.subscription ? (

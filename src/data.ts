@@ -25,6 +25,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Soya Chunks', 'Paneer', 'Sprouts', 'Roasted Chana', 'Mixed Fruits', 'Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)'],
     tags: ['50g+ Protein', 'Bulk 50P', 'Weight Gain', 'Veg Plan', 'BCAA 9.42g', 'EAA 21.05g'],
     image: highProteinMealImg,
+    images: [
+      highProteinMealImg,
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80'
+    ],
     isVeg: true,
     mealItems: [
       { name: 'Soya Chunks', quantity: '60g', protein: 31.4, carbs: 27.2, fats: 0.36, calories: 213.0, bcaa: 5.76, eaa: 12.84 },
@@ -52,6 +57,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Soya Chunks', 'Sprouts', 'Roasted Chana', 'Mixed Fruits', 'Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)'],
     tags: ['35g+ Protein', 'Bulk 35P', 'Weight Gain', 'Veg Plan', 'BCAA 6.17g', 'EAA 13.93g'],
     image: highProteinMealImg,
+    images: [
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
+      highProteinMealImg,
+      'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80'
+    ],
     isVeg: true,
     mealItems: [
       { name: 'Soya Chunks', quantity: '40g', protein: 20.9, carbs: 14.2, fats: 0.2, calories: 142.0, bcaa: 3.82, eaa: 8.54 },
@@ -80,6 +90,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Soya Chunks', 'Paneer', 'Sprouts', 'Roasted Chana', 'Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)', 'Pumpkin Seeds'],
     tags: ['50g+ Protein', 'Lean 50P', 'Weight Loss', 'Veg Plan', 'BCAA 9.33g', 'EAA 20.60g'],
     image: highProteinMealImg,
+    images: [
+      'https://images.unsplash.com/photo-1547496502-affa22d38842?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=800&q=80',
+      highProteinMealImg
+    ],
     isVeg: true,
     mealItems: [
       { name: 'Soya Chunks', quantity: '60g', protein: 31.4, carbs: 27.2, fats: 0.36, calories: 213.0, bcaa: 5.76, eaa: 12.84 },
@@ -107,6 +122,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Soya Chunks', 'Sprouts', 'Roasted Chana', 'Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)', 'Pumpkin Seeds'],
     tags: ['35g+ Protein', 'Lean 35P', 'Weight Loss', 'Veg Plan', 'BCAA 6.22g', 'EAA 13.78g'],
     image: highProteinMealImg,
+    images: [
+      'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+    ],
     isVeg: true,
     mealItems: [
       { name: 'Soya Chunks', quantity: '45g', protein: 23.6, carbs: 20.4, fats: 0.27, calories: 159.8, bcaa: 4.32, eaa: 9.61 },
@@ -132,6 +152,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Tandoori Spiced Paneer', 'Tri-color Bell Peppers', 'English Cucumber', 'Cracked Walnuts', 'Thick Mint Greek Yogurt Dressing'],
     tags: ['Paneer Salad', 'Cottage Cheese', 'Veg Protein', 'Keto Friendly'],
     image: saladBowlImg,
+    images: [
+      'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
+      saladBowlImg,
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80'
+    ],
     isVeg: true
   },
   {
@@ -148,6 +173,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Strawberries', 'Blueberries', 'Kiwi Slices', 'Crispy Apple', 'Pomegranate Pearls', 'Fresh Mint', 'Organic Honey Drizzle'],
     tags: ['Fruit Salad', 'Antioxidant Rich', 'Vitamin Bomb', 'Super Fresh', 'Low Fat'],
     image: saladBowlImg,
+    images: [
+      'https://images.unsplash.com/photo-1568899307548-490f230554ef?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1519996529931-28324d5a630e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=800&q=80'
+    ],
     isVeg: true
   },
   {
@@ -164,6 +194,11 @@ export const PRODUCTS: Product[] = [
     ingredients: ['Sprouted Moong', 'Sprouted Kala Chana', 'Crunchy Cucumber', 'Fresh Tomatoes', 'Coriander Leaves', 'Tangy Lemon Juice', 'Chaat Masala'],
     tags: ['Sprouts Salad', 'Digestive Health', 'High Fiber', 'Traditional Food', 'Zero Oil'],
     image: saladBowlImg,
+    images: [
+      'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&w=800&q=80',
+      saladBowlImg,
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80'
+    ],
     isVeg: true
   }
 ];

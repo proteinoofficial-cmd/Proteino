@@ -22,7 +22,8 @@ import {
   Flame, 
   Heart, 
   TrendingUp,
-  Key
+  Key,
+  Check
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -101,6 +102,7 @@ export default function App() {
   const [checkoutTimeSlot, setCheckoutTimeSlot] = useState('2 PM');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+  const [showCheckoutConfirmModal, setShowCheckoutConfirmModal] = useState(false);
 
   // Pre-fill checkout form whenever profile changes
   useEffect(() => {
@@ -132,10 +134,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (profile) {
+    if (profile?.phone) {
       fetchUserData();
+      const pollTimer = setInterval(() => {
+        fetchUserData();
+      }, 3500);
+      return () => clearInterval(pollTimer);
     }
-  }, [profile]);
+  }, [profile?.phone]);
 
   // Handle Firebase Google Sign-In redirect results on page load (essential for mobile devices!)
   useEffect(() => {
@@ -538,7 +544,7 @@ export default function App() {
   };
 
   // --- Checkout Action ---
-  const handleCheckout = async () => {
+  const handleCheckoutPrompt = () => {
     // If not authenticated, require authentication before placing the order
     if (!profile) {
       setAuthModalNotice('Please sign in or create an account to confirm and place your order.');
@@ -551,24 +557,43 @@ export default function App() {
       setCheckoutError('Please enter recipient name');
       return;
     }
-    if (checkoutPhone.length < 10) {
+    const cleanPhone = checkoutPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10) {
       setCheckoutError('Please enter a valid 10-digit mobile number');
       return;
     }
     setCheckoutError('');
+    setShowCheckoutConfirmModal(true);
+  };
+
+  const executeCheckout = async () => {
     setIsCheckingOut(true);
+    setCheckoutError('');
 
     const gym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
-    const totalAmount = cart.reduce((acc, item) => {
-      if (item.purchaseOption === 'subscription') {
-        const subPrice = item.product.monthlyPrice || Math.round(item.product.price * 26 * 0.85);
-        return acc + (subPrice * item.quantity);
-      }
-      return acc + (item.product.price * item.quantity);
-    }, 0);
+    const cleanPhone = checkoutPhone.replace(/[^0-9]/g, '');
+    const cleanName = checkoutName.trim() || profile?.name || 'Valued Customer';
 
-    // Filter single meal items for placing the single delivery order
+    // Persist phone and name directly to user profile
+    const updatedProfile: UserProfile = {
+      ...(profile || {
+        id: 'user_' + Date.now(),
+        name: cleanName,
+        email: '',
+        goal: 'gain',
+        dietaryPreference: 'veg',
+        targetCalories: 2200,
+        targetProtein: 140
+      }),
+      name: cleanName,
+      phone: cleanPhone
+    };
+    setProfile(updatedProfile);
+    localStorage.setItem('proteino_profile', JSON.stringify(updatedProfile));
+
+    // Filter single meal items and subscription items
     const singleMealItems = cart.filter(item => item.purchaseOption === 'single');
+    const subscriptionItems = cart.filter(item => item.purchaseOption === 'subscription');
 
     try {
       const nowObj = new Date();
@@ -591,8 +616,8 @@ export default function App() {
           total: singleMealItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0),
           status: 'cooking' as const,
           deliveryTimeRemaining: 25, // mins for simulator countdown
-          customerName: checkoutName,
-          customerPhone: checkoutPhone,
+          customerName: cleanName,
+          customerPhone: cleanPhone,
           gymName: gym.name,
           gymLocation: gym.location,
           deliveryTimeSlot: checkoutTimeSlot,
@@ -612,7 +637,6 @@ export default function App() {
       }
 
       // 2. Process subscription items - creates separate subscription entries for each unit of quantity!
-      const subscriptionItems = cart.filter(item => item.purchaseOption === 'subscription');
       if (subscriptionItems.length > 0) {
         for (const item of subscriptionItems) {
           const itemSubPrice = item.product.monthlyPrice || Math.round(item.product.price * 26 * 0.85);
@@ -622,8 +646,8 @@ export default function App() {
               planName: `${item.product.name} 26-Day Subscription`,
               price: itemSubPrice,
               durationDays: 26,
-              customerName: checkoutName,
-              customerPhone: checkoutPhone,
+              customerName: cleanName,
+              customerPhone: cleanPhone,
               gymId: gym.id,
               gymName: gym.name,
               gymLocation: gym.location,
@@ -650,13 +674,23 @@ export default function App() {
       // Successful Transaction
       setCart([]);
       localStorage.removeItem('proteino_cart');
+      setShowCheckoutConfirmModal(false);
       setShowCart(false);
 
       // Refresh data
-      await fetchUserData();
+      const [ordersRes, subsRes] = await Promise.all([
+        apiFetch(`/api/orders?phone=${cleanPhone}`),
+        apiFetch(`/api/subscriptions?phone=${cleanPhone}`)
+      ]);
+      if (ordersRes.ok && ordersRes.headers.get('content-type')?.includes('application/json')) {
+        setOrders(await ordersRes.json());
+      }
+      if (subsRes.ok && subsRes.headers.get('content-type')?.includes('application/json')) {
+        setActiveSubscriptions(await subsRes.json());
+      }
 
       // Redirect view based on checkout item types
-      if (subscriptionItems.length > 0) {
+      if (subscriptionItems.length > 0 && singleMealItems.length === 0) {
         setCurrentView('active_plans');
       } else {
         setCurrentView('orders');
@@ -664,6 +698,7 @@ export default function App() {
 
     } catch (err: any) {
       setCheckoutError(err.message || 'Server checkout error. Please try again.');
+      setShowCheckoutConfirmModal(false);
     } finally {
       setIsCheckingOut(false);
     }
@@ -706,6 +741,18 @@ export default function App() {
       return;
     }
 
+    const subPhone = newSub.customerPhone;
+    const subName = newSub.customerName;
+    if (subPhone) {
+      const updatedProfile: UserProfile = {
+        ...profile,
+        name: subName || profile.name,
+        phone: subPhone
+      };
+      setProfile(updatedProfile);
+      localStorage.setItem('proteino_profile', JSON.stringify(updatedProfile));
+    }
+
     try {
       const res = await apiFetch('/api/subscriptions', {
         method: 'POST',
@@ -714,7 +761,13 @@ export default function App() {
       });
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const savedSub = await res.json();
-        setActiveSubscriptions(prev => [savedSub, ...prev]);
+        setActiveSubscriptions(prev => [savedSub, ...prev.filter(s => s.id !== savedSub.id)]);
+        if (subPhone) {
+          const subsRes = await apiFetch(`/api/subscriptions?phone=${subPhone}`);
+          if (subsRes.ok && subsRes.headers.get('content-type')?.includes('application/json')) {
+            setActiveSubscriptions(await subsRes.json());
+          }
+        }
         setCurrentView('active_plans');
       }
     } catch (err) {
@@ -737,9 +790,7 @@ export default function App() {
     }
   };
 
-  const handleTogglePauseDirect = async () => {
-    if (activeSubscriptions.length === 0) return;
-    const subId = activeSubscriptions[0].id;
+  const handleTogglePauseSubscription = async (subId: string) => {
     try {
       const res = await apiFetch(`/api/subscriptions/${subId}/pause`, {
         method: 'PUT'
@@ -751,6 +802,38 @@ export default function App() {
     } catch (err) {
       console.error("Failed to toggle pause:", err);
     }
+  };
+
+  const handleCompleteSubscription = async (subId: string) => {
+    try {
+      const res = await apiFetch(`/api/subscriptions/${subId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' })
+      });
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const updatedSub = await res.json();
+        setActiveSubscriptions(prev => prev.map(s => s.id === subId ? updatedSub : s));
+      }
+    } catch (err) {
+      console.error("Failed to complete subscription:", err);
+    }
+  };
+
+  const handleRenewSubscription = (planId: string) => {
+    const prod = PRODUCTS.find(p => p.id === planId);
+    if (prod) {
+      setSelectedProduct(prod);
+      setCurrentView('product_details');
+    } else {
+      setCurrentView('dashboard');
+    }
+  };
+
+  const handleTogglePauseDirect = async () => {
+    if (activeSubscriptions.length === 0) return;
+    const subId = activeSubscriptions[0].id;
+    await handleTogglePauseSubscription(subId);
   };
 
   // Logout utility
@@ -815,6 +898,7 @@ export default function App() {
               onCartClick={() => setShowCart(true)}
               activeSubscriptions={activeSubscriptions}
               onViewActivePlans={() => setCurrentView('active_plans')}
+              cart={cart}
             />
           )}
 
@@ -827,6 +911,7 @@ export default function App() {
               onSubscribeDirect={handleBuySubscriptionDirect}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              cart={cart}
               onRequireAuth={(msg) => {
                 setAuthModalNotice(msg || 'Please sign in or create an account to continue.');
                 setAuthModalStep('welcome');
@@ -838,6 +923,9 @@ export default function App() {
           {currentView === 'active_plans' && (
             <ActivePlans 
               activeSubscriptions={activeSubscriptions}
+              onSubscriptionUpdate={setActiveSubscriptions}
+              onRenewSub={handleRenewSubscription}
+              onExploreClick={() => setCurrentView('dashboard')}
               isGuest={!profile}
               onSignInClick={() => {
                 setAuthModalNotice('');
@@ -856,6 +944,11 @@ export default function App() {
                 setAuthModalNotice('');
                 setAuthModalStep('welcome');
                 setShowAuthModal(true);
+              }}
+              onExploreClick={() => setCurrentView('explore')}
+              onReorder={(items) => {
+                items.forEach(item => handleAddToCart(item));
+                setShowCart(true);
               }}
             />
           )}
@@ -901,7 +994,9 @@ export default function App() {
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className={`fixed left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[410px] z-30 transition-all duration-300 ${
-                currentView === 'product_details' ? 'bottom-22' : 'bottom-20'
+                cartCount > 0
+                  ? (currentView === 'product_details' ? 'bottom-[145px]' : 'bottom-[142px]')
+                  : (currentView === 'product_details' ? 'bottom-22' : 'bottom-20')
               }`}
             >
               <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white px-3.5 py-3 rounded-2xl shadow-xl shadow-orange-950/25 border border-amber-300/50 flex items-center justify-between gap-2.5 backdrop-blur-xs">
@@ -931,6 +1026,62 @@ export default function App() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* =========================================================
+            ZEPTO-STYLE FLOATING CART BAR
+            ========================================================= */}
+        <AnimatePresence>
+          {cartCount > 0 && !showCart && (
+            <motion.div
+              initial={{ opacity: 0, y: 35, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 35, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+              className={`fixed left-1/2 -translate-x-1/2 w-[calc(100%-1.25rem)] max-w-[410px] z-35 transition-all duration-300 ${
+                currentView === 'product_details' ? 'bottom-20' : 'bottom-[74px]'
+              }`}
+            >
+              <div 
+                onClick={() => setShowCart(true)}
+                className="group relative bg-[#0F1E36] hover:bg-[#132542] text-white p-3 rounded-2xl shadow-2xl shadow-brand-navy/60 border border-brand-green/40 flex items-center justify-between gap-3 cursor-pointer transition-all duration-200 active:scale-[0.98]"
+              >
+                {/* Subtle luminous top border */}
+                <div className="absolute top-0 left-6 right-6 h-[1.5px] bg-gradient-to-r from-transparent via-brand-green to-transparent" />
+
+                {/* Left section: Icon + items count + Total */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-10 h-10 rounded-xl bg-brand-green flex items-center justify-center text-white shrink-0 shadow-md shadow-brand-green/30">
+                    <ShoppingBag className="w-5 h-5 text-white" />
+                    <span className="absolute -top-1.5 -right-1.5 bg-[#0F1E36] text-brand-green border border-brand-green text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-black text-base text-white tracking-tight leading-none">
+                        ₹{cartTotal}
+                      </span>
+                      <span className="text-[10px] text-white/60 font-bold uppercase tracking-wider">
+                        • {cartCount} {cartCount === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] font-bold text-brand-green leading-tight mt-1 truncate flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+                      <span>Ready to order & gym drop-off</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right CTA section: View Cart */}
+                <div className="flex items-center gap-1 bg-brand-green hover:bg-brand-green-hover text-white px-3.5 py-2 rounded-xl text-xs font-black shrink-0 shadow-sm transition-all group-hover:pl-4">
+                  <span>View Cart</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 stroke-[2.5]" />
+                </div>
               </div>
             </motion.div>
           )}
@@ -1246,8 +1397,9 @@ export default function App() {
                 {cart.length > 0 && (
                   <div className="sticky bottom-0 bg-white border-t border-slate-200/50 p-4 z-20">
                     <button
-                      onClick={handleCheckout}
+                      onClick={handleCheckoutPrompt}
                       disabled={isCheckingOut}
+                      id="btn-cart-order-now"
                       className="w-full py-4 bg-[#6B9E35] hover:bg-[#59832B] disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isCheckingOut ? (
@@ -1255,7 +1407,7 @@ export default function App() {
                       ) : (
                         <>
                           <ShieldCheck className="w-5 h-5" />
-                          <span>Confirm Order & Checkout (₹{cartTotal})</span>
+                          <span>Order Now • ₹{cartTotal}</span>
                         </>
                       )}
                     </button>
@@ -1265,6 +1417,127 @@ export default function App() {
                   </div>
                 )}
 
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* =========================================================
+            CART ORDER CONFIRMATION MODAL OVERLAY (Single & Subscription Confirmation)
+            ========================================================= */}
+        <AnimatePresence>
+          {showCheckoutConfirmModal && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !isCheckingOut && setShowCheckoutConfirmModal(false)}
+                className="fixed inset-0 bg-[#0F1E36]/75 backdrop-blur-xs cursor-pointer z-40"
+              />
+
+              {/* Modal Box */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200/80 z-50 overflow-hidden"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-brand-green/15 text-brand-green flex items-center justify-center">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-brand-navy">Order Confirmation</h3>
+                      <p className="text-[10.5px] font-bold text-slate-400">Insulated Gym Drop-off Delivery</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowCheckoutConfirmModal(false)}
+                    disabled={isCheckingOut}
+                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Prompt */}
+                <p className="text-xs font-bold text-brand-navy mt-4 mb-3">
+                  {cart.some(i => i.purchaseOption === 'subscription') 
+                    ? 'Do you want to confirm this order and subscription?' 
+                    : 'Do you want to confirm this meal order?'}
+                </p>
+
+                {/* Order Summary Details */}
+                <div className="bg-[#FAF9F6] border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-2 text-xs font-medium text-brand-navy/80 max-h-48 overflow-y-auto">
+                  <div className="flex flex-col gap-1 border-b border-slate-200/40 pb-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Order Items</span>
+                    {cart.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-brand-navy truncate max-w-[190px]">
+                          {item.quantity}x {item.product.name}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-500">
+                          {item.purchaseOption === 'subscription' ? '(26-Day Sub)' : '(Single)'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-between items-center pt-0.5">
+                    <span className="text-[11px] font-bold text-slate-500">Total Price:</span>
+                    <span className="font-black text-brand-green text-sm">₹{cartTotal}</span>
+                  </div>
+
+                  <div className="flex justify-between items-start border-t border-slate-200/40 pt-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
+                    <span className="font-bold text-brand-navy text-right max-w-[180px] truncate">
+                      {GYMS.find(g => g.id === selectedGymId)?.name || "Gold's Gym"}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
+                    <span className="font-bold text-brand-navy">{checkoutTimeSlot}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">Recipient:</span>
+                    <span className="font-bold text-brand-navy truncate max-w-[190px]">
+                      {checkoutName} (+91 {checkoutPhone.replace(/[^0-9]/g, '')})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Confirm & Cancel Buttons */}
+                <div className="grid grid-cols-2 gap-2.5 mt-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowCheckoutConfirmModal(false)}
+                    disabled={isCheckingOut}
+                    className="py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-xs transition-all active:scale-95 cursor-pointer text-center"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={executeCheckout}
+                    disabled={isCheckingOut}
+                    className="py-3 px-4 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    {isCheckingOut ? (
+                      <span>Placing Order...</span>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>Confirm Order</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </motion.div>
             </div>
           )}

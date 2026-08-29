@@ -4,6 +4,7 @@ import {
   ArrowRight, 
   Flame, 
   ShieldCheck, 
+  Sparkles,
   User, 
   Phone, 
   Lock, 
@@ -14,7 +15,6 @@ import {
   LogIn,
   X
 } from 'lucide-react';
-import mascotImg from '../assets/images/mascot_illustration_1783093311674.jpg';
 import proteinoLogo from '../assets/images/proteino_logo_1783248797173.jpg';
 import { apiFetch } from '../utils/api';
 
@@ -202,63 +202,56 @@ export default function Onboarding({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col justify-between h-full flex-grow"
+            className="flex flex-col justify-between h-full flex-grow py-2"
           >
-            {/* Top Section: Logo & Branding */}
-            <div className="flex flex-col items-center mt-4 text-center">
-              {/* Custom Brand Logo */}
-              <div className="relative mb-4 w-28 h-28 rounded-3xl overflow-hidden shadow-lg border-2 border-brand-green/20 bg-[#0F1E36]">
+            {/* Center Brand Identity Showcase */}
+            <div className="flex flex-col items-center justify-center my-auto text-center px-2">
+              {/* Premium Dark Navy Brand Tile with Official Artwork */}
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className="relative mb-5 w-40 h-40 rounded-3xl overflow-hidden shadow-xl border-2 border-brand-green/30 bg-[#0F1E36] p-2 flex items-center justify-center"
+              >
                 <img 
                   src={proteinoLogo} 
-                  alt="Proteino Logo" 
-                  className="w-full h-full object-cover"
+                  alt="Proteino Brand Logo" 
+                  className="w-full h-full object-contain rounded-2xl"
                   referrerPolicy="no-referrer"
                 />
-                <motion.span 
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ repeat: Infinity, duration: 2.5 }}
-                  className="absolute -top-1 -right-1 text-base animate-bounce"
-                >
-                  ✨
-                </motion.span>
+              </motion.div>
+
+              {/* Bold Athletic Slanted Typography Matching the Uploaded Artwork */}
+              <div className="relative inline-block">
+                <h1 className="text-4xl font-black italic tracking-widest text-[#74C043] font-['Kanit',sans-serif] uppercase transform -skew-x-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] select-none">
+                  PROTEINO
+                </h1>
               </div>
 
-              {/* Brand Typography */}
-              <h1 className="text-3xl font-extrabold tracking-wider text-brand-green font-display italic">
-                PROTEINO
-              </h1>
-              <p className="mt-1.5 text-sm font-semibold text-brand-navy/60">
-                Healthy meals. Delivered to you.
+              {/* Tagline */}
+              <p className="mt-2 text-sm font-bold text-brand-navy/70 max-w-[260px] leading-snug">
+                Pure high-protein fitness meals. Delivered to your gym.
               </p>
-            </div>
 
-            {/* Middle Section: Mascot/Illustration */}
-            <div className="my-auto flex flex-col items-center justify-center p-3">
-              <div className="relative max-w-[240px] aspect-square rounded-3xl overflow-hidden shadow-sm border border-brand-navy/5 bg-white p-2">
-                <img 
-                  src={mascotImg} 
-                  alt="Proteino Fitness Mascot" 
-                  className="w-full h-full object-cover rounded-2xl"
-                  referrerPolicy="no-referrer"
-                />
-                {/* Floating badges */}
-                <div className="absolute top-4 -left-2 bg-[#FAF9F6] border border-brand-green/30 px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5">
+              {/* Simple Feature Tags */}
+              <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
+                <span className="bg-[#EBF4E0] border border-brand-green/30 text-brand-navy px-3 py-1 rounded-full text-[11px] font-extrabold flex items-center gap-1.5">
                   <Flame className="w-3.5 h-3.5 text-brand-green fill-brand-green" />
-                  <span className="text-[10px] font-bold text-brand-navy">High Protein</span>
-                </div>
-                <div className="absolute bottom-4 -right-2 bg-[#FAF9F6] border border-brand-green/30 px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5">
+                  50g+ Protein
+                </span>
+                <span className="bg-[#FAF9F6] border border-brand-navy/10 text-brand-navy/80 px-3 py-1 rounded-full text-[11px] font-extrabold flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-brand-green" />
-                  <span className="text-[10px] font-bold text-brand-navy">100% Clean</span>
-                </div>
+                  100% Clean
+                </span>
               </div>
             </div>
 
             {/* Bottom Section: Actions */}
-            <div className="flex flex-col gap-2.5 mb-4">
+            <div className="flex flex-col gap-2.5 mb-2">
               <button
                 onClick={() => { setStep('register'); setError(''); }}
                 id="btn-get-started"
-                className="group relative flex items-center justify-center gap-2 w-full py-3.5 bg-brand-green hover:bg-brand-green-hover text-white font-bold text-base rounded-2xl shadow-md active:scale-95 transition-all duration-200 cursor-pointer border-0"
+                className="group relative flex items-center justify-center gap-2 w-full py-3.5 bg-brand-green hover:bg-brand-green-hover text-white font-black text-base rounded-2xl shadow-md active:scale-95 transition-all duration-200 cursor-pointer border-0"
               >
                 <span>Get Started</span>
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />

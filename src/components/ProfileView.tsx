@@ -12,7 +12,6 @@ import {
   ChevronRight,
   TrendingUp,
   Check,
-  Phone,
   Lock,
   Mail
 } from 'lucide-react';
@@ -178,27 +177,6 @@ export default function ProfileView({ profile, onUpdateProfile, onSelectProduct,
                 value={name}
                 readOnly
                 placeholder="Enter your name"
-                className="bg-transparent text-sm font-semibold text-brand-navy/60 w-full focus:outline-none cursor-not-allowed"
-              />
-            </div>
-          </div>
-
-          {/* Phone Field */}
-          <div className="flex flex-col gap-1.5 opacity-75">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">Mobile Number</label>
-              <span className="text-[9px] font-bold text-brand-navy/30 flex items-center gap-0.5">
-                <Lock className="w-2.5 h-2.5" /> Locked
-              </span>
-            </div>
-            <div className="flex items-center bg-brand-navy/5 border border-brand-navy/10 rounded-2xl px-3.5 py-3 cursor-not-allowed">
-              <Phone className="w-4 h-4 text-brand-navy/35 mr-2.5" />
-              <input 
-                type="tel" 
-                value={phone}
-                readOnly
-                maxLength={10}
-                placeholder="Mobile number"
                 className="bg-transparent text-sm font-semibold text-brand-navy/60 w-full focus:outline-none cursor-not-allowed"
               />
             </div>

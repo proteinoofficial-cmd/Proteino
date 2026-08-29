@@ -653,10 +653,15 @@ app.post("/api/orders", (req, res) => {
 
 app.put("/api/orders/:id", (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, deliveryTimeRemaining } = req.body;
   const orderIdx = store.orders.findIndex(o => o.id === id);
   if (orderIdx !== -1) {
     store.orders[orderIdx].status = status;
+    if (status === 'delivered') {
+      store.orders[orderIdx].deliveryTimeRemaining = 0;
+    } else if (deliveryTimeRemaining !== undefined) {
+      store.orders[orderIdx].deliveryTimeRemaining = deliveryTimeRemaining;
+    }
     saveStore();
     res.json(store.orders[orderIdx]);
   } else {

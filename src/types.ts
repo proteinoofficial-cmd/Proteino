@@ -25,6 +25,7 @@ export interface Product {
   ingredients: string[];
   tags: string[];
   image: string;
+  images?: string[];
   isVeg: boolean;
   bcaa?: number;
   eaa?: number;

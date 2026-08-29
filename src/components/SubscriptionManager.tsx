@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
   Clock, 
@@ -16,6 +16,7 @@ import {
   Zap,
   Phone,
   User,
+  X,
   Dumbbell as GymIcon
 } from 'lucide-react';
 import { Product, UserProfile, ActiveSubscription, Gym } from '../types';
@@ -49,6 +50,7 @@ export default function SubscriptionManager({
   const [customerPhone, setCustomerPhone] = useState<string>(profile?.phone || '');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
   React.useEffect(() => {
     setCustomerName(profile?.name || '');
@@ -85,6 +87,10 @@ export default function SubscriptionManager({
     }
 
     setErrorMsg('');
+    setShowConfirmModal(true);
+  };
+
+  const handleFinalConfirmOrder = () => {
     const newSubPayload = {
       planId: selectedProduct.id,
       planName: `${selectedProduct.name} ${numDeliveryDays}-Day Subscription`,
@@ -100,6 +106,7 @@ export default function SubscriptionManager({
     };
 
     onBuySubscription(newSubPayload);
+    setShowConfirmModal(false);
     setSuccessMsg(true);
   };
 
@@ -330,13 +337,97 @@ export default function SubscriptionManager({
 
           <button
             type="submit"
-            className="w-full py-4 bg-brand-navy text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:bg-brand-navy/95 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-4 bg-brand-green hover:bg-brand-green-hover text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            <Zap className="w-4 h-4 text-brand-green" /> Setup My Plan Now
+            <Zap className="w-4 h-4 text-white fill-current" /> Confirm Subscription • ₹{finalPrice}
           </button>
 
         </form>
       </div>
+
+      {/* Subscription Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirmModal && (
+          <div className="fixed inset-0 bg-[#0F1E36]/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200/80 overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-brand-green/15 text-brand-green flex items-center justify-center">
+                    <Zap className="w-5 h-5 fill-brand-green" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-brand-navy">Confirm Subscription</h3>
+                    <p className="text-[10.5px] font-bold text-slate-400">{numDeliveryDays}-Day Gym Drop-off Meal Plan</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Prompt */}
+              <p className="text-xs font-bold text-brand-navy mt-4 mb-3">
+                Do you want to confirm this order and subscription?
+              </p>
+
+              {/* Summary Card */}
+              <div className="bg-[#FAF9F6] border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-2 text-xs font-medium text-brand-navy/80">
+                <div className="flex justify-between items-start">
+                  <span className="text-[11px] font-bold text-slate-500">Plan:</span>
+                  <span className="font-extrabold text-brand-navy text-right max-w-[200px]">{selectedProduct.name} ({numDeliveryDays} Meals)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-500">Total Price:</span>
+                  <span className="font-black text-brand-green text-sm">₹{finalPrice}</span>
+                </div>
+                <div className="flex justify-between items-start border-t border-slate-200/40 pt-1.5">
+                  <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
+                  <span className="font-bold text-brand-navy text-right max-w-[190px] truncate">
+                    {selectedGym.name}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
+                  <span className="font-bold text-brand-navy">{selectedTimeSlot} Daily</span>
+                </div>
+                <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
+                  <span className="text-[11px] font-bold text-slate-500">Subscriber:</span>
+                  <span className="font-bold text-brand-navy">{customerName} (+91 {customerPhone.replace(/[^0-9]/g, '')})</span>
+                </div>
+              </div>
+
+              {/* Confirm & Cancel Buttons */}
+              <div className="grid grid-cols-2 gap-2.5 mt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-xs transition-all active:scale-95 cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinalConfirmOrder}
+                  className="py-3 px-4 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Confirm Order</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -17,8 +17,9 @@ import {
   LogIn,
   User
 } from 'lucide-react';
-import { Product, ActiveSubscription } from '../types';
+import { Product, ActiveSubscription, CartItem } from '../types';
 import { PRODUCTS } from '../data';
+import ProductImageSlider from './ProductImageSlider';
 
 interface DashboardProps {
   onProductClick: (product: Product) => void;
@@ -31,6 +32,7 @@ interface DashboardProps {
   onCartClick?: () => void;
   activeSubscriptions: ActiveSubscription[];
   onViewActivePlans: () => void;
+  cart?: CartItem[];
 }
 
 export default function Dashboard({ 
@@ -43,24 +45,91 @@ export default function Dashboard({
   onSignInClick,
   onCartClick,
   activeSubscriptions,
-  onViewActivePlans
+  onViewActivePlans,
+  cart = []
 }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'weight_gain' | 'weight_loss' | 'salad'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'meals' | 'weight_gain' | 'weight_loss' | 'salad'>('all');
   const [vegOnly, setVegOnly] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [addedProductId, setAddedProductId] = useState<string | null>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState([
     { id: 1, text: '🍗 Non-Veg High-Protein Meals coming soon in 1–2 months! Fresh grilled chicken & egg fitness meals are in the pipeline.', read: false },
     { id: 2, text: 'Your fitness plan recommendation is ready! Check Profile.', read: false },
     { id: 3, text: 'Get 15% off on our 50P Super Protein plan this week.', read: false },
   ]);
 
-  // Filtering products
+  // Close notifications if user clicks or taps anywhere outside
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [showNotifications]);
+
+  // Normalize search query and tokenize
+  const cleanQuery = searchQuery.trim().toLowerCase();
+  const searchTokens = cleanQuery.split(/\s+/).filter(Boolean);
+
+  // Robust, comprehensive filtering for search, category, and diet
   const filteredProducts = PRODUCTS.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    // 1. Search Query Matching across entire product data
+    let matchesSearch = true;
+    if (searchTokens.length > 0) {
+      const categorySynonyms: Record<string, string> = {
+        'weight_gain': 'weight gain bulk mass bulking muscle gainer calories 50p 35p high calorie',
+        'weight_loss': 'weight loss lean shred shredded diet cutting fat loss 50p 35p calorie deficit',
+        'salad': 'salad fresh green bowl veggies nutritious light keto fiber'
+      };
+
+      const productCorpus = [
+        product.name,
+        product.description,
+        product.id,
+        product.category,
+        product.category.replace('_', ' '),
+        categorySynonyms[product.category] || '',
+        ...(product.tags || []),
+        ...(product.ingredients || []),
+        ...(product.mealItems ? product.mealItems.map(m => `${m.name} ${m.protein}g ${m.calories}cal`) : []),
+        `${product.protein}g protein ${product.protein}p ${product.calories}kcal ${product.price}rs`,
+        product.isVeg ? 'veg vegetarian pure veg' : 'non-veg nonveg'
+      ].join(' ').toLowerCase();
+
+      // Every word token in the search must match the product's corpus
+      matchesSearch = searchTokens.every(token => productCorpus.includes(token));
+    }
+
+    // 2. Category matching
+    let matchesCategory = true;
+    if (cleanQuery.length > 0) {
+      // When searching actively via the search bar, search globally across all categories so results like "Lean" are never hidden
+      matchesCategory = true;
+    } else {
+      if (selectedCategory === 'all') {
+        matchesCategory = true;
+      } else if (selectedCategory === 'meals') {
+        matchesCategory = product.category === 'weight_gain' || product.category === 'weight_loss';
+      } else {
+        matchesCategory = product.category === selectedCategory;
+      }
+    }
+
+    // 3. Veg filter
     const matchesVeg = !vegOnly || product.isVeg;
+
     return matchesSearch && matchesCategory && matchesVeg;
   });
 
@@ -105,23 +174,10 @@ export default function Dashboard({
           </div>
         </div>
         
-        {/* Notification Bell & Cart Icon Row */}
+        {/* Notification Bell Header Container */}
         <div className="flex items-center gap-2">
-          {/* Cart Icon Button */}
-          <button 
-            onClick={onCartClick}
-            className="relative p-2.5 rounded-xl bg-white border border-brand-navy/5 shadow-sm active:scale-95 transition-all duration-200 cursor-pointer"
-          >
-            <ShoppingBag className="w-5 h-5 text-brand-navy" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-brand-green text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
-                {cartCount}
-              </span>
-            )}
-          </button>
-
-          {/* Notification Bell Icon */}
-          <div className="relative">
+          {/* Notification Bell Icon & Container */}
+          <div className="relative" ref={notificationRef}>
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2.5 rounded-xl bg-white border border-brand-navy/5 shadow-sm active:scale-95 transition-all duration-200 cursor-pointer"
@@ -135,34 +191,41 @@ export default function Dashboard({
           {/* Notifications Dropdown */}
           <AnimatePresence>
             {showNotifications && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-brand-navy/10 p-4 z-50"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-sm text-brand-navy">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <button 
-                      onClick={markNotificationsRead}
-                      className="text-xs text-brand-green font-bold hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2.5 max-h-60 overflow-y-auto">
-                  {notifications.map(item => (
-                    <div 
-                      key={item.id} 
-                      className={`p-2.5 rounded-xl text-xs ${item.read ? 'bg-gray-50 text-gray-500' : 'bg-[#EBF4E0] text-brand-navy border border-brand-green/20'}`}
-                    >
-                      <p className="font-medium">{item.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+              <>
+                {/* Instant Tap/Click Anywhere Outside Backdrop */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowNotifications(false)} 
+                />
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-brand-navy/10 p-4 z-50"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-sm text-brand-navy">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markNotificationsRead}
+                        className="text-xs text-brand-green font-bold hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2.5 max-h-60 overflow-y-auto">
+                    {notifications.map(item => (
+                      <div 
+                        key={item.id} 
+                        className={`p-2.5 rounded-xl text-xs ${item.read ? 'bg-gray-50 text-gray-500' : 'bg-[#EBF4E0] text-brand-navy border border-brand-green/20'}`}
+                      >
+                        <p className="font-medium">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>
@@ -188,30 +251,23 @@ export default function Dashboard({
         </div>
       )}
 
-      <div className="px-5 flex flex-col gap-5">
-        
-        {/* Interactive Search Bar */}
-        <div className="relative flex items-center bg-white rounded-2xl border border-brand-navy/5 shadow-sm px-4 py-3">
-          <Search className="w-5 h-5 text-brand-navy/30 mr-3" />
-          <input 
-            type="text" 
-            placeholder="Search weight goals, salads..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent text-sm font-semibold text-brand-navy placeholder:text-brand-navy/35 w-full focus:outline-none"
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="text-xs font-bold text-brand-navy/50 hover:text-brand-navy"
-            >
-              Clear
-            </button>
-          )}
+      <div className="px-5 flex flex-col gap-4">
+
+        {/* Compact Non-Veg Coming Soon Notice - Placed right above the banner */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50/80 border border-amber-200 rounded-2xl px-3.5 py-2 flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="text-sm shrink-0">🍗</span>
+            <p className="text-xs font-black text-amber-950 tracking-tight">
+              Non-veg meal coming soon in 1 to 2 months
+            </p>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full shrink-0">
+            Stay Tuned
+          </span>
         </div>
 
         {/* Active Gym Subscriptions Highlight Card */}
-        {activeSubscriptions.length > 0 && (
+        {activeSubscriptions.filter(s => s.status !== 'completed').length > 0 && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -228,7 +284,7 @@ export default function Dashboard({
               <div className="flex-grow">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[9px] bg-white text-brand-green font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    {activeSubscriptions.length} ACTIVE {activeSubscriptions.length === 1 ? 'PLAN' : 'PLANS'}
+                    {activeSubscriptions.filter(s => s.status !== 'completed').length} ACTIVE {activeSubscriptions.filter(s => s.status !== 'completed').length === 1 ? 'PLAN' : 'PLANS'}
                   </span>
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/90">
                     Live Trackers Running
@@ -292,6 +348,28 @@ export default function Dashboard({
           </div>
         </motion.div>
 
+        {/* Search Option - Positioned directly below the 'Fuel your best every day' banner */}
+        <div className="flex flex-col gap-2">
+          <div className="relative flex items-center bg-white rounded-2xl border-2 border-brand-navy/10 hover:border-brand-green/40 focus-within:border-brand-green shadow-xs px-4 py-3 transition-all">
+            <Search className="w-5 h-5 text-brand-green mr-3 shrink-0" />
+            <input 
+              type="text" 
+              placeholder="Search for meal..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent text-sm font-bold text-brand-navy placeholder:text-brand-navy/40 w-full focus:outline-none"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-black text-brand-navy/60 transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Category cards ("What would you like?") */}
         <div>
           <h3 className="font-extrabold text-base text-brand-navy mb-3 tracking-tight">
@@ -301,42 +379,46 @@ export default function Dashboard({
             
             {/* Meals Option */}
             <button 
-              onClick={() => setSelectedCategory('weight_gain')}
-              className={`relative flex flex-col justify-between text-left p-4 rounded-3xl border transition-all duration-200 shadow-sm cursor-pointer ${selectedCategory === 'weight_gain' || selectedCategory === 'weight_loss' ? 'bg-[#EBF4E0] border-brand-green/30' : 'bg-white border-brand-navy/5 hover:border-brand-navy/10'}`}
+              onClick={() => {
+                setSelectedCategory('meals');
+                setSearchQuery('');
+              }}
+              className={`relative flex flex-col justify-between text-left p-4 rounded-3xl border transition-all duration-200 shadow-sm cursor-pointer ${selectedCategory === 'meals' || selectedCategory === 'weight_gain' || selectedCategory === 'weight_loss' ? 'bg-[#EBF4E0] border-brand-green/30' : 'bg-white border-brand-navy/5 hover:border-brand-navy/10'}`}
             >
               <div>
                 <span className="text-2xl mb-1 block">🍛</span>
-                <h4 className="font-extrabold text-sm text-brand-navy">Meals</h4>
+                <h4 className="font-extrabold text-sm text-brand-navy">Wholesome Meals</h4>
                 <p className="text-[10px] text-brand-navy/50 font-medium leading-normal mt-0.5">
-                  Wholesome & balanced meals
+                  High-protein balanced meals
                 </p>
               </div>
               <div className="flex items-center justify-between mt-4">
-                <div className={`p-1.5 rounded-full flex items-center justify-center ${selectedCategory === 'weight_gain' || selectedCategory === 'weight_loss' ? 'bg-brand-green text-white' : 'bg-[#FAF9F6] text-brand-navy/30'}`}>
+                <div className={`p-1.5 rounded-full flex items-center justify-center ${selectedCategory === 'meals' || selectedCategory === 'weight_gain' || selectedCategory === 'weight_loss' ? 'bg-brand-green text-white' : 'bg-[#FAF9F6] text-brand-navy/30'}`}>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
-                {/* Micro illustration inside card */}
                 <span className="text-sm opacity-40">🔥</span>
               </div>
             </button>
 
             {/* Salads Option */}
             <button 
-              onClick={() => setSelectedCategory('salad')}
+              onClick={() => {
+                setSelectedCategory('salad');
+                setSearchQuery('');
+              }}
               className={`relative flex flex-col justify-between text-left p-4 rounded-3xl border transition-all duration-200 shadow-sm cursor-pointer ${selectedCategory === 'salad' ? 'bg-[#EBF4E0] border-brand-green/30' : 'bg-white border-brand-navy/5 hover:border-brand-navy/10'}`}
             >
               <div>
                 <span className="text-2xl mb-1 block">🥗</span>
                 <h4 className="font-extrabold text-sm text-brand-navy">Salads</h4>
                 <p className="text-[10px] text-brand-navy/50 font-medium leading-normal mt-0.5">
-                  Fresh & nutritious salads
+                  Fresh, crisp & nutritious bowls
                 </p>
               </div>
               <div className="flex items-center justify-between mt-4">
                 <div className={`p-1.5 rounded-full flex items-center justify-center ${selectedCategory === 'salad' ? 'bg-brand-green text-white' : 'bg-[#FAF9F6] text-brand-navy/30'}`}>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
-                {/* Micro illustration inside card */}
                 <span className="text-sm opacity-40">🌱</span>
               </div>
             </button>
@@ -349,24 +431,30 @@ export default function Dashboard({
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight border transition-all cursor-pointer ${selectedCategory === 'all' ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-brand-navy/5 text-brand-navy/60 hover:bg-gray-50'}`}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight border transition-all cursor-pointer ${selectedCategory === 'all' && !searchQuery ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-brand-navy/5 text-brand-navy/60 hover:bg-gray-50'}`}
             >
               All Items
             </button>
             <button
-              onClick={() => setSelectedCategory('weight_gain')}
+              onClick={() => { setSelectedCategory('meals'); setSearchQuery(''); }}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight border transition-all cursor-pointer ${selectedCategory === 'meals' ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-brand-navy/5 text-brand-navy/60 hover:bg-gray-50'}`}
+            >
+              Meals
+            </button>
+            <button
+              onClick={() => { setSelectedCategory('weight_gain'); setSearchQuery(''); }}
               className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight border transition-all cursor-pointer ${selectedCategory === 'weight_gain' ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-brand-navy/5 text-brand-navy/60 hover:bg-gray-50'}`}
             >
               Weight Gain
             </button>
             <button
-              onClick={() => setSelectedCategory('weight_loss')}
+              onClick={() => { setSelectedCategory('weight_loss'); setSearchQuery(''); }}
               className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight border transition-all cursor-pointer ${selectedCategory === 'weight_loss' ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-brand-navy/5 text-brand-navy/60 hover:bg-gray-50'}`}
             >
               Weight Loss
             </button>
             <button
-              onClick={() => setSelectedCategory('salad')}
+              onClick={() => { setSelectedCategory('salad'); setSearchQuery(''); }}
               className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight border transition-all cursor-pointer ${selectedCategory === 'salad' ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-brand-navy/5 text-brand-navy/60 hover:bg-gray-50'}`}
             >
               Salads
@@ -383,46 +471,46 @@ export default function Dashboard({
           </button>
         </div>
 
-        {/* Highlighted Notice: Non-Veg High-Protein Meals Coming Soon */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 via-orange-50/70 to-amber-50 border-2 border-amber-300/80 rounded-3xl p-4.5 shadow-sm">
-          <div className="flex items-start gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl shrink-0 shadow-xs">
-              🍗
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
-                  Coming Soon
-                </span>
-                <span className="text-[11px] font-extrabold text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-full">
-                  In 1–2 Months ⏳
-                </span>
-              </div>
-              <h4 className="font-black text-sm text-brand-navy mt-1.5 leading-tight">
-                Non-Veg High-Protein Meals
-              </h4>
-              <p className="text-xs text-brand-navy/70 font-medium mt-1 leading-relaxed">
-                We are currently crafting and testing chef-curated grilled chicken, whole egg, and high-bioavailability macro bowls tailored for gym athletes. Stay tuned!
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Explore Feed */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-extrabold text-base text-brand-navy tracking-tight">Explore Pure Veg Menu</h3>
-            <span className="text-xs font-bold text-brand-green hover:underline cursor-pointer">View all ({filteredProducts.length})</span>
+            <div>
+              <h3 className="font-extrabold text-base text-brand-navy tracking-tight">
+                {searchQuery.trim() ? (
+                  <span className="flex items-center gap-1.5 flex-wrap">
+                    <span>Results for <span className="text-brand-green">"{searchQuery.trim()}"</span></span>
+                    <span className="text-xs font-bold text-brand-navy/50">({filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'})</span>
+                  </span>
+                ) : (
+                  <span>Explore Pure Veg Menu</span>
+                )}
+              </h3>
+              {searchQuery.trim() && (
+                <p className="text-[11px] text-brand-navy/60 font-semibold mt-0.5">
+                  Showing matching meals, protein values & salads
+                </p>
+              )}
+            </div>
+            {searchQuery.trim() ? (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="text-xs font-bold text-brand-green hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Clear search
+              </button>
+            ) : (
+              <span className="text-xs font-bold text-brand-green">({filteredProducts.length} items)</span>
+            )}
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 bg-white border border-brand-navy/5 rounded-3xl text-center">
+            <div className="flex flex-col items-center justify-center p-8 bg-white border border-brand-navy/5 rounded-3xl text-center shadow-xs">
               <span className="text-3xl mb-2">🍽️</span>
-              <p className="text-sm font-bold text-brand-navy/70">No meals fit this filter</p>
-              <p className="text-xs text-brand-navy/40 mt-1">Try resetting the search or veg filters</p>
+              <p className="text-sm font-bold text-brand-navy/80">No meals found for "{searchQuery}"</p>
+              <p className="text-xs text-brand-navy/50 mt-1">Try searching for 'Lean', 'Bulk', '50P', 'Paneer', or 'Salad'</p>
               <button 
                 onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setVegOnly(false); }}
-                className="mt-4 px-4 py-2 bg-brand-green text-white font-bold text-xs rounded-xl"
+                className="mt-4 px-4 py-2 bg-brand-green hover:bg-brand-green-hover text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 Reset All Filters
               </button>
@@ -436,24 +524,30 @@ export default function Dashboard({
                   onClick={() => onProductClick(product)}
                   className="group bg-white rounded-3xl border border-brand-navy/5 p-3 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
                 >
-                  {/* Food Image Container */}
+                  {/* Food Image Slider (3x auto sliding every 2.5s) */}
                   <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gray-50 mb-3 border border-brand-navy/5">
-                    <img 
-                      src={product.image} 
+                    <ProductImageSlider
+                      images={product.images || [product.image]}
+                      fallbackImage={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      referrerPolicy="no-referrer"
-                    />
-                    
-                    {/* Diet Dot badge (Green for Veg, Red/Orange for Non-Veg) */}
-                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm p-1 rounded-md flex items-center justify-center border border-black/5">
-                      <div className={`w-2.5 h-2.5 border ${product.isVeg ? 'border-green-600 bg-green-500 rounded-full' : 'border-red-600 bg-red-500 rounded-sm'}`} />
-                    </div>
+                      intervalMs={2500}
+                      aspectClassName="aspect-square"
+                      showDots={true}
+                      showArrows={false}
+                      overlayBadge={
+                        <>
+                          {/* Diet Dot badge (Green for Veg, Red/Orange for Non-Veg) */}
+                          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm p-1 rounded-md flex items-center justify-center border border-black/5 z-10">
+                            <div className={`w-2.5 h-2.5 border ${product.isVeg ? 'border-green-600 bg-green-500 rounded-full' : 'border-red-600 bg-red-500 rounded-sm'}`} />
+                          </div>
 
-                    {/* Calories floating badge */}
-                    <div className="absolute bottom-2 left-2 bg-brand-navy/80 backdrop-blur-sm px-2 py-0.5 rounded-full text-[9px] font-extrabold text-white">
-                      {product.calories} Kcal
-                    </div>
+                          {/* Calories floating badge */}
+                          <div className="absolute bottom-2 left-2 bg-brand-navy/85 backdrop-blur-sm px-2 py-0.5 rounded-full text-[9px] font-extrabold text-white z-10">
+                            {product.calories} Kcal
+                          </div>
+                        </>
+                      }
+                    />
                   </div>
 
                   {/* Text Details */}
@@ -485,17 +579,38 @@ export default function Dashboard({
                         </span>
                       </div>
                       
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onProductClick(product);
-                        }}
-                        id={`btn-add-${product.id}`}
-                        className="p-1.5 rounded-xl bg-[#EBF4E0] text-brand-green hover:bg-brand-green hover:text-white transition-all active:scale-90 cursor-pointer"
-                        title="View meal & subscription options"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                      {(() => {
+                        const isInCart = cart.some(i => i.product.id === product.id && i.purchaseOption === 'single');
+                        const isProductAdded = addedProductId === product.id || isInCart;
+                        return (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddToCart(product);
+                              setAddedProductId(product.id);
+                            }}
+                            id={`btn-add-${product.id}`}
+                            className={`py-1.5 px-2.5 rounded-xl font-black text-xs transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1 shrink-0 ${
+                              isProductAdded
+                                ? 'bg-[#0F1E36] text-brand-green border border-brand-green shadow-xs'
+                                : 'bg-[#EBF4E0] hover:bg-brand-green hover:text-white text-brand-navy border border-brand-green/20 shadow-xs'
+                            }`}
+                            title="Add single meal to cart"
+                          >
+                            {isProductAdded ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-brand-green stroke-[3]" />
+                                <span className="text-[10px] font-black text-brand-green">Added!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3.5 h-3.5 text-brand-green stroke-[2.5]" />
+                                <span className="text-[10px] font-black">ADD</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </motion.div>

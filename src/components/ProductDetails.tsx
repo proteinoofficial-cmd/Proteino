@@ -18,10 +18,13 @@ import {
   Calendar,
   User,
   Phone,
-  CheckCircle2
+  CheckCircle2,
+  Check,
+  X
 } from 'lucide-react';
 import { Product, CartItem, ActiveSubscription, UserProfile } from '../types';
 import { GYMS } from '../data';
+import ProductImageSlider from './ProductImageSlider';
 
 interface ProductDetailsProps {
   product: Product;
@@ -32,6 +35,7 @@ interface ProductDetailsProps {
   favorites: string[];
   onToggleFavorite: (id: string) => void;
   onRequireAuth?: (message?: string) => void;
+  cart?: CartItem[];
 }
 
 export default function ProductDetails({ 
@@ -42,7 +46,8 @@ export default function ProductDetails({
   onSubscribeDirect,
   favorites,
   onToggleFavorite,
-  onRequireAuth
+  onRequireAuth,
+  cart = []
 }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState(1);
   const [purchaseOption, setPurchaseOption] = useState<'single' | 'subscription'>('single');
@@ -64,8 +69,13 @@ export default function ProductDetails({
   const [isSubmittingSub, setIsSubmittingSub] = useState(false);
   const [subSuccess, setSubSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const isFavorited = favorites.includes(product.id);
+
+  // Determine if this item is in the cart or was just added
+  const isInCart = cart.some(item => item.product.id === product.id && item.purchaseOption === 'single');
+  const isItemAdded = isAdded || isInCart;
 
   // Reset states when product changes
   useEffect(() => {
@@ -73,6 +83,7 @@ export default function ProductDetails({
     setPurchaseOption('single');
     setIsAdded(false);
     setSubSuccess(false);
+    setShowConfirmModal(false);
     setErrorMsg('');
   }, [product]);
 
@@ -84,7 +95,7 @@ export default function ProductDetails({
   const subscriptionPrice = product.monthlyPrice || Math.round(product.price * 26 * 0.85); // Official 26-day monthly subscription price
   const subscriptionSavings = Math.max(0, (product.price * 26) - subscriptionPrice);
 
-  const handleActionClick = async () => {
+  const handleActionClick = () => {
     if (purchaseOption === 'single') {
       setIsAdded(true);
       onAddToCart({
@@ -92,11 +103,8 @@ export default function ProductDetails({
         quantity,
         purchaseOption: 'single'
       });
-      setTimeout(() => {
-        setIsAdded(false);
-      }, 1500);
     } else {
-      // Handle subscription checkout directly!
+      // Validate subscription details before opening confirmation prompt
       if (!profile) {
         if (onRequireAuth) {
           onRequireAuth('Please sign in or create an account to activate your 26-day gym subscription.');
@@ -108,36 +116,61 @@ export default function ProductDetails({
         setErrorMsg('Please enter recipient name');
         return;
       }
-      if (customerPhone.length < 10) {
+      const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length < 10) {
         setErrorMsg('Please enter a 10-digit mobile number');
         return;
       }
       setErrorMsg('');
-      setIsSubmittingSub(true);
+      setShowConfirmModal(true);
+    }
+  };
 
-      const gym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
-      const newSub = {
-        planId: product.id,
-        planName: `${product.name} 26-Day Subscription`,
-        price: subscriptionPrice,
-        durationDays: 26,
-        customerName: customerName,
-        customerPhone: customerPhone,
-        gymId: gym.id,
-        gymName: gym.name,
-        gymLocation: gym.location,
-        timeSlot: selectedTimeSlot,
-        isPaused: false
-      };
+  const handleConfirmSubscription = async () => {
+    setIsSubmittingSub(true);
+    setErrorMsg('');
 
-      try {
-        await onSubscribeDirect(newSub);
-        setSubSuccess(true);
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Failed to place direct subscription');
-      } finally {
-        setIsSubmittingSub(false);
-      }
+    const gym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
+    const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+    const nowObj = new Date();
+    const formattedDateStr = nowObj.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+    const formattedTimeStr = nowObj.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+    const orderDateDisplay = `${formattedTimeStr}, ${formattedDateStr}`;
+
+    const newSub = {
+      planId: product.id,
+      planName: `${product.name} 26-Day Subscription`,
+      price: subscriptionPrice,
+      durationDays: 26,
+      customerName: customerName.trim(),
+      customerPhone: cleanPhone,
+      gymId: gym.id,
+      gymName: gym.name,
+      gymLocation: gym.location,
+      timeSlot: selectedTimeSlot,
+      isPaused: false,
+      startDate: nowObj.toISOString(),
+      createdAt: nowObj.toISOString(),
+      date: orderDateDisplay
+    };
+
+    try {
+      await onSubscribeDirect(newSub);
+      setShowConfirmModal(false);
+      setSubSuccess(true);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to place direct subscription. Please try again.');
+      setShowConfirmModal(false);
+    } finally {
+      setIsSubmittingSub(false);
     }
   };
 
@@ -162,21 +195,26 @@ export default function ProductDetails({
         </button>
       </div>
 
-      {/* Hero Product Image */}
+      {/* Hero Product Image Slider (3x auto sliding every 2.5s) */}
       <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden border-b border-brand-navy/5 shadow-sm">
-        <img 
-          src={product.image} 
-          alt={product.name} 
-          className="w-full h-full object-cover"
-          referrerPolicy="no-referrer"
+        <ProductImageSlider
+          images={product.images || [product.image]}
+          fallbackImage={product.image}
+          alt={product.name}
+          intervalMs={2500}
+          aspectClassName="aspect-[4/3]"
+          showDots={true}
+          showArrows={true}
+          overlayBadge={
+            <>
+              {/* Diet Indicator Badge */}
+              <div className="absolute bottom-4 left-5 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5 border border-black/5 z-10">
+                <div className={`w-2.5 h-2.5 border ${product.isVeg ? 'border-green-600 bg-green-500 rounded-full' : 'border-red-600 bg-red-500 rounded-sm'}`} />
+                <span className="text-brand-navy">{product.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}</span>
+              </div>
+            </>
+          }
         />
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-brand-navy/10 to-transparent" />
-        
-        {/* Diet Indicator Badge */}
-        <div className="absolute bottom-4 left-5 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5 border border-black/5">
-          <div className={`w-2.5 h-2.5 border ${product.isVeg ? 'border-green-600 bg-green-500 rounded-full' : 'border-red-600 bg-red-500 rounded-sm'}`} />
-          <span className="text-brand-navy">{product.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}</span>
-        </div>
       </div>
 
       {/* Info Body */}
@@ -552,6 +590,102 @@ export default function ProductDetails({
 
       </div>
 
+      {/* Subscription Confirmation Modal Overlay */}
+      <AnimatePresence>
+        {showConfirmModal && (
+          <div className="fixed inset-0 bg-[#0F1E36]/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200/80 overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-brand-green/15 text-brand-green flex items-center justify-center">
+                    <Zap className="w-5 h-5 fill-brand-green" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-brand-navy">Confirm Subscription</h3>
+                    <p className="text-[10.5px] font-bold text-slate-400">26-Day Gym Drop-off Meal Plan</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Question prompt */}
+              <p className="text-xs font-bold text-brand-navy mt-4 mb-3">
+                Do you want to confirm this order and subscription?
+              </p>
+
+              {/* Summary Details Card */}
+              <div className="bg-[#FAF9F6] border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-2 text-xs font-medium text-brand-navy/80">
+                <div className="flex justify-between items-start">
+                  <span className="text-[11px] font-bold text-slate-500">Plan:</span>
+                  <span className="font-extrabold text-brand-navy text-right max-w-[200px]">{product.name} (26 Meals)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-500">Total Price:</span>
+                  <div className="text-right">
+                    <span className="font-black text-brand-green text-sm">₹{subscriptionPrice}</span>
+                    {subscriptionSavings > 0 && (
+                      <span className="text-[10px] text-brand-navy/50 font-bold ml-1.5 line-through">₹{product.price * 26}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-between items-start border-t border-slate-200/40 pt-1.5">
+                  <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
+                  <span className="font-bold text-brand-navy text-right max-w-[190px] truncate">
+                    {GYMS.find(g => g.id === selectedGymId)?.name || "Gold's Gym"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
+                  <span className="font-bold text-brand-navy">{selectedTimeSlot} Daily</span>
+                </div>
+                <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
+                  <span className="text-[11px] font-bold text-slate-500">Subscriber:</span>
+                  <span className="font-bold text-brand-navy">{customerName} (+91 {customerPhone.replace(/[^0-9]/g, '')})</span>
+                </div>
+              </div>
+
+              {/* Action Buttons: Confirm & Cancel */}
+              <div className="grid grid-cols-2 gap-2.5 mt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={isSubmittingSub}
+                  className="py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-xs transition-all active:scale-95 cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSubscription}
+                  disabled={isSubmittingSub}
+                  className="py-3 px-4 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {isSubmittingSub ? (
+                    <span>Confirming...</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>Confirm Order</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Success Modal Overlay */}
       {subSuccess && (
         <div className="absolute inset-0 bg-brand-navy/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center text-white">
@@ -587,22 +721,26 @@ export default function ProductDetails({
           id="btn-add-to-cart-action"
           className={`flex-grow py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 active:scale-98 transition-all shadow-md cursor-pointer ${
             purchaseOption === 'single'
-              ? (isAdded ? 'bg-brand-navy text-brand-green' : 'bg-brand-green hover:bg-brand-green-hover text-white')
+              ? (isItemAdded ? 'bg-[#0F1E36] text-brand-green border border-brand-green/30' : 'bg-brand-green hover:bg-brand-green-hover text-white')
               : 'bg-[#0F1E36] text-brand-green border border-brand-green hover:bg-[#1a3359]'
           }`}
         >
           {purchaseOption === 'single' ? (
             <>
-              <ShoppingBag className="w-5 h-5" />
-              <span>
-                {isAdded ? 'Added to Plan!' : `Add to Cart • ₹${calculatedPrice}`}
+              {isItemAdded ? (
+                <Check className="w-5 h-5 text-brand-green stroke-[3]" />
+              ) : (
+                <ShoppingBag className="w-5 h-5" />
+              )}
+              <span className={isItemAdded ? "text-brand-green font-black" : ""}>
+                {isItemAdded ? 'Added to Cart' : `Add to Cart • ₹${calculatedPrice}`}
               </span>
             </>
           ) : (
             <>
               <Zap className="w-5 h-5 fill-brand-green" />
               <span>
-                {isSubmittingSub ? 'Processing Membership...' : `Subscribe & Order Now • ₹${subscriptionPrice}`}
+                {isSubmittingSub ? 'Processing...' : `Confirm Subscription • ₹${subscriptionPrice}`}
               </span>
             </>
           )}
