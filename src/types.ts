@@ -52,6 +52,9 @@ export interface Order {
   gymName?: string;
   gymLocation?: string;
   deliveryTimeSlot?: string;
+  isPreOrder?: boolean;
+  scheduledDate?: string;
+  orderType?: 'instant' | 'preorder';
 }
 
 export interface UserProfile {

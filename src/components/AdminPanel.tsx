@@ -32,6 +32,7 @@ import { Order, ActiveSubscription } from "../types";
 import { PRODUCTS } from "../data";
 import { apiFetch } from "../utils/api";
 import { playOrderAlertSound, initAudioUnlock } from "../utils/audio";
+import { calculateMealsRemaining } from "../utils/deliverySlots";
 
 interface NewOrderNotification {
   id: string;
@@ -56,6 +57,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState<"single" | "plan" | "total">("single");
+  const [singleOrderSubTab, setSingleOrderSubTab] = useState<"current" | "past">("current");
+  const [subscriptionSubTab, setSubscriptionSubTab] = useState<"current" | "past">("current");
   const [timeFilter, setTimeFilter] = useState<"24h" | "month" | "all">("24h");
   const [typeFilter, setTypeFilter] = useState<"all" | "single" | "subscription">("all");
 
@@ -561,12 +564,25 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   }, [unifiedOrdersList, timeFilter, typeFilter, searchQuery]);
 
   // Filter lists based on search query (by phone, customer name, gym, etc.)
+  const isPreOrderCheck = (order: Order) => {
+    if (order.isPreOrder) return true;
+    if (order.orderType === 'preorder') return true;
+    const slot = (order.deliveryTimeSlot || '').toLowerCase();
+    const sched = (order.scheduledDate || '').toLowerCase();
+    return slot.includes('tomorrow') || sched.includes('tomorrow') || slot.includes('pre-order') || sched.includes('pre-order');
+  };
+
   const filteredOrders = orders.filter(o => 
     o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     o.customerPhone.includes(searchQuery) ||
     (o.gymName && o.gymName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // Separate Single Orders into Current (active kitchen/dispatch queue) vs Past Orders (completed/delivered)
+  const currentSingleOrders = filteredOrders.filter(o => o.status !== 'delivered');
+  const pastSingleOrders = filteredOrders.filter(o => o.status === 'delivered');
+  const displayedSingleOrders = singleOrderSubTab === 'current' ? currentSingleOrders : pastSingleOrders;
 
   const filteredSubscriptions = subscriptions.filter(sub => 
     sub.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -575,9 +591,14 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     sub.planName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Group subscriptions by customer phone number
+  // Separate Subscriptions into Current (active/paused) vs Past Subscriptions (completed)
+  const currentSubscriptions = filteredSubscriptions.filter(s => s.status !== 'completed');
+  const pastSubscriptions = filteredSubscriptions.filter(s => s.status === 'completed');
+  const displayedSubscriptions = subscriptionSubTab === 'current' ? currentSubscriptions : pastSubscriptions;
+
+  // Group displayed subscriptions by customer phone number
   const groupedSubscriptionsMap = new Map<string, ActiveSubscription[]>();
-  filteredSubscriptions.forEach(sub => {
+  displayedSubscriptions.forEach(sub => {
     const key = sub.customerPhone || 'unknown';
     if (!groupedSubscriptionsMap.has(key)) {
       groupedSubscriptionsMap.set(key, []);
@@ -587,7 +608,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
 
   const groupedSubscriptionsList = Array.from(groupedSubscriptionsMap.entries()).map(([phone, subs]) => ({
     phone,
-    customerName: subs[0].customerName,
+    customerName: subs[0].customerName || 'Valued Subscriber',
     subs,
     stats: getCustomerStats(phone)
   }));
@@ -784,58 +805,125 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
           {activeTab === "single" && (
             /* COLUMN 1: SINGLE MEAL ORDERS */
             <div className="space-y-4">
-            <div className="flex items-center justify-between bg-brand-navy text-white px-5 py-4 rounded-3xl shadow-sm">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-white/10 rounded-xl text-brand-green">
-                  <ShoppingBag className="w-5 h-5" />
+              <div className="flex items-center justify-between bg-brand-navy text-white px-5 py-4 rounded-3xl shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-white/10 rounded-xl text-brand-green">
+                    <ShoppingBag className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm tracking-tight">Single Meal Orders</h3>
+                    <p className="text-[9px] text-white/50 font-bold uppercase tracking-wider">Kitchen & Dispatch Queue</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-black text-sm tracking-tight">Single Meal Orders</h3>
-                  <p className="text-[9px] text-white/50 font-bold uppercase tracking-wider">Kitchen & Dispatch Queue</p>
+                <span className="bg-brand-green text-white text-[11px] font-black px-3 py-1 rounded-full shadow-xs">
+                  {filteredOrders.length} TOTAL ORDERS
+                </span>
+              </div>
+
+              {/* Sub-tabs: Current Orders vs Past Orders */}
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={() => setSingleOrderSubTab("current")}
+                  className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    singleOrderSubTab === "current"
+                      ? "bg-[#0F1E36] text-white shadow-xs"
+                      : "text-slate-600 hover:text-brand-navy"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-brand-green" />
+                  <span>Current Orders</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    singleOrderSubTab === "current" ? "bg-brand-green text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {currentSingleOrders.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSingleOrderSubTab("past")}
+                  className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    singleOrderSubTab === "past"
+                      ? "bg-[#0F1E36] text-white shadow-xs"
+                      : "text-slate-600 hover:text-brand-navy"
+                  }`}
+                >
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Past Orders</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    singleOrderSubTab === "past" ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {pastSingleOrders.length}
+                  </span>
+                </button>
+              </div>
+
+              {displayedSingleOrders.length === 0 ? (
+                <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
+                  {singleOrderSubTab === "current" 
+                    ? "No current live orders found." 
+                    : "No past delivered orders found."}
                 </div>
-              </div>
-              <span className="bg-brand-green text-white text-[11px] font-black px-3 py-1 rounded-full shadow-xs">
-                {filteredOrders.length} ORDERS
-              </span>
-            </div>
+              ) : (
+                <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
+                  {displayedSingleOrders.map((order) => {
+                    const stats = getCustomerStats(order.customerPhone);
+                    const isOrderPreOrder = isPreOrderCheck(order);
 
-            {filteredOrders.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
-                No single orders found matching search criteria.
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
-                {filteredOrders.map((order) => {
-                  const stats = getCustomerStats(order.customerPhone);
+                    return (
+                      <div key={order.id} className={`bg-white rounded-3xl border p-5 shadow-xs transition-all flex flex-col gap-4 ${
+                        isOrderPreOrder 
+                          ? "border-sky-300/80 hover:border-sky-400 ring-1 ring-sky-100" 
+                          : "border-slate-200/70 hover:border-brand-green/30"
+                      }`}>
+                        
+                        {/* If Pre-Order, show a high-visibility badge banner */}
+                        {isOrderPreOrder && (
+                          <div className="bg-gradient-to-r from-sky-50 to-indigo-50/70 border border-sky-200/80 rounded-2xl px-3.5 py-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">🗓️</span>
+                              <div>
+                                <p className="text-[11px] font-black text-sky-950">Pre-Order For Tomorrow</p>
+                                <p className="text-[9.5px] font-bold text-sky-700">{order.scheduledDate || "Tomorrow Delivery"}</p>
+                              </div>
+                            </div>
+                            <span className="text-[10.5px] font-black text-sky-900 bg-sky-200/90 px-3 py-1 rounded-full border border-sky-300/50 shadow-2xs">
+                              🕒 Slot: {order.deliveryTimeSlot || "Morning Section"}
+                            </span>
+                          </div>
+                        )}
 
-                  return (
-                    <div key={order.id} className="bg-white rounded-3xl border border-slate-200/70 p-5 shadow-xs hover:border-brand-green/30 transition-all flex flex-col gap-4">
-                      
-                      {/* Header: ID, Date & Preferred Slot */}
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div>
-                          <p className="text-[10px] font-black text-brand-navy/40 uppercase tracking-wider">ORDER ID</p>
-                          <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                            <p className="font-black text-brand-navy text-sm font-mono">{order.id}</p>
-                            {stats.isReOrdered && (
-                              <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[9.5px] font-black px-2 py-0.5 rounded-full shadow-xs uppercase tracking-tight">
-                                <Repeat className="w-2.5 h-2.5" /> Re-ordered ({stats.totalOrders}x Orders)
+                        {/* Header: ID, Date & Preferred Slot */}
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <div>
+                            <p className="text-[10px] font-black text-brand-navy/40 uppercase tracking-wider">ORDER ID</p>
+                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                              <p className="font-black text-brand-navy text-sm font-mono">{order.id}</p>
+                              {stats.isReOrdered && (
+                                <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[9.5px] font-black px-2 py-0.5 rounded-full shadow-xs uppercase tracking-tight">
+                                  <Repeat className="w-2.5 h-2.5" /> Re-ordered ({stats.totalOrders}x Orders)
+                                </span>
+                              )}
+                              {!isOrderPreOrder && (
+                                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
+                                  ⚡ Live Order
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center justify-end gap-1.5 text-[11px] font-black text-brand-navy">
+                              <Clock className="w-3.5 h-3.5 text-brand-green shrink-0" />
+                              <span>{formatOrderDateTime(order.createdAt, order.date).display}</span>
+                            </div>
+                            {order.deliveryTimeSlot && !isOrderPreOrder && (
+                              <span className="inline-block mt-1 bg-[#EBF4E0] text-brand-green text-[9px] font-black px-2 py-0.5 rounded-full">
+                                🕒 Slot: {order.deliveryTimeSlot}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center justify-end gap-1.5 text-[11px] font-black text-brand-navy">
-                            <Clock className="w-3.5 h-3.5 text-brand-green shrink-0" />
-                            <span>{formatOrderDateTime(order.createdAt, order.date).display}</span>
-                          </div>
-                          {order.deliveryTimeSlot && (
-                            <span className="inline-block mt-1 bg-[#EBF4E0] text-brand-green text-[9px] font-black px-2 py-0.5 rounded-full">
-                              🕒 Slot: {order.deliveryTimeSlot} Preferred
-                            </span>
-                          )}
-                        </div>
-                      </div>
 
                       {/* Customer & Destination Info */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -979,175 +1067,237 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
           {activeTab === "plan" && (
             /* COLUMN 2: GYM PLAN MEMBERSHIPS */
             <div className="space-y-4">
-            <div className="flex items-center justify-between bg-brand-green text-white px-5 py-4 rounded-3xl shadow-sm">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-white/15 rounded-xl text-white">
-                  <Repeat className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-sm tracking-tight">Gym Plan Subscriptions</h3>
-                  <p className="text-[9px] text-white/70 font-bold uppercase tracking-wider">Multi-Day Recurring Deliveries</p>
-                </div>
-              </div>
-              <span className="bg-[#0F1E36] text-white text-[11px] font-black px-3 py-1 rounded-full shadow-xs">
-                {subscriptions.length} PLANS
-              </span>
-            </div>
-
-            {groupedSubscriptionsList.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
-                No active memberships found matching search criteria.
-              </div>
-            ) : (
-              <div className="space-y-5 max-h-[750px] overflow-y-auto pr-1">
-                {groupedSubscriptionsList.map(({ phone, customerName, subs, stats }) => (
-                  <div key={phone} className="bg-white rounded-3xl border border-slate-200/60 p-5 shadow-xs flex flex-col gap-4">
-                    
-                    {/* Customer Identity Section (Member name & phone) */}
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">MEMBER:</span>
-                        <h4 className="font-black text-brand-navy text-sm leading-none">{customerName}</h4>
-                        <span className="text-[10px] text-slate-400 font-mono font-bold">({phone})</span>
-                        {stats.isReOrdered && (
-                          <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1 shadow-xs">
-                            <Repeat className="w-2.5 h-2.5" /> Re-ordered ({stats.totalOrders}x Orders)
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {stats.isReOrdered && (
-                          <span className="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded-md uppercase">
-                            Repeat Customer
-                          </span>
-                        )}
-                        <span className="text-[9px] bg-brand-green/10 text-brand-green font-black px-2 py-0.5 rounded-full uppercase">
-                          {subs.length} Active {subs.length === 1 ? 'Plan' : 'Plans'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Sequential simplified list of member's active plans */}
-                    <div className="divide-y divide-slate-100">
-                      {subs.map((sub, index) => {
-                        const mealProduct = PRODUCTS.find(p => p.id === sub.planId);
-                        const mealName = mealProduct ? mealProduct.name : sub.planName.replace(" 26-Day Subscription", "").replace("Subscription", "").trim();
-                        const isVeg = mealProduct ? mealProduct.isVeg : (sub.planName.toLowerCase().includes("veg") && !sub.planName.toLowerCase().includes("non-veg"));
-
-                        return (
-                          <div key={sub.id || index} className={`py-4 ${index === 0 ? 'pt-1' : ''} ${index === subs.length - 1 ? 'pb-1' : ''} flex flex-col gap-3`}>
-                            
-                            {/* Sequential title and indicator */}
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-black text-brand-green font-mono">
-                                  {index + 1}.
-                                </span>
-                                <div className="flex items-center gap-1.5">
-                                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isVeg ? 'border-green-600 bg-green-50' : 'border-red-600 bg-red-50'}`}>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                                  </div>
-                                  <h4 className="font-black text-xs text-brand-navy uppercase tracking-tight">{mealName}</h4>
-                                </div>
-                                {stats.isReOrdered && (
-                                  <span className="text-[8px] bg-amber-50 text-amber-700 font-black px-1.5 py-0.5 rounded border border-amber-200 uppercase">
-                                    🔁 Re-order
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[9px] bg-[#FAF9F6] border border-slate-200 text-brand-navy/60 font-black px-2 py-0.5 rounded font-mono">
-                                🕒 {sub.timeSlot}
-                              </span>
-                            </div>
-
-                            {/* Highlighted Gym & Countdown Timer */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                              
-                              {/* Highlighted Gym Info */}
-                              <div className="bg-[#EBF4E0] border border-brand-green/35 rounded-xl p-3 flex flex-col justify-center">
-                                <p className="text-[8px] font-black text-brand-green tracking-widest uppercase">DELIVERY DESTINATION GYM</p>
-                                <p className="font-black text-brand-navy text-xs mt-1 tracking-tight flex items-center gap-1 truncate">
-                                  <span>🏋️</span> {sub.gymName}
-                                </p>
-                                <p className="text-[9px] text-brand-navy/60 font-semibold mt-0.5 truncate leading-none">
-                                  {sub.gymLocation}
-                                </p>
-                              </div>
-
-                              {/* Highlighted Live Countdown Timer */}
-                              <div className="bg-[#0F1E36] text-white rounded-xl p-3 border border-brand-navy/10 shadow-sm flex flex-col justify-center relative">
-                                <div className="absolute right-2 top-2 flex h-1.5 w-1.5">
-                                  {!sub.isPaused && sub.status !== "completed" && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-green opacity-75"></span>}
-                                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${sub.status === "completed" ? "bg-green-500" : sub.isPaused ? 'bg-amber-400' : 'bg-brand-green'}`}></span>
-                                </div>
-                                <p className="text-[8px] font-black text-brand-green tracking-widest uppercase leading-none">
-                                  {sub.status === "completed" ? "🏆 COMPLETED" : sub.isPaused ? "⏸️ TIMER PAUSED" : "⚡ LIVE TIMER COUNTDOWN"}
-                                </p>
-                                <p className="text-[12px] font-black font-mono tracking-wider mt-1.5 text-white leading-none">
-                                  {sub.status === "completed" ? "Plan Completed" : getSubscriptionCountdown(sub.expiryDate, sub.isPaused, sub.pausedAt)}
-                                </p>
-                              </div>
-
-                            </div>
-
-                            {/* Ends Date / Order Date Indicator */}
-                            <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex-wrap gap-2">
-                              <span className="flex items-center gap-1 font-mono text-brand-navy">
-                                <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
-                                <span>Ordered: {formatOrderDateTime(sub.createdAt || sub.startDate, sub.date || sub.startDate).display}</span>
-                              </span>
-                              <span>
-                                {sub.status === "completed" ? "Completed: " : "Expires: "}
-                                {new Date(sub.expiryDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })} • Excludes Sundays
-                              </span>
-                            </div>
-
-                            {/* Administrative Controls for Subscription */}
-                            <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
-                              <div className="flex items-center gap-1">
-                                <span className="text-[9px] font-black uppercase text-brand-navy/40">Status:</span>
-                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                                  sub.status === "completed"
-                                    ? "bg-green-100 text-green-700"
-                                    : sub.isPaused
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-[#EBF4E0] text-brand-green"
-                                }`}>
-                                  {sub.status === "completed" ? "🏆 Completed" : sub.isPaused ? "Paused" : "Active"}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                {sub.status !== "completed" && (
-                                  <button
-                                    onClick={() => handleUpdateSubscriptionStatus(sub.id, "completed")}
-                                    className="px-2.5 py-1.5 bg-[#6B9E35] hover:bg-[#59832B] text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
-                                  >
-                                    <Check className="w-3 h-3" />
-                                    <span>Complete Plan</span>
-                                  </button>
-                                )}
-
-                                <button
-                                  onClick={() => handleDeleteSubscription(sub.id)}
-                                  className="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
-                                  title="Delete Plan"
-                                >
-                                  <span>🗑️ Delete Plan</span>
-                                </button>
-                              </div>
-                            </div>
-
-                          </div>
-                        );
-                      })}
-                    </div>
-
+              <div className="flex items-center justify-between bg-brand-green text-white px-5 py-4 rounded-3xl shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-white/15 rounded-xl text-white">
+                    <Repeat className="w-5 h-5" />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="font-black text-sm tracking-tight">Gym Plan Subscriptions</h3>
+                    <p className="text-[9px] text-white/70 font-bold uppercase tracking-wider">Multi-Day Recurring Deliveries</p>
+                  </div>
+                </div>
+                <span className="bg-[#0F1E36] text-white text-[11px] font-black px-3 py-1 rounded-full shadow-xs">
+                  {filteredSubscriptions.length} TOTAL PLANS
+                </span>
               </div>
-            )}
-          </div>
+
+              {/* Sub-tabs: Current Subscriptions vs Past Subscriptions */}
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={() => setSubscriptionSubTab("current")}
+                  className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    subscriptionSubTab === "current"
+                      ? "bg-[#0F1E36] text-white shadow-xs"
+                      : "text-slate-600 hover:text-brand-navy"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-brand-green" />
+                  <span>Current Plans</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    subscriptionSubTab === "current" ? "bg-brand-green text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {currentSubscriptions.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSubscriptionSubTab("past")}
+                  className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    subscriptionSubTab === "past"
+                      ? "bg-[#0F1E36] text-white shadow-xs"
+                      : "text-slate-600 hover:text-brand-navy"
+                  }`}
+                >
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Past Plans</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    subscriptionSubTab === "past" ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {pastSubscriptions.length}
+                  </span>
+                </button>
+              </div>
+
+              {groupedSubscriptionsList.length === 0 ? (
+                <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
+                  {subscriptionSubTab === "current"
+                    ? "No active subscriptions found matching search criteria."
+                    : "No past completed subscriptions found."}
+                </div>
+              ) : (
+                <div className="space-y-5 max-h-[750px] overflow-y-auto pr-1">
+                  {groupedSubscriptionsList.map(({ phone, customerName, subs, stats }) => (
+                    <div key={phone} className="bg-white rounded-3xl border border-slate-200/60 p-5 shadow-xs flex flex-col gap-4">
+                      
+                      {/* Customer Identity Section (Member name & phone number) */}
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">CUSTOMER:</span>
+                          <h4 className="font-black text-brand-navy text-sm leading-none">{customerName}</h4>
+                          <span className="text-xs text-brand-navy/70 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-md">📞 {phone}</span>
+                          {stats.isReOrdered && (
+                            <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1 shadow-xs">
+                              <Repeat className="w-2.5 h-2.5" /> Re-ordered ({stats.totalOrders}x Orders)
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {stats.isReOrdered && (
+                            <span className="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded-md uppercase">
+                              Repeat Customer
+                            </span>
+                          )}
+                          <span className="text-[9px] bg-brand-green/10 text-brand-green font-black px-2 py-0.5 rounded-full uppercase">
+                            {subs.length} {subscriptionSubTab === 'current' ? 'Active' : 'Past'} {subs.length === 1 ? 'Plan' : 'Plans'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Sequential detailed list of member's plans showing meals, macros & remaining meals */}
+                      <div className="divide-y divide-slate-100">
+                        {subs.map((sub, index) => {
+                          const mealProduct = PRODUCTS.find(p => p.id === sub.planId);
+                          const mealName = mealProduct ? mealProduct.name : sub.planName.replace(" 26-Day Subscription", "").replace("Subscription", "").trim();
+                          const isVeg = mealProduct ? mealProduct.isVeg : (sub.planName.toLowerCase().includes("veg") && !sub.planName.toLowerCase().includes("non-veg"));
+                          const proteinGrams = mealProduct ? mealProduct.protein : (sub.planName.includes("50P") ? 50 : sub.planName.includes("40P") ? 40 : 35);
+                          const caloriesKcal = mealProduct ? mealProduct.calories : 520;
+                          
+                          // Calculate remaining meals accurately
+                          const mealInfo = calculateMealsRemaining(sub.startDate, sub.durationDays || 26, sub.isPaused, sub.pausedAt);
+                          const durationLabel = sub.durationDays === 78 ? "78 Meals (3 Months)" : sub.durationDays === 52 ? "52 Meals (2 Months)" : "26 Meals (1 Month)";
+
+                          return (
+                            <div key={sub.id || index} className={`py-4 ${index === 0 ? 'pt-1' : ''} ${index === subs.length - 1 ? 'pb-1' : ''} flex flex-col gap-3.5`}>
+                              
+                              {/* Meal Name, Type and Delivery Slot */}
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-black text-brand-green font-mono">
+                                    #{index + 1}
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isVeg ? 'border-green-600 bg-green-50' : 'border-red-600 bg-red-50'}`}>
+                                      <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
+                                    </div>
+                                    <h4 className="font-black text-sm text-brand-navy tracking-tight">{mealName}</h4>
+                                  </div>
+                                  <span className="text-[9px] bg-slate-100 text-slate-700 font-extrabold px-2 py-0.5 rounded-md">
+                                    💪 {proteinGrams}g Protein • {caloriesKcal} Kcal
+                                  </span>
+                                </div>
+                                <span className="text-[9px] bg-[#FAF9F6] border border-slate-200 text-brand-navy/80 font-black px-2 py-0.5 rounded font-mono">
+                                  🕒 {sub.timeSlot}
+                                </span>
+                              </div>
+
+                              {/* Meals Tracker & Delivery Destination */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                
+                                {/* Highlighted Delivery Destination Gym */}
+                                <div className="bg-[#EBF4E0] border border-brand-green/35 rounded-xl p-3 flex flex-col justify-center">
+                                  <p className="text-[8px] font-black text-brand-green tracking-widest uppercase">DELIVERY DESTINATION GYM</p>
+                                  <p className="font-black text-brand-navy text-xs mt-1 tracking-tight flex items-center gap-1 truncate">
+                                    <span>🏋️</span> {sub.gymName}
+                                  </p>
+                                  <p className="text-[9px] text-brand-navy/60 font-semibold mt-0.5 truncate leading-none">
+                                    {sub.gymLocation}
+                                  </p>
+                                </div>
+
+                                {/* Meals Remaining Tracker */}
+                                <div className="bg-[#0F1E36] text-white rounded-xl p-3 border border-brand-navy/10 shadow-sm flex flex-col justify-between relative">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-[8px] font-black text-brand-green tracking-widest uppercase leading-none">
+                                      {sub.status === "completed" ? "🏆 PLAN COMPLETED" : "🥗 MEALS REMAINING"}
+                                    </p>
+                                    <span className="text-[8px] font-black bg-white/10 text-white/80 px-1.5 py-0.5 rounded">
+                                      {durationLabel}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="my-1.5">
+                                    <p className="text-sm font-black font-mono tracking-tight text-white leading-none">
+                                      {sub.status === "completed" 
+                                        ? `All ${mealInfo.totalMeals} Meals Delivered` 
+                                        : `${mealInfo.mealsRemaining} of ${mealInfo.totalMeals} Meals Remaining`}
+                                    </p>
+                                    <p className="text-[9px] text-white/60 font-medium mt-1">
+                                      {mealInfo.mealsDelivered} meals delivered • Excludes Sundays
+                                    </p>
+                                  </div>
+
+                                  {/* Progress bar */}
+                                  <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                                    <div 
+                                      className="bg-brand-green h-full rounded-full transition-all duration-500"
+                                      style={{ width: `${mealInfo.percentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+
+                              </div>
+
+                              {/* Dates Indicator */}
+                              <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex-wrap gap-2">
+                                <span className="flex items-center gap-1 font-mono text-brand-navy">
+                                  <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
+                                  <span>Ordered: {formatOrderDateTime(sub.createdAt || sub.startDate, sub.date || sub.startDate).display}</span>
+                                </span>
+                                <span>
+                                  {sub.status === "completed" ? "Completed: " : "Expires: "}
+                                  {new Date(sub.expiryDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })} • Excludes Sundays
+                                </span>
+                              </div>
+
+                              {/* Administrative Controls for Subscription */}
+                              <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] font-black uppercase text-brand-navy/40">Status:</span>
+                                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                    sub.status === "completed"
+                                      ? "bg-green-100 text-green-700"
+                                      : sub.isPaused
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-[#EBF4E0] text-brand-green"
+                                  }`}>
+                                    {sub.status === "completed" ? "🏆 Completed" : sub.isPaused ? "Paused" : "Active"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  {sub.status !== "completed" && (
+                                    <button
+                                      onClick={() => handleUpdateSubscriptionStatus(sub.id, "completed")}
+                                      className="px-2.5 py-1.5 bg-[#6B9E35] hover:bg-[#59832B] text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                      <span>Complete Plan</span>
+                                    </button>
+                                  )}
+
+                                  <button
+                                    onClick={() => handleDeleteSubscription(sub.id)}
+                                    className="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                                    title="Delete Plan"
+                                  >
+                                    <span>🗑️ Delete Plan</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {activeTab === "total" && (

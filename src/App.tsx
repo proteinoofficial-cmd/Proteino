@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShoppingBag, 
@@ -23,7 +23,9 @@ import {
   Heart, 
   TrendingUp,
   Key,
-  Check
+  Check,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -40,6 +42,9 @@ import { Product, UserProfile, ActiveSubscription, Order, CartItem } from './typ
 import { apiFetch } from './utils/api';
 import { auth, googleProvider } from './lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { useStoreHours } from './utils/storeHours';
+import DeliverySlotPicker from './components/DeliverySlotPicker';
+import { MORNING_DELIVERY_SLOTS, getTomorrowFormatted } from './utils/deliverySlots';
 
 export default function App() {
   // --- Profile State ---
@@ -74,10 +79,13 @@ export default function App() {
       return [];
     }
   });
+  const [favoriteToast, setFavoriteToast] = useState<{ show: boolean; product: Product } | null>(null);
+  const favoriteToastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- UI Routing States ---
   const [currentView, setCurrentView] = useState<'dashboard' | 'product_details' | 'active_plans' | 'orders' | 'profile' | 'subscriptions' | 'admin'>('dashboard');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [dashboardScrollY, setDashboardScrollY] = useState(0);
   const [showCart, setShowCart] = useState(false);
 
   // --- Auth Modal Overlay State ---
@@ -90,6 +98,10 @@ export default function App() {
     return localStorage.getItem('proteino_hide_nonveg_floating_notice') !== 'true';
   });
 
+  // --- Store Operating Sessions (6-10 AM, 5-10 PM) ---
+  const storeStatus = useStoreHours();
+  const [showClosedStoreModal, setShowClosedStoreModal] = useState<boolean>(false);
+
   const handleDismissNotice = () => {
     setShowFloatingNotice(false);
     localStorage.setItem('proteino_hide_nonveg_floating_notice', 'true');
@@ -99,7 +111,8 @@ export default function App() {
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
   const [selectedGymId, setSelectedGymId] = useState('g1');
-  const [checkoutTimeSlot, setCheckoutTimeSlot] = useState('2 PM');
+  const [checkoutTimeSlot, setCheckoutTimeSlot] = useState(MORNING_DELIVERY_SLOTS[0]);
+  const [orderScheduleMode, setOrderScheduleMode] = useState<'preorder' | 'instant'>('preorder');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [showCheckoutConfirmModal, setShowCheckoutConfirmModal] = useState(false);
@@ -489,14 +502,33 @@ export default function App() {
   // --- Favorites Toggle ---
   const handleToggleFavorite = (id: string) => {
     setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+      const isAdding = !prev.includes(id);
+      const next = isAdding ? [...prev, id] : prev.filter(f => f !== id);
       localStorage.setItem('proteino_favorites', JSON.stringify(next));
+
+      if (isAdding) {
+        const prod = PRODUCTS.find(p => p.id === id);
+        if (prod) {
+          if (favoriteToastTimeoutRef.current) {
+            clearTimeout(favoriteToastTimeoutRef.current);
+          }
+          setFavoriteToast({ show: true, product: prod });
+          favoriteToastTimeoutRef.current = setTimeout(() => {
+            setFavoriteToast(null);
+          }, 5000); // closes automatically after 5 seconds
+        }
+      }
       return next;
     });
   };
 
   // --- Cart Actions ---
   const handleAddToCart = (item: CartItem) => {
+    // If store is closed for live kitchen orders, seamlessly set mode to pre-order for tomorrow
+    if (!storeStatus.isOpen && item.purchaseOption === 'single') {
+      setOrderScheduleMode('preorder');
+    }
+
     setCart(prev => {
       const idx = prev.findIndex(i => i.product.id === item.product.id && i.purchaseOption === item.purchaseOption);
       let next;
@@ -545,6 +577,13 @@ export default function App() {
 
   // --- Checkout Action ---
   const handleCheckoutPrompt = () => {
+    const hasSingleMeals = cart.some(item => item.purchaseOption === 'single');
+    
+    // If user requested instant live prep during closed hours, switch them to pre-order for tomorrow
+    if (hasSingleMeals && orderScheduleMode === 'instant' && !storeStatus.isOpen) {
+      setOrderScheduleMode('preorder');
+    }
+
     // If not authenticated, require authentication before placing the order
     if (!profile) {
       setAuthModalNotice('Please sign in or create an account to confirm and place your order.');
@@ -567,6 +606,13 @@ export default function App() {
   };
 
   const executeCheckout = async () => {
+    const hasSingleMeals = cart.some(item => item.purchaseOption === 'single');
+    if (hasSingleMeals && orderScheduleMode === 'instant' && !storeStatus.isOpen) {
+      setShowCheckoutConfirmModal(false);
+      setShowClosedStoreModal(true);
+      return;
+    }
+
     setIsCheckingOut(true);
     setCheckoutError('');
 
@@ -608,9 +654,14 @@ export default function App() {
         hour12: true
       });
       const orderDateDisplay = `${formattedTimeStr}, ${formattedDateStr}`;
+      const tomorrowInfo = getTomorrowFormatted();
 
       // 1. If we have single meal items, place a single order on the server
       if (singleMealItems.length > 0) {
+        const isPreOrderMeal = orderScheduleMode === 'preorder' || !storeStatus.isOpen;
+        const finalDeliverySlot = isPreOrderMeal ? checkoutTimeSlot : 'Immediate Live Prep';
+        const finalScheduledDate = isPreOrderMeal ? tomorrowInfo.label : 'Today (Live Session)';
+
         const orderPayload = {
           items: singleMealItems,
           total: singleMealItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0),
@@ -620,7 +671,10 @@ export default function App() {
           customerPhone: cleanPhone,
           gymName: gym.name,
           gymLocation: gym.location,
-          deliveryTimeSlot: checkoutTimeSlot,
+          deliveryTimeSlot: finalDeliverySlot,
+          isPreOrder: isPreOrderMeal,
+          orderType: isPreOrderMeal ? 'preorder' : 'instant',
+          scheduledDate: finalScheduledDate,
           createdAt: nowObj.toISOString(),
           date: orderDateDisplay
         };
@@ -734,6 +788,11 @@ export default function App() {
 
   // --- Subscription Controls ---
   const handleBuySubscriptionDirect = async (newSub: ActiveSubscription) => {
+    if (!storeStatus.isOpen) {
+      setShowClosedStoreModal(true);
+      return;
+    }
+
     if (!profile) {
       setAuthModalNotice('Please sign in or create an account to activate your gym meal subscription.');
       setAuthModalStep('welcome');
@@ -882,6 +941,11 @@ export default function App() {
           {currentView === 'dashboard' && (
             <Dashboard 
               onProductClick={(p) => {
+                const currentY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                setDashboardScrollY(currentY);
+                try {
+                  sessionStorage.setItem('proteino_dashboard_scroll', currentY.toString());
+                } catch (e) {}
                 setSelectedProduct(p);
                 setCurrentView('product_details');
               }}
@@ -899,6 +963,9 @@ export default function App() {
               activeSubscriptions={activeSubscriptions}
               onViewActivePlans={() => setCurrentView('active_plans')}
               cart={cart}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+              savedScrollY={dashboardScrollY}
             />
           )}
 
@@ -956,6 +1023,9 @@ export default function App() {
           {currentView === 'profile' && (
             <ProfileView 
               profile={profile}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+              onAddToCart={handleDashboardAddToCart}
               onUpdateProfile={handleUpdateProfile}
               onSelectProduct={(p) => {
                 setSelectedProduct(p);
@@ -1197,6 +1267,21 @@ export default function App() {
 
                 {/* Items and Checkout Form */}
                 <div className="flex-grow overflow-y-auto px-5 py-4 flex flex-col gap-6">
+                  {/* Store Closed Banner inside Cart if ordering is currently outside session hours */}
+                  {!storeStatus.isOpen && (
+                    <div className="bg-gradient-to-r from-[#0F1E36] to-[#1E3250] text-white p-3.5 rounded-2xl border border-amber-400/40 shadow-sm flex items-start gap-2.5">
+                      <Moon className="w-4 h-4 text-amber-300 shrink-0 mt-0.5 animate-pulse" />
+                      <div className="flex-grow">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[9.5px] font-black uppercase text-amber-300">● Orders Paused</span>
+                          <span className="text-[9px] font-bold text-white/50">{storeStatus.currentTimeString}</span>
+                        </div>
+                        <p className="text-xs font-black text-white mt-0.5">{storeStatus.headline}</p>
+                        <p className="text-[10px] text-white/80 font-medium mt-0.5">{storeStatus.statusMessage}</p>
+                      </div>
+                    </div>
+                  )}
+
                   {cart.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center flex-grow">
                       <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center text-3xl mb-4">
@@ -1330,7 +1415,7 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Gym Dropdown Selector (Mandatory for subscription prep delivery) */}
+                        {/* Partner Gym Selector */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">Partner Gym Delivery Point</label>
                           <select
@@ -1352,26 +1437,79 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Time Slot Picker */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">Preferred Delivery Slot</label>
-                          <div className="grid grid-cols-4 gap-1.5 mt-1">
-                            {['12 PM', '2 PM', '4 PM', '6 PM'].map((slot) => (
+                        {/* Pre-Order for Tomorrow vs Live Prep Delivery Option */}
+                        {cart.some(item => item.purchaseOption === 'single') ? (
+                          <div className="flex flex-col gap-2 bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/60">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-brand-navy/50">Single Meal Delivery Type</span>
+                              {orderScheduleMode === 'preorder' && (
+                                <span className="text-[9px] font-black bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-200">
+                                  🗓️ {getTomorrowFormatted().label}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-slate-200/60">
                               <button
-                                key={slot}
                                 type="button"
-                                onClick={() => setCheckoutTimeSlot(slot)}
-                                className={`py-2 px-1 rounded-xl text-[9px] font-black text-center transition-all cursor-pointer border ${
-                                  checkoutTimeSlot === slot
-                                    ? 'bg-brand-green border-brand-green text-white shadow-sm'
-                                    : 'bg-[#FAF9F6] border-slate-200 text-brand-navy/60 hover:bg-slate-100'
+                                onClick={() => setOrderScheduleMode('preorder')}
+                                className={`py-2 px-2 rounded-lg text-[10.5px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                                  orderScheduleMode === 'preorder'
+                                    ? 'bg-[#0F1E36] text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-brand-navy'
                                 }`}
                               >
-                                {slot}
+                                <span>🗓️ Pre-Order (Tomorrow)</span>
                               </button>
-                            ))}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!storeStatus.isOpen) {
+                                    setShowClosedStoreModal(true);
+                                  } else {
+                                    setOrderScheduleMode('instant');
+                                  }
+                                }}
+                                className={`py-2 px-2 rounded-lg text-[10.5px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                                  orderScheduleMode === 'instant'
+                                    ? 'bg-brand-green text-white shadow-xs'
+                                    : storeStatus.isOpen
+                                    ? 'text-slate-600 hover:text-brand-navy'
+                                    : 'text-slate-400 opacity-60'
+                                }`}
+                              >
+                                <span>⚡ Live Kitchen Prep</span>
+                                {!storeStatus.isOpen && <span className="text-[8px] bg-slate-200 text-slate-600 px-1 py-0.2 rounded font-bold">Closed</span>}
+                              </button>
+                            </div>
+
+                            {orderScheduleMode === 'preorder' ? (
+                              <div className="mt-1">
+                                <DeliverySlotPicker
+                                  value={checkoutTimeSlot}
+                                  onChange={setCheckoutTimeSlot}
+                                  title="Select Tomorrow's Delivery Slot"
+                                  isPreOrder={true}
+                                  scheduledDateText={getTomorrowFormatted().label}
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-brand-green font-bold bg-brand-green/10 p-2.5 rounded-xl border border-brand-green/20">
+                                ⚡ Live order: Fresh kitchen prep starts immediately during our active open session.
+                              </p>
+                            )}
                           </div>
-                        </div>
+                        ) : (
+                          /* Subscription Delivery Slot Picker */
+                          <div className="flex flex-col gap-1.5">
+                            <DeliverySlotPicker
+                              value={checkoutTimeSlot}
+                              onChange={setCheckoutTimeSlot}
+                              title="Daily Subscription Delivery Slot"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Cost Summary Section */}
@@ -1499,9 +1637,22 @@ export default function App() {
                     </span>
                   </div>
 
+                  <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">Order Timing:</span>
+                    <span className="font-bold text-brand-navy">
+                      {cart.some(i => i.purchaseOption === 'single')
+                        ? (orderScheduleMode === 'preorder' ? `Pre-Order (${getTomorrowFormatted().label})` : 'Live Prep (Immediate)')
+                        : 'Daily Subscription Delivery'}
+                    </span>
+                  </div>
+
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
-                    <span className="font-bold text-brand-navy">{checkoutTimeSlot}</span>
+                    <span className="font-bold text-brand-navy">
+                      {cart.some(i => i.purchaseOption === 'single') && orderScheduleMode === 'instant'
+                        ? 'Immediate Dispatch'
+                        : checkoutTimeSlot}
+                    </span>
                   </div>
 
                   <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
@@ -1577,6 +1728,121 @@ export default function App() {
                 />
               </motion.div>
             </div>
+          )}
+        </AnimatePresence>
+
+        {/* =========================================================
+            STORE CLOSED / SESSION TIMING MODAL OVERLAY
+            ========================================================= */}
+        <AnimatePresence>
+          {showClosedStoreModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowClosedStoreModal(false)}
+                className="fixed inset-0 bg-[#0F1E36]/80 backdrop-blur-xs cursor-pointer z-40"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-amber-200 z-50 overflow-hidden text-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 mx-auto flex items-center justify-center mb-3.5 shadow-xs">
+                  <Clock className="w-7 h-7 animate-pulse text-amber-600" />
+                </div>
+
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-3 py-1 rounded-full inline-block mb-2">
+                  Ordering Currently Paused
+                </span>
+
+                <h3 className="text-base font-black text-brand-navy leading-snug">
+                  {storeStatus.headline}
+                </h3>
+
+                <p className="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
+                  {storeStatus.statusMessage}
+                </p>
+
+                <div className="bg-[#FAF9F6] border border-slate-200/80 rounded-2xl p-3.5 my-4 text-left flex flex-col gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Proteino Operating Hours:
+                  </span>
+                  <div className="flex flex-col gap-1.5 text-xs font-extrabold text-brand-navy">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                      <span className="flex items-center gap-1.5">
+                        <span>🌅</span>
+                        <span>Morning Session:</span>
+                      </span>
+                      <span className="text-brand-green">6:00 AM – 10:00 AM</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                      <span className="flex items-center gap-1.5">
+                        <span>🌆</span>
+                        <span>Evening Session:</span>
+                      </span>
+                      <span className="text-brand-green">5:00 PM – 10:00 PM</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowClosedStoreModal(false)}
+                  className="w-full py-3 bg-[#0F1E36] hover:bg-brand-navy text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  Understood, I'll Wait
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 5-Second Auto-Closing "Added to Favorites" Floating Popup */}
+        <AnimatePresence>
+          {favoriteToast && favoriteToast.show && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="fixed bottom-24 inset-x-4 max-w-sm mx-auto z-50 bg-[#0F1E36] text-white p-3.5 rounded-2xl shadow-2xl border border-brand-green/20 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/30">
+                  <Heart className="w-5 h-5 fill-red-400 text-red-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-black text-white">Added to Favorites</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+                  </div>
+                  <p className="text-[10px] text-white/60 font-semibold truncate max-w-[140px]">
+                    {favoriteToast.product.name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => {
+                    setFavoriteToast(null);
+                    setCurrentView('profile');
+                  }}
+                  className="px-3 py-1.5 bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                >
+                  Open Favorites
+                </button>
+                <button
+                  onClick={() => setFavoriteToast(null)}
+                  className="p-1 text-white/40 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
           )}
         </AnimatePresence>
 

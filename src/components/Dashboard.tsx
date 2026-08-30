@@ -15,11 +15,17 @@ import {
   ShoppingBag,
   Clock,
   LogIn,
-  User
+  User,
+  Moon,
+  Sun,
+  AlertCircle,
+  X,
+  Heart
 } from 'lucide-react';
 import { Product, ActiveSubscription, CartItem } from '../types';
 import { PRODUCTS } from '../data';
 import ProductImageSlider from './ProductImageSlider';
+import { useStoreHours } from '../utils/storeHours';
 
 interface DashboardProps {
   onProductClick: (product: Product) => void;
@@ -33,6 +39,9 @@ interface DashboardProps {
   activeSubscriptions: ActiveSubscription[];
   onViewActivePlans: () => void;
   cart?: CartItem[];
+  favorites?: string[];
+  onToggleFavorite?: (id: string) => void;
+  savedScrollY?: number;
 }
 
 export default function Dashboard({ 
@@ -46,14 +55,71 @@ export default function Dashboard({
   onCartClick,
   activeSubscriptions,
   onViewActivePlans,
-  cart = []
+  cart = [],
+  favorites = [],
+  onToggleFavorite,
+  savedScrollY = 0
 }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'meals' | 'weight_gain' | 'weight_loss' | 'salad'>('all');
   const [vegOnly, setVegOnly] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [addedProductId, setAddedProductId] = useState<string | null>(null);
+  const [showClosedNoticeModal, setShowClosedNoticeModal] = useState(false);
+  const storeStatus = useStoreHours();
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Restore scroll position when returning from product details or switching back to explore
+  useEffect(() => {
+    let targetY = savedScrollY || 0;
+    try {
+      const stored = sessionStorage.getItem('proteino_dashboard_scroll');
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          targetY = parsed;
+        }
+      }
+    } catch (e) {}
+
+    if (targetY > 0) {
+      window.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+      document.documentElement.scrollTop = targetY;
+      document.body.scrollTop = targetY;
+
+      // Delayed checks to account for image render & layout calculation
+      const t1 = setTimeout(() => {
+        window.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+        document.documentElement.scrollTop = targetY;
+        document.body.scrollTop = targetY;
+      }, 50);
+
+      const t2 = setTimeout(() => {
+        window.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+        document.documentElement.scrollTop = targetY;
+        document.body.scrollTop = targetY;
+      }, 150);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [savedScrollY]);
+
+  // Keep track of scroll position continuously so navigating away preserves the exact position
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      if (currentY >= 0) {
+        try {
+          sessionStorage.setItem('proteino_dashboard_scroll', currentY.toString());
+        } catch (e) {}
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const [notifications, setNotifications] = useState([
     { id: 1, text: '🍗 Non-Veg High-Protein Meals coming soon in 1–2 months! Fresh grilled chicken & egg fitness meals are in the pipeline.', read: false },
     { id: 2, text: 'Your fitness plan recommendation is ready! Check Profile.', read: false },
@@ -253,7 +319,33 @@ export default function Dashboard({
 
       <div className="px-5 flex flex-col gap-4">
 
-        {/* Compact Non-Veg Coming Soon Notice - Placed right above the banner */}
+        {/* Short & Compact Proteino Store Operating Sessions Banner - Positioned right UP of the non-veg notice */}
+        <div 
+          id="proteino-session-banner"
+          className={`rounded-2xl px-3.5 py-2.5 border shadow-2xs transition-all flex items-center justify-between gap-2.5 ${
+            storeStatus.isOpen
+              ? 'bg-[#0F1E36] border-emerald-500/40 text-white'
+              : 'bg-gradient-to-r from-[#0B1528] via-[#102244] to-[#18335D] border-sky-400/30 text-white'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm shrink-0">
+              {storeStatus.isOpen ? '🥗' : storeStatus.nextSession === 'evening' ? '🌆' : '🌅'}
+            </span>
+            <p className="text-xs font-black tracking-tight truncate text-white">
+              {storeStatus.shortNotice}
+            </p>
+          </div>
+          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shrink-0 border ${
+            storeStatus.isOpen 
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+              : 'bg-sky-500/20 text-sky-300 border-sky-400/40'
+          }`}>
+            {storeStatus.isOpen ? '● Live Now' : storeStatus.openBadgeText}
+          </span>
+        </div>
+
+        {/* Compact Non-Veg Coming Soon Notice - Placed right below the session timing banner */}
         <div className="bg-gradient-to-r from-amber-50 to-orange-50/80 border border-amber-200 rounded-2xl px-3.5 py-2 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-2">
             <span className="text-sm shrink-0">🍗</span>
@@ -541,6 +633,20 @@ export default function Dashboard({
                             <div className={`w-2.5 h-2.5 border ${product.isVeg ? 'border-green-600 bg-green-500 rounded-full' : 'border-red-600 bg-red-500 rounded-sm'}`} />
                           </div>
 
+                          {/* Heart Favorite Button */}
+                          {onToggleFavorite && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleFavorite(product.id);
+                              }}
+                              className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm border border-black/5 flex items-center justify-center shadow-xs hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                              title={favorites.includes(product.id) ? 'Remove from favorites' : 'Add to favorites'}
+                            >
+                              <Heart className={`w-3.5 h-3.5 ${favorites.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-slate-400 hover:text-red-400'} transition-colors`} />
+                            </button>
+                          )}
+
                           {/* Calories floating badge */}
                           <div className="absolute bottom-2 left-2 bg-brand-navy/85 backdrop-blur-sm px-2 py-0.5 rounded-full text-[9px] font-extrabold text-white z-10">
                             {product.calories} Kcal
@@ -588,6 +694,9 @@ export default function Dashboard({
                               e.stopPropagation();
                               onAddToCart(product);
                               setAddedProductId(product.id);
+                              setTimeout(() => {
+                                setAddedProductId(null);
+                              }, 1600);
                             }}
                             id={`btn-add-${product.id}`}
                             className={`py-1.5 px-2.5 rounded-xl font-black text-xs transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1 shrink-0 ${
@@ -620,6 +729,73 @@ export default function Dashboard({
         </div>
 
       </div>
+
+      {/* Store Closed Modal Dialog */}
+      <AnimatePresence>
+        {showClosedNoticeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowClosedNoticeModal(false)}
+              className="fixed inset-0 bg-[#0F1E36]/80 backdrop-blur-xs cursor-pointer z-40"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-amber-200 z-50 overflow-hidden text-center"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 mx-auto flex items-center justify-center mb-3.5 shadow-xs">
+                <Clock className="w-7 h-7 animate-pulse text-amber-600" />
+              </div>
+
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-3 py-1 rounded-full inline-block mb-2">
+                Ordering Currently Paused
+              </span>
+
+              <h3 className="text-base font-black text-brand-navy leading-snug">
+                {storeStatus.headline}
+              </h3>
+
+              <p className="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
+                {storeStatus.statusMessage}
+              </p>
+
+              <div className="bg-[#FAF9F6] border border-slate-200/80 rounded-2xl p-3.5 my-4 text-left flex flex-col gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Proteino Operating Hours:
+                </span>
+                <div className="flex flex-col gap-1.5 text-xs font-extrabold text-brand-navy">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                    <span className="flex items-center gap-1.5">
+                      <span>🌅</span>
+                      <span>Morning Session:</span>
+                    </span>
+                    <span className="text-brand-green">6:00 AM – 10:00 AM</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                    <span className="flex items-center gap-1.5">
+                      <span>🌆</span>
+                      <span>Evening Session:</span>
+                    </span>
+                    <span className="text-brand-green">5:00 PM – 10:00 PM</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowClosedNoticeModal(false)}
+                className="w-full py-3 bg-[#0F1E36] hover:bg-brand-navy text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all active:scale-95"
+              >
+                Understood, I'll Wait
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -13,19 +13,36 @@ import {
   TrendingUp,
   Check,
   Lock,
-  Mail
+  Mail,
+  Heart,
+  Plus,
+  Trash2,
+  Utensils
 } from 'lucide-react';
 import { UserProfile, Product } from '../types';
 import { PRODUCTS } from '../data';
 
 interface ProfileViewProps {
   profile: UserProfile | null;
+  favorites?: string[];
+  onToggleFavorite?: (id: string) => void;
+  onAddToCart?: (product: Product) => void;
   onUpdateProfile: (profile: UserProfile) => void;
   onSelectProduct: (product: Product) => void;
   onSignInClick?: () => void;
 }
 
-export default function ProfileView({ profile, onUpdateProfile, onSelectProduct, onSignInClick }: ProfileViewProps) {
+export default function ProfileView({ 
+  profile, 
+  favorites = [],
+  onToggleFavorite,
+  onAddToCart,
+  onUpdateProfile, 
+  onSelectProduct, 
+  onSignInClick 
+}: ProfileViewProps) {
+  const favoriteProducts = PRODUCTS.filter(p => favorites.includes(p.id));
+
   if (!profile) {
     return (
       <div className="flex flex-col h-full bg-[#FAF9F6] p-5 pb-28 overflow-y-auto select-none">
@@ -51,6 +68,83 @@ export default function ProfileView({ profile, onUpdateProfile, onSelectProduct,
           >
             Sign In / Create Account
           </button>
+        </div>
+
+        {/* Favorite Meals for Guest */}
+        <div className="mt-6 bg-white border border-brand-navy/5 rounded-3xl p-5 shadow-xs flex flex-col gap-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">
+                <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-brand-navy">My Favorite Meals</h3>
+                <p className="text-[10px] font-semibold text-brand-navy/50">Saved fitness meals for quick reordering</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono font-black text-brand-green bg-[#EBF4E0] px-2.5 py-0.5 rounded-full">
+              {favoriteProducts.length} {favoriteProducts.length === 1 ? 'Meal' : 'Meals'}
+            </span>
+          </div>
+
+          {favoriteProducts.length === 0 ? (
+            <div className="bg-[#FAF9F6] rounded-2xl p-5 border border-brand-navy/5 text-center flex flex-col items-center gap-2">
+              <Heart className="w-6 h-6 text-slate-300" />
+              <p className="text-xs font-bold text-brand-navy/70">No favorite meals saved yet</p>
+              <p className="text-[10px] text-brand-navy/50 max-w-xs leading-normal">
+                Tap the heart icon (❤️) on any meal in the menu to save it here for quick access.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {favoriteProducts.map(product => (
+                <div 
+                  key={product.id}
+                  className="bg-[#FAF9F6] border border-brand-navy/5 rounded-2xl p-3 flex items-center justify-between hover:border-brand-green/30 transition-all"
+                >
+                  <div 
+                    onClick={() => onSelectProduct(product)}
+                    className="flex items-center gap-3 cursor-pointer flex-grow min-w-0 mr-2"
+                  >
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="w-12 h-12 rounded-xl object-cover border border-brand-navy/5 shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-xs text-brand-navy truncate">{product.name}</h4>
+                      <p className="text-[10px] text-brand-navy/50 font-semibold mt-0.5 truncate">
+                        🔥 {product.calories} Kcal • 💪 {product.protein}g Protein
+                      </p>
+                      <span className="font-black text-xs text-brand-green">₹{product.price}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {onAddToCart && (
+                      <button
+                        onClick={() => onAddToCart(product)}
+                        className="px-3 py-1.5 bg-brand-green hover:bg-brand-green-hover text-white text-[11px] font-black rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add</span>
+                      </button>
+                    )}
+                    {onToggleFavorite && (
+                      <button
+                        onClick={() => onToggleFavorite(product.id)}
+                        className="p-1.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors cursor-pointer"
+                        title="Remove from favorites"
+                      >
+                        <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Feature Highlights */}
@@ -312,6 +406,85 @@ export default function ProfileView({ profile, onUpdateProfile, onSelectProduct,
             </div>
 
           </div>
+        </div>
+
+        {/* FAVORITES SECTION - LOCATED JUST DOWN OF THE CALCULATED DAILY MACRO GOAL */}
+        <div id="favorites-section" className="bg-white border border-brand-navy/5 rounded-3xl p-5 shadow-xs flex flex-col gap-3.5 scroll-mt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shadow-xs">
+                <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-brand-navy">Favorite Meals</h3>
+                <p className="text-[10px] font-semibold text-brand-navy/50">Your quick-reorder saved meals</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono font-black text-brand-green bg-[#EBF4E0] px-2.5 py-0.5 rounded-full border border-brand-green/20">
+              {favoriteProducts.length} {favoriteProducts.length === 1 ? 'Meal' : 'Meals'}
+            </span>
+          </div>
+
+          {favoriteProducts.length === 0 ? (
+            <div className="bg-[#FAF9F6] rounded-2xl p-5 border border-brand-navy/5 text-center flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <Heart className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-bold text-brand-navy/70">No favorite meals saved yet</p>
+              <p className="text-[10px] text-brand-navy/50 max-w-xs leading-normal">
+                Tap the heart icon (❤️) on any meal in the menu to save your high-protein favorites here.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {favoriteProducts.map(product => (
+                <div 
+                  key={product.id}
+                  className="bg-[#FAF9F6] border border-brand-navy/5 rounded-2xl p-3 flex items-center justify-between hover:border-brand-green/30 transition-all shadow-xs"
+                >
+                  <div 
+                    onClick={() => onSelectProduct(product)}
+                    className="flex items-center gap-3 cursor-pointer flex-grow min-w-0 mr-2"
+                  >
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="w-12 h-12 rounded-xl object-cover border border-brand-navy/5 shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-xs text-brand-navy truncate">{product.name}</h4>
+                      <p className="text-[10px] text-brand-navy/50 font-semibold mt-0.5 truncate">
+                        🔥 {product.calories} Kcal • 💪 {product.protein}g Protein
+                      </p>
+                      <span className="font-black text-xs text-brand-green">₹{product.price}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {onAddToCart && (
+                      <button
+                        onClick={() => onAddToCart(product)}
+                        className="px-3 py-1.5 bg-brand-green hover:bg-brand-green-hover text-white text-[11px] font-black rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add</span>
+                      </button>
+                    )}
+                    {onToggleFavorite && (
+                      <button
+                        onClick={() => onToggleFavorite(product.id)}
+                        className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors cursor-pointer"
+                        title="Remove from favorites"
+                      >
+                        <Heart className="w-3.5 h-3.5 fill-red-500 text-red-500" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Dynamic Meal Recommendations based on Target */}

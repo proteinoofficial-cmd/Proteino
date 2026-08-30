@@ -48,7 +48,7 @@ export default function OrdersTracker({
     return currentOrders.length > 0 ? 'current' : pastOrders.length > 0 ? 'past' : 'current';
   });
 
-  const [reorderSuccessId, setReorderSuccessId] = useState<string | null>(null);
+  const [reorderedOrderIds, setReorderedOrderIds] = useState<string[]>([]);
 
   // Auto-switch tabs when orders transition or new orders arrive
   useEffect(() => {
@@ -60,8 +60,7 @@ export default function OrdersTracker({
   const handleReorderClick = (order: Order) => {
     if (onReorder) {
       onReorder(order.items);
-      setReorderSuccessId(order.id);
-      setTimeout(() => setReorderSuccessId(null), 2500);
+      setReorderedOrderIds(prev => prev.includes(order.id) ? prev : [...prev, order.id]);
     }
   };
 
@@ -442,15 +441,16 @@ export default function OrdersTracker({
                       <button
                         onClick={() => handleReorderClick(order)}
                         className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                          reorderSuccessId === order.id
-                            ? 'bg-brand-navy text-brand-green'
+                          reorderedOrderIds.includes(order.id)
+                            ? 'bg-[#0F1E36] text-brand-green border border-brand-green/30 shadow-xs'
                             : 'bg-[#EBF4E0] hover:bg-brand-green hover:text-white text-brand-navy border border-brand-green/20'
                         }`}
+                        title={reorderedOrderIds.includes(order.id) ? "Added to Cart" : "Reorder this meal"}
                       >
-                        {reorderSuccessId === order.id ? (
+                        {reorderedOrderIds.includes(order.id) ? (
                           <>
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Added to Cart!</span>
+                            <Check className="w-3.5 h-3.5 text-brand-green" />
+                            <span>Added to Cart</span>
                           </>
                         ) : (
                           <>

@@ -5,22 +5,20 @@ import {
   Clock, 
   Check, 
   Calendar, 
-  Flame, 
   MapPin, 
-  ShieldCheck, 
-  Play, 
-  Pause, 
-  Trash2,
-  Repeat,
-  Compass,
+  User, 
+  X, 
+  Moon, 
+  Sun, 
   Zap,
-  Phone,
-  User,
-  X,
-  Dumbbell as GymIcon
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
-import { Product, UserProfile, ActiveSubscription, Gym } from '../types';
+import { Product, UserProfile, ActiveSubscription } from '../types';
 import { PRODUCTS, GYMS } from '../data';
+import { useStoreHours } from '../utils/storeHours';
+import DeliverySlotPicker from './DeliverySlotPicker';
+import { MORNING_DELIVERY_SLOTS, calculateMealsRemaining, validateCustomDeliveryTime } from '../utils/deliverySlots';
 
 interface SubscriptionManagerProps {
   profile: UserProfile | null;
@@ -39,11 +37,13 @@ export default function SubscriptionManager({
   onTogglePause,
   onRequireAuth
 }: SubscriptionManagerProps) {
+  const storeStatus = useStoreHours();
   // Buy plan states
   const [selectedProductId, setSelectedProductId] = useState<string>(PRODUCTS[0].id);
   const [selectedGymId, setSelectedGymId] = useState<string>(GYMS[0].id);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('2 PM');
-  const [durationWeeks, setDurationWeeks] = useState<number>(4); // Default 4 weeks = 26 days
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(MORNING_DELIVERY_SLOTS[0]);
+  const [durationMonths, setDurationMonths] = useState<1 | 2 | 3>(1); // 1 Month, 2 Months, 3 Months
+  const [isTimeSlotValid, setIsTimeSlotValid] = useState<boolean>(true);
 
   // Client verification form
   const [customerName, setCustomerName] = useState<string>(profile?.name || '');
@@ -51,6 +51,7 @@ export default function SubscriptionManager({
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  const [showClosedModal, setShowClosedModal] = useState<boolean>(false);
 
   React.useEffect(() => {
     setCustomerName(profile?.name || '');
@@ -60,16 +61,16 @@ export default function SubscriptionManager({
   const selectedProduct = PRODUCTS.find(p => p.id === selectedProductId) || PRODUCTS[0];
   const selectedGym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
 
-  // Subscription calculation
-  // Base 26-day monthly cycle with exact plan pricing from menu
-  const numDeliveryDays = durationWeeks === 4 ? 26 : durationWeeks === 8 ? 52 : 104;
-  const cycleMultiplier = durationWeeks / 4;
+  // Base 26-day monthly cycle (Excluding Sundays)
+  const numDeliveryDays = durationMonths * 26; // 26, 52, 78 meals
   const originalTotalPrice = selectedProduct.price * numDeliveryDays;
-  const finalPrice = Math.round((selectedProduct.monthlyPrice || Math.round(selectedProduct.price * 26 * 0.85)) * cycleMultiplier);
+  const singleMonthPrice = selectedProduct.monthlyPrice || Math.round(selectedProduct.price * 26 * 0.85);
+  const finalPrice = singleMonthPrice * durationMonths;
   const moneySaved = Math.max(0, originalTotalPrice - finalPrice);
 
   const handleSubscribeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!profile) {
       if (onRequireAuth) {
         onRequireAuth('Please sign in or create an account to activate your gym meal subscription.');
@@ -86,14 +87,24 @@ export default function SubscriptionManager({
       return;
     }
 
+    // Validate delivery time
+    if (selectedTimeSlot.toLowerCase().includes('custom')) {
+      const validation = validateCustomDeliveryTime(selectedTimeSlot);
+      if (!validation.isValid) {
+        setErrorMsg(`We cannot deliver at this time! ${validation.message}`);
+        return;
+      }
+    }
+
     setErrorMsg('');
     setShowConfirmModal(true);
   };
 
   const handleFinalConfirmOrder = () => {
+    const monthLabel = durationMonths === 1 ? '1-Month' : durationMonths === 2 ? '2-Month' : '3-Month';
     const newSubPayload = {
       planId: selectedProduct.id,
-      planName: `${selectedProduct.name} ${numDeliveryDays}-Day Subscription`,
+      planName: `${selectedProduct.name} ${monthLabel} Subscription (${numDeliveryDays} Meals)`,
       price: finalPrice,
       durationDays: numDeliveryDays,
       customerName,
@@ -125,40 +136,119 @@ export default function SubscriptionManager({
         </p>
       </div>
 
-      {/* RENDER ACTIVE SUBSCRIPTION IF WE HAVE ONE */}
-      {activeSubscription ? (
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/50 shadow-sm flex flex-col gap-5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${activeSubscription.isPaused ? 'bg-amber-100 text-amber-700' : 'bg-brand-green/10 text-brand-green'}`}>
-                ● {activeSubscription.isPaused ? 'PAUSED' : 'ACTIVE GYM PLAN'}
+      {/* Store Operating Hours & Ordering Session Banner */}
+      <div 
+        className={`rounded-3xl p-4 border shadow-sm transition-all relative overflow-hidden ${
+          storeStatus.isOpen
+            ? 'bg-gradient-to-r from-[#0F1E36] to-[#1a2f4c] text-white border-brand-green/30'
+            : 'bg-gradient-to-r from-[#0F1E36] via-[#162742] to-[#1E3250] text-white border-amber-400/40'
+        }`}
+      >
+        <div className="flex items-start gap-3.5 relative z-10">
+          <div className={`p-2.5 rounded-2xl shrink-0 flex items-center justify-center ${
+            storeStatus.isOpen ? 'bg-brand-green/20 text-brand-green border border-brand-green/40' : 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
+          }`}>
+            {storeStatus.isOpen ? (
+              <Sun className="w-5 h-5 text-brand-green" />
+            ) : (
+              <Moon className="w-5 h-5 text-amber-300 animate-pulse" />
+            )}
+          </div>
+          <div className="flex-grow">
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                storeStatus.isOpen
+                  ? 'bg-brand-green/20 text-brand-green border-brand-green/30'
+                  : 'bg-amber-400/20 text-amber-300 border-amber-400/30'
+              }`}>
+                {storeStatus.isOpen ? '● Ordering Live Now' : '● Pre-orders & Subscriptions Open'}
               </span>
-              <h3 className="font-extrabold text-brand-navy text-sm mt-1">{activeSubscription.planName}</h3>
+              <span className="text-[10px] font-extrabold text-white/50">{storeStatus.currentTimeString}</span>
             </div>
-            <span className="font-black text-sm text-brand-green">₹{activeSubscription.price}</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
-            <div className="bg-[#FAF9F6] p-3 rounded-2xl flex flex-col gap-1 border border-slate-200/20">
-              <span className="text-[9px] font-black uppercase text-brand-navy/40">Drop-off Point</span>
-              <p className="text-brand-navy font-black text-[11px] truncate">🏋️ {activeSubscription.gymName}</p>
-              <p className="text-[10px] text-slate-400 font-medium truncate">{activeSubscription.gymLocation}</p>
-            </div>
-            <div className="bg-[#FAF9F6] p-3 rounded-2xl flex flex-col gap-1 border border-slate-200/20">
-              <span className="text-[9px] font-black uppercase text-brand-navy/40">Preferred Time Slot</span>
-              <p className="text-brand-navy font-black text-[11px]">🕒 {activeSubscription.timeSlot}</p>
-              <p className="text-[10px] text-brand-green font-bold">Mon - Sat (Excl. Sundays)</p>
-            </div>
-          </div>
-
-          <div className="bg-[#0F1E36] text-white p-4 rounded-2xl flex items-center justify-between relative overflow-hidden border border-brand-green/20 shadow-xs">
-            <div>
-              <p className="text-[8px] text-brand-green font-black tracking-wider uppercase">Subscription Status</p>
-              <p className="text-xs font-black mt-1">26 Days Cycle • Monday to Saturday</p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Fresh daily gym drop-offs active (Excluding Sundays).</p>
+            <h4 className="text-xs sm:text-sm font-black text-white leading-snug">
+              {storeStatus.headline}
+            </h4>
+            <p className="text-[11px] font-semibold text-white/80 mt-1">
+              {storeStatus.statusMessage}
+            </p>
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-2 text-[10px] font-bold text-white/70 flex-wrap">
+              <span className="bg-white/10 px-2 py-0.5 rounded-md">🌅 Morning: 6:00 AM – 10:00 AM</span>
+              <span className="bg-white/10 px-2 py-0.5 rounded-md">🌆 Evening: 5:00 PM – 10:00 PM</span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* RENDER ACTIVE SUBSCRIPTION IF WE HAVE ONE */}
+      {activeSubscription ? (
+        (() => {
+          const stats = calculateMealsRemaining(
+            activeSubscription.startDate,
+            activeSubscription.durationDays,
+            activeSubscription.isPaused,
+            activeSubscription.pausedAt
+          );
+
+          return (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/50 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${activeSubscription.isPaused ? 'bg-amber-100 text-amber-700' : 'bg-brand-green/10 text-brand-green'}`}>
+                    ● {activeSubscription.isPaused ? 'PAUSED' : 'ACTIVE GYM PLAN'}
+                  </span>
+                  <h3 className="font-extrabold text-brand-navy text-sm mt-1">{activeSubscription.planName}</h3>
+                </div>
+                <span className="font-black text-sm text-brand-green">₹{activeSubscription.price}</span>
+              </div>
+
+              {/* Prominent Meals Remaining Tracker */}
+              <div className="bg-[#0F1E36] text-white p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden border border-brand-green/20 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] text-brand-green font-black tracking-wider uppercase flex items-center gap-1.5">
+                    🍱 MEALS REMAINING
+                  </span>
+                  <span className="text-[10px] font-black text-brand-green bg-brand-green/20 px-2.5 py-0.5 rounded-full border border-brand-green/30">
+                    {stats.percentage}% Completed
+                  </span>
+                </div>
+                
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-white font-display">
+                    {stats.mealsRemaining}
+                  </span>
+                  <span className="text-sm font-bold text-white/70">
+                    Meals Remaining (out of {stats.totalMeals})
+                  </span>
+                </div>
+
+                <div className="w-full bg-white/10 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className="h-full bg-brand-green rounded-full transition-all duration-500"
+                    style={{ width: `${stats.percentage}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] text-white/60 font-semibold pt-1">
+                  <span>Delivered: {stats.mealsDelivered} Meals</span>
+                  <span>Schedule: Mon–Sat (Excl. Sundays)</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
+                <div className="bg-[#FAF9F6] p-3 rounded-2xl flex flex-col gap-1 border border-slate-200/20">
+                  <span className="text-[9px] font-black uppercase text-brand-navy/40">Drop-off Point</span>
+                  <p className="text-brand-navy font-black text-[11px] truncate">🏋️ {activeSubscription.gymName}</p>
+                  <p className="text-[10px] text-slate-400 font-medium truncate">{activeSubscription.gymLocation}</p>
+                </div>
+                <div className="bg-[#FAF9F6] p-3 rounded-2xl flex flex-col gap-1 border border-slate-200/20">
+                  <span className="text-[9px] font-black uppercase text-brand-navy/40">Preferred Time Slot</span>
+                  <p className="text-brand-navy font-black text-[11px]">🕒 {activeSubscription.timeSlot}</p>
+                  <p className="text-[10px] text-brand-green font-bold">Mon - Sat (Excl. Sundays)</p>
+                </div>
+              </div>
+            </div>
+          );
+        })()
       ) : null}
 
       {/* SUBSCRIBE FORM FOR GYM PLANS */}
@@ -167,6 +257,17 @@ export default function SubscriptionManager({
           <Sparkles className="w-5 h-5 text-brand-green" />
           <span>Setup Gym Meal Subscription</span>
         </h3>
+
+        {/* Success Alert */}
+        {successMsg && (
+          <div className="bg-[#EBF4E0] border border-brand-green text-brand-navy p-4 rounded-2xl flex items-center gap-3">
+            <Check className="w-5 h-5 text-brand-green shrink-0" />
+            <div>
+              <h4 className="font-extrabold text-xs">Subscription Confirmed & Active!</h4>
+              <p className="text-[11px] text-brand-navy/70 mt-0.5">Your fresh gym meal deliveries have been scheduled Monday to Saturday (Excluding Sundays).</p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubscribeSubmit} className="flex flex-col gap-4">
           
@@ -224,13 +325,13 @@ export default function SubscriptionManager({
             </div>
           </div>
 
-          {/* 3. Duration Select */}
+          {/* 3. Duration Select: 1 Month, 2 Months, 3 Months (Excluding Sundays) */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">
                 3. Select Plan Duration
               </label>
-              <span className="text-[9px] font-black text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md">
+              <span className="text-[9.5px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300/60">
                 Excluding Sundays 🚫
               </span>
             </div>
@@ -242,41 +343,41 @@ export default function SubscriptionManager({
 
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: '26 Days', weeks: 4, desc: '1 Mo (Excl. Sun)' },
-                { label: '52 Days', weeks: 8, desc: '2 Mo (Excl. Sun)' },
-                { label: '104 Days', weeks: 16, desc: '4 Mo (Excl. Sun)' },
+                { months: 1 as const, label: '1 Month', meals: '26 Meals', desc: 'Excl. Sundays' },
+                { months: 2 as const, label: '2 Months', meals: '52 Meals', desc: 'Excl. Sundays' },
+                { months: 3 as const, label: '3 Months', meals: '78 Meals', desc: 'Excl. Sundays' },
               ].map(opt => (
                 <button
                   type="button"
-                  key={opt.weeks}
-                  onClick={() => setDurationWeeks(opt.weeks)}
-                  className={`py-2.5 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer ${durationWeeks === opt.weeks ? 'bg-brand-navy border-brand-navy text-white shadow-xs' : 'bg-white border-slate-200 text-brand-navy/70 hover:border-slate-300'}`}
+                  key={opt.months}
+                  onClick={() => setDurationMonths(opt.months)}
+                  className={`py-3 px-2 rounded-2xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    durationMonths === opt.months 
+                      ? 'bg-brand-navy border-brand-navy text-white shadow-sm' 
+                      : 'bg-white border-slate-200 text-brand-navy hover:border-brand-green/40 hover:bg-slate-50'
+                  }`}
                 >
-                  <span className="text-xs font-black leading-none">{opt.label}</span>
-                  <span className="text-[8px] font-bold mt-1 opacity-70 leading-none">{opt.desc}</span>
+                  <span className="text-xs font-black leading-tight">{opt.label}</span>
+                  <span className="text-[10px] font-extrabold text-brand-green mt-0.5 leading-none">{opt.meals}</span>
+                  <span className={`text-[8.5px] font-bold mt-1 leading-none ${durationMonths === opt.months ? 'text-white/70' : 'text-slate-400'}`}>
+                    {opt.desc}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* 4. Select Time Slot */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">
-              4. Daily Delivery Time Slot
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {['11 AM', '2 PM', '8 PM'].map(slot => (
-                <button
-                  type="button"
-                  key={slot}
-                  onClick={() => setSelectedTimeSlot(slot)}
-                  className={`py-2 px-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer ${selectedTimeSlot === slot ? 'bg-brand-green border-brand-green text-white' : 'bg-white border-slate-200 text-brand-navy/70'}`}
-                >
-                  <span className="text-xs font-black leading-none">{slot}</span>
-                  <span className="text-[8px] font-bold mt-1 opacity-60 leading-none">{slot === '11 AM' ? 'Post-Workout' : slot === '2 PM' ? 'Lunch Meal' : 'Dinner Meal'}</span>
-                </button>
-              ))}
-            </div>
+          <div className="bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/60">
+            <DeliverySlotPicker
+              value={selectedTimeSlot}
+              onChange={(slot) => {
+                setSelectedTimeSlot(slot);
+                setErrorMsg('');
+              }}
+              onValidationChange={(isValid) => setIsTimeSlotValid(isValid)}
+              title="4. Daily Delivery Time Slot"
+            />
           </div>
 
           {/* 5. Personal Checkout Verification */}
@@ -313,11 +414,11 @@ export default function SubscriptionManager({
           {/* Summary / Cost block */}
           <div className="bg-[#EBF4E0] border border-brand-green/10 rounded-2xl p-4 flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-extrabold text-brand-navy">
-              <span>Standard Rate ({numDeliveryDays} meals • Excl. Sundays):</span>
+              <span>Standard Single Meal Total ({numDeliveryDays} meals):</span>
               <span className="line-through text-slate-400">₹{originalTotalPrice}</span>
             </div>
             <div className="flex items-center justify-between text-xs font-black text-brand-green">
-              <span>Subscription Discount Savings:</span>
+              <span>Subscription Discount Savings (15% OFF):</span>
               <span>-₹{moneySaved}</span>
             </div>
             <div className="border-t border-brand-green/10 pt-2 flex items-center justify-between">
@@ -330,16 +431,22 @@ export default function SubscriptionManager({
           </div>
 
           {errorMsg && (
-            <p className="text-[10px] font-bold text-red-500 bg-red-50 p-2.5 rounded-lg border border-red-100">
-              ⚠️ {errorMsg}
-            </p>
+            <div className="text-xs font-bold text-red-900 bg-red-100 p-3 rounded-xl border border-red-300 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
           )}
 
           <button
             type="submit"
-            className="w-full py-4 bg-brand-green hover:bg-brand-green-hover text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+            disabled={!isTimeSlotValid}
+            className={`w-full py-4 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 ${
+              isTimeSlotValid
+                ? 'bg-brand-green hover:bg-brand-green-hover text-white active:scale-98 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
           >
-            <Zap className="w-4 h-4 text-white fill-current" /> Confirm Subscription • ₹{finalPrice}
+            <Zap className="w-4 h-4 text-white fill-current" /> Confirm {durationMonths}-Month Subscription • ₹{finalPrice}
           </button>
 
         </form>
@@ -384,7 +491,7 @@ export default function SubscriptionManager({
               <div className="bg-[#FAF9F6] border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-2 text-xs font-medium text-brand-navy/80">
                 <div className="flex justify-between items-start">
                   <span className="text-[11px] font-bold text-slate-500">Plan:</span>
-                  <span className="font-extrabold text-brand-navy text-right max-w-[200px]">{selectedProduct.name} ({numDeliveryDays} Meals)</span>
+                  <span className="font-extrabold text-brand-navy text-right max-w-[200px]">{selectedProduct.name} ({durationMonths} Mo - {numDeliveryDays} Meals)</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] font-bold text-slate-500">Total Price:</span>
@@ -398,7 +505,11 @@ export default function SubscriptionManager({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
-                  <span className="font-bold text-brand-navy">{selectedTimeSlot} Daily</span>
+                  <span className="font-bold text-brand-navy">{selectedTimeSlot}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-500">Schedule:</span>
+                  <span className="font-bold text-brand-green">Mon–Sat (Excl. Sundays)</span>
                 </div>
                 <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
                   <span className="text-[11px] font-bold text-slate-500">Subscriber:</span>
@@ -424,6 +535,73 @@ export default function SubscriptionManager({
                   <span>Confirm Order</span>
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Store Closed Modal Dialog */}
+      <AnimatePresence>
+        {showClosedModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowClosedModal(false)}
+              className="fixed inset-0 bg-[#0F1E36]/80 backdrop-blur-xs cursor-pointer z-40"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-amber-200 z-50 overflow-hidden text-center"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 mx-auto flex items-center justify-center mb-3.5 shadow-xs">
+                <Clock className="w-7 h-7 animate-pulse text-amber-600" />
+              </div>
+
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-3 py-1 rounded-full inline-block mb-2">
+                Ordering Currently Paused
+              </span>
+
+              <h3 className="text-base font-black text-brand-navy leading-snug">
+                {storeStatus.headline}
+              </h3>
+
+              <p className="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
+                {storeStatus.statusMessage}
+              </p>
+
+              <div className="bg-[#FAF9F6] border border-slate-200/80 rounded-2xl p-3.5 my-4 text-left flex flex-col gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Proteino Operating Hours:
+                </span>
+                <div className="flex flex-col gap-1.5 text-xs font-extrabold text-brand-navy">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                    <span className="flex items-center gap-1.5">
+                      <span>🌅</span>
+                      <span>Morning Session:</span>
+                    </span>
+                    <span className="text-brand-green">6:00 AM – 10:00 AM</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                    <span className="flex items-center gap-1.5">
+                      <span>🌆</span>
+                      <span>Evening Session:</span>
+                    </span>
+                    <span className="text-brand-green">5:00 PM – 10:00 PM</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowClosedModal(false)}
+                className="w-full py-3 bg-[#0F1E36] hover:bg-brand-navy text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all active:scale-95"
+              >
+                Understood, I'll Wait
+              </button>
             </motion.div>
           </div>
         )}

@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
-  Clock, 
   MapPin, 
-  Repeat, 
   Calendar, 
   Sparkles, 
   CheckCircle2, 
-  RotateCcw,
-  ChevronRight,
-  ShieldCheck,
-  TrendingUp
+  RotateCcw, 
+  ShieldCheck, 
+  TrendingUp,
+  Utensils,
+  PauseCircle
 } from 'lucide-react';
 import { ActiveSubscription } from '../types';
 import { PRODUCTS } from '../data';
+import { calculateMealsRemaining } from '../utils/deliverySlots';
 
 interface ActivePlansProps {
   activeSubscriptions: ActiveSubscription[];
@@ -32,14 +32,11 @@ export default function ActivePlans({
   isGuest, 
   onSignInClick 
 }: ActivePlansProps) {
-  const [now, setNow] = useState<number>(Date.now());
-
   // Separate Subscriptions into Current vs Past (Completed)
   const currentSubscriptions = activeSubscriptions.filter(s => s.status !== 'completed');
   const pastSubscriptions = activeSubscriptions.filter(s => s.status === 'completed');
 
   // Sub-tab state ('current' vs 'past')
-  // Default to 'current' if active plans exist, else 'past' if past plans exist
   const [activeTab, setActiveTab] = useState<'current' | 'past'>(() => {
     return currentSubscriptions.length > 0 ? 'current' : pastSubscriptions.length > 0 ? 'past' : 'current';
   });
@@ -51,45 +48,6 @@ export default function ActivePlans({
     }
   }, [currentSubscriptions.length, pastSubscriptions.length]);
 
-  // Ticking live countdown timer every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Helper to calculate countdown time remaining
-  const getSubscriptionCountdown = (expiryDateStr: string, isPaused: boolean, pausedAt?: string) => {
-    const expiry = new Date(expiryDateStr).getTime();
-    let diff = expiry - now;
-
-    if (isPaused && pausedAt) {
-      const pausedTime = new Date(pausedAt).getTime();
-      diff = expiry - pausedTime;
-    }
-
-    if (diff <= 0) return "Term Completed";
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  };
-
-  // Helper to calculate days passed out of 26
-  const getDaysProgress = (startDateStr: string, expiryDateStr: string) => {
-    const start = new Date(startDateStr).getTime();
-    const expiry = new Date(expiryDateStr).getTime();
-    const totalDuration = Math.max(1, expiry - start);
-    const elapsed = Math.max(0, Math.min(totalDuration, now - start));
-    const percentage = Math.min(100, Math.round((elapsed / totalDuration) * 100));
-    const daysElapsed = Math.min(26, Math.max(1, Math.round((elapsed / totalDuration) * 26)));
-    return { percentage, daysElapsed };
-  };
-
   return (
     <div className="flex flex-col h-full bg-[#FAF9F6] p-5 pb-28 overflow-y-auto select-none">
       
@@ -97,54 +55,53 @@ export default function ActivePlans({
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <span className="text-[10px] bg-[#EBF4E0] text-brand-green font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-            26-DAY MEAL PLANS
+            HIGH-PROTEIN MEAL PLANS
           </span>
         </div>
         <h2 className="text-2xl font-black text-brand-navy tracking-tight mt-1">Gym Subscriptions</h2>
         <p className="text-xs font-semibold text-brand-navy/50 mt-0.5">
-          Live daily drop-off countdowns & subscription history
+          Real-time meal tracking & drop-off history (Excluding Sundays)
         </p>
       </div>
 
       {/* Guest Mode Notice */}
       {isGuest && (
-        <div className="mb-5 bg-white border border-brand-green/20 rounded-3xl p-5 shadow-sm flex flex-col items-center text-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#EBF4E0] text-brand-green flex items-center justify-center text-2xl">
-            ⚡
+        <div className="mb-5 bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-black text-xs text-brand-navy">You are browsing as Guest</h3>
+              <p className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                Sign in to sync your active gym drop-offs and meal deliveries across devices.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-extrabold text-sm text-brand-navy">Track Your Gym Subscriptions</h3>
-            <p className="text-xs text-brand-navy/60 max-w-[260px] mt-1 leading-relaxed">
-              Sign in to monitor your 26-day meal plan status, daily delivery countdowns, and renewal records.
-            </p>
-          </div>
-          <button
-            onClick={onSignInClick}
-            className="w-full py-2.5 bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black rounded-xl shadow-sm cursor-pointer transition-all active:scale-95"
-          >
-            Sign In to View Subscriptions
-          </button>
+          {onSignInClick && (
+            <button
+              onClick={onSignInClick}
+              className="py-2.5 px-4 rounded-xl bg-brand-navy text-white text-xs font-black hover:bg-brand-navy/90 transition-all cursor-pointer whitespace-nowrap self-end sm:self-center"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       )}
 
-      {/* Dual Sub-Tabs (Current Subscription vs Past Subscription) */}
-      <div className="bg-white p-1.5 rounded-2xl border border-brand-navy/5 shadow-xs flex items-center gap-1.5 mb-5">
+      {/* Sub-Tabs: Current Subscriptions vs Past Subscriptions */}
+      <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-200/60 rounded-2xl mb-5">
         <button
           onClick={() => setActiveTab('current')}
-          id="tab-current-subscription"
-          className={`relative flex-1 py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'current'
-              ? 'bg-[#0F1E36] text-white shadow-sm'
-              : 'text-brand-navy/60 hover:text-brand-navy hover:bg-brand-navy/5'
+              ? 'bg-white text-brand-navy shadow-xs'
+              : 'text-slate-500 hover:text-brand-navy'
           }`}
         >
-          <span>Current Subscription</span>
+          <span>Active Plans</span>
           {currentSubscriptions.length > 0 && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === 'current' 
-                ? 'bg-brand-green text-white animate-pulse' 
-                : 'bg-brand-green/20 text-brand-green'
-            }`}>
+            <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.2 rounded-full font-mono">
               {currentSubscriptions.length}
             </span>
           )}
@@ -152,53 +109,47 @@ export default function ActivePlans({
 
         <button
           onClick={() => setActiveTab('past')}
-          id="tab-past-subscription"
-          className={`relative flex-1 py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'past'
-              ? 'bg-[#0F1E36] text-white shadow-sm'
-              : 'text-brand-navy/60 hover:text-brand-navy hover:bg-brand-navy/5'
+              ? 'bg-white text-brand-navy shadow-xs'
+              : 'text-slate-500 hover:text-brand-navy'
           }`}
         >
-          <span>Past Subscription</span>
+          <span>Past Subscriptions</span>
           {pastSubscriptions.length > 0 && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === 'past' 
-                ? 'bg-white/20 text-white' 
-                : 'bg-brand-navy/10 text-brand-navy/70'
-            }`}>
+            <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">
               {pastSubscriptions.length}
             </span>
           )}
         </button>
       </div>
 
-      {/* TAB CONTENT: CURRENT SUBSCRIPTION */}
-      {activeTab === 'current' && (
-        <div className="flex flex-col gap-4">
-          {currentSubscriptions.length === 0 ? (
-            <div className="bg-white rounded-3xl p-8 border border-slate-200/50 shadow-xs flex flex-col items-center text-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-brand-green border border-slate-200/50">
-                <Repeat className="w-8 h-8 text-slate-400" />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-sm text-brand-navy">No Active Subscriptions</h3>
-                <p className="text-xs text-brand-navy/50 font-medium mt-1.5 max-w-xs leading-relaxed">
-                  You don't have any ongoing 26-day gym meal subscriptions at this time.
-                </p>
-              </div>
+      {/* TAB CONTENT: CURRENT SUBSCRIPTIONS */}
+      {activeTab === 'current' ? (
+        currentSubscriptions.length === 0 ? (
+          <div className="bg-white rounded-3xl p-8 border border-slate-200/60 shadow-xs flex flex-col items-center justify-center text-center my-auto py-12">
+            <div className="w-16 h-16 rounded-2xl bg-[#EBF4E0] text-brand-green flex items-center justify-center mb-4">
+              <Utensils className="w-8 h-8" />
+            </div>
+            <h3 className="text-base font-black text-brand-navy">No Active Subscriptions</h3>
+            <p className="text-xs font-semibold text-slate-400 max-w-xs mt-1.5 leading-relaxed">
+              You don't have any ongoing gym meal subscriptions. Subscribe now to save 15% on fresh high-protein meals with convenient gym desk drop-off.
+            </p>
+            {onExploreClick && (
               <button
                 onClick={onExploreClick}
-                className="px-5 py-2.5 bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black rounded-xl shadow-sm cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+                className="mt-6 py-3 px-6 rounded-2xl bg-brand-green text-white font-black text-xs hover:bg-brand-green-hover transition-all shadow-sm active:scale-95 cursor-pointer"
               >
-                <span>Explore 26-Day Gym Plans</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                Explore Gym Meal Plans
               </button>
-            </div>
-          ) : (
-            currentSubscriptions.map((sub, idx) => {
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {currentSubscriptions.map((sub, idx) => {
               const product = PRODUCTS.find(p => p.id === sub.planId);
               const isVeg = product ? product.isVeg : sub.planName.toLowerCase().includes('veg');
-              const { percentage, daysElapsed } = getDaysProgress(sub.startDate, sub.expiryDate);
+              const stats = calculateMealsRemaining(sub.startDate, sub.durationDays, sub.isPaused, sub.pausedAt);
 
               return (
                 <motion.div
@@ -209,15 +160,26 @@ export default function ActivePlans({
                   className="bg-white rounded-3xl p-5 border border-slate-200/60 shadow-xs flex flex-col gap-4 relative overflow-hidden"
                 >
                   {/* Decorative Left Border */}
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-green" />
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${sub.isPaused ? 'bg-amber-400' : 'bg-brand-green'}`} />
 
                   {/* Header: Status Pill & Plan ID & Price */}
                   <div className="flex items-start justify-between pl-1">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full bg-[#EBF4E0] text-brand-green flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
-                          <span>ACTIVE MEAL PLAN</span>
+                        <span className={`text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                          sub.isPaused ? 'bg-amber-100 text-amber-700' : 'bg-[#EBF4E0] text-brand-green'
+                        }`}>
+                          {sub.isPaused ? (
+                            <>
+                              <PauseCircle className="w-2.5 h-2.5 text-amber-600" />
+                              <span>PLAN PAUSED</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+                              <span>ACTIVE GYM PLAN</span>
+                            </>
+                          )}
                         </span>
                         <span className="text-[9px] text-slate-400 font-mono font-bold">#{sub.id}</span>
                       </div>
@@ -225,7 +187,7 @@ export default function ActivePlans({
                         {sub.planName}
                       </h3>
                       <p className="text-[10.5px] font-semibold text-slate-400 mt-0.5">
-                        26 Daily Drop-offs • 1 Fresh Meal / Day
+                        {stats.totalMeals} Scheduled Meals • Mon–Sat (Excl. Sundays)
                       </p>
                     </div>
 
@@ -261,59 +223,65 @@ export default function ActivePlans({
                     </div>
                   )}
 
-                  {/* 26-Day Progress Bar */}
-                  <div className="bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/40 flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-black">
-                      <span className="text-brand-navy flex items-center gap-1">
-                        <TrendingUp className="w-3.5 h-3.5 text-brand-green" />
-                        <span>Cycle Progress</span>
+                  {/* Meals Remaining Highlight Banner (Replaces Timer Countdown) */}
+                  <div className="bg-[#0F1E36] text-white p-4 rounded-2xl border border-brand-green/10 flex flex-col gap-2.5 relative overflow-hidden shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] text-brand-green font-black uppercase tracking-wider flex items-center gap-1">
+                        🍱 MEALS REMAINING
                       </span>
-                      <span className="text-brand-green font-mono">
-                        Day {daysElapsed} / 26 ({percentage}%)
+                      <span className="text-[10px] font-black text-brand-green bg-brand-green/20 px-2.5 py-0.5 rounded-full border border-brand-green/30">
+                        {stats.percentage}% Delivered
                       </span>
                     </div>
-                    <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-white font-display">
+                          {stats.mealsRemaining}
+                        </span>
+                        <span className="text-xs font-bold text-white/70">
+                          Meals Remaining (out of {stats.totalMeals})
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-white/50">
+                        Delivered: {stats.mealsDelivered}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
                       <div 
                         className="h-full rounded-full bg-brand-green transition-all duration-500" 
-                        style={{ width: `${percentage}%` }}
+                        style={{ width: `${stats.percentage}%` }}
                       />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[9.5px] text-white/60 font-semibold pt-0.5">
+                      <span>Cycle: Day {stats.mealsDelivered + 1} of {stats.totalMeals}</span>
+                      <span>Delivery: Mon–Sat (Excl. Sundays)</span>
                     </div>
                   </div>
 
-                  {/* Countdown Timer & Gym Drop-off Desk Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    
-                    {/* Live Timer Countdown */}
-                    <div className="bg-[#0F1E36] text-white p-3.5 rounded-2xl border border-brand-green/10 flex flex-col justify-between relative overflow-hidden shadow-xs">
-                      <div className="absolute right-2.5 top-2.5 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-green opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-green"></span>
-                      </div>
-                      <span className="text-[7.5px] text-brand-green font-black uppercase tracking-wider flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        ⏳ TIME REMAINING
-                      </span>
-                      <p className="font-mono font-black text-xs text-white mt-1.5 tracking-tight">
-                        {getSubscriptionCountdown(sub.expiryDate, false)}
-                      </p>
-                    </div>
-
-                    {/* Destination Desk */}
-                    <div className="bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/40 flex flex-col justify-between">
-                      <span className="text-[7.5px] text-brand-navy/40 font-black uppercase tracking-wider flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-brand-green" />
-                        PARTNER GYM DROP-OFF
-                      </span>
+                  {/* Gym Drop-off Desk Details */}
+                  <div className="bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/40 flex flex-col justify-between">
+                    <span className="text-[7.5px] text-brand-navy/40 font-black uppercase tracking-wider flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-brand-green" />
+                      PARTNER GYM DROP-OFF DESK
+                    </span>
+                    <div className="flex items-center justify-between mt-1">
                       <div>
-                        <p className="font-extrabold text-[11px] text-brand-navy mt-1 truncate">
+                        <p className="font-extrabold text-[11px] text-brand-navy truncate">
                           🏋️ {sub.gymName}
                         </p>
                         <p className="text-[9.5px] text-brand-navy/60 font-medium truncate mt-0.5">
-                          {sub.gymLocation} • {sub.timeSlot}
+                          {sub.gymLocation}
                         </p>
                       </div>
+                      <div className="text-right">
+                        <span className="text-[10.5px] font-black text-brand-green bg-brand-green/10 px-2.5 py-1 rounded-xl border border-brand-green/20">
+                          🕒 {sub.timeSlot}
+                        </span>
+                      </div>
                     </div>
-
                   </div>
 
                   {/* Schedule Dates & Live Desk Status */}
@@ -322,7 +290,7 @@ export default function ActivePlans({
                       <Calendar className="w-3.5 h-3.5 text-brand-green shrink-0" />
                       <span>Started: {new Date(sub.startDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</span>
                       <span className="mx-1">•</span>
-                      <span>Expires: {new Date(sub.expiryDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</span>
+                      <span>Schedule: Mon–Sat (Excl. Sundays)</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-brand-navy/70 text-[9.5px] font-bold">
@@ -333,13 +301,11 @@ export default function ActivePlans({
 
                 </motion.div>
               );
-            })
-          )}
-        </div>
-      )}
-
-      {/* TAB CONTENT: PAST SUBSCRIPTION */}
-      {activeTab === 'past' && (
+            })}
+          </div>
+        )
+      ) : (
+        /* TAB CONTENT: PAST SUBSCRIPTIONS */
         <div className="flex flex-col gap-4">
           {pastSubscriptions.length === 0 ? (
             <div className="bg-white rounded-3xl p-8 border border-slate-200/50 shadow-xs flex flex-col items-center text-center gap-4">
@@ -349,7 +315,7 @@ export default function ActivePlans({
               <div>
                 <h3 className="font-extrabold text-sm text-brand-navy">No Past Subscriptions</h3>
                 <p className="text-xs text-brand-navy/50 font-medium mt-1.5 max-w-xs leading-relaxed">
-                  When your 26-day meal plan cycles complete their delivery term, they will be archived here.
+                  When your meal plan cycles complete their delivery term, they will be archived here.
                 </p>
               </div>
               <button
@@ -389,7 +355,7 @@ export default function ActivePlans({
                         {sub.planName}
                       </h3>
                       <p className="text-[10.5px] font-semibold text-slate-400 mt-0.5">
-                        26/26 Meals Delivered Successfully
+                        {sub.durationDays} Meals Delivered Successfully
                       </p>
                     </div>
 
@@ -399,7 +365,7 @@ export default function ActivePlans({
                     </div>
                   </div>
 
-                  {/* Macromolecules Bar */}
+                  {/* Macro Nutrients Bar */}
                   {product && (
                     <div className="bg-[#FAF9F6] p-3 rounded-2xl border border-slate-200/30 flex items-center justify-between opacity-85">
                       <div className="flex items-center gap-2">
@@ -422,28 +388,11 @@ export default function ActivePlans({
                     </div>
                   )}
 
-                  {/* Completion Certificate Banner */}
-                  <div className="bg-emerald-50/60 border border-emerald-500/20 p-3.5 rounded-2xl flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-brand-navy">
-                          🎉 Term Accomplished!
-                        </p>
-                        <p className="text-[10px] text-brand-navy/60 font-semibold mt-0.5 leading-relaxed">
-                          All 26 daily high-protein drop-offs were completed at {sub.gymName}.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Summary Details & Re-subscribe Action */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
                     <div className="flex flex-col gap-0.5 text-[10px] text-slate-500 font-semibold">
                       <span>🏋️ Drop-off Gym: <strong className="text-brand-navy">{sub.gymName}</strong></span>
-                      <span>📅 Term: {new Date(sub.startDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })} — {new Date(sub.expiryDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</span>
+                      <span>📅 Schedule: Mon–Sat (Excl. Sundays)</span>
                     </div>
 
                     <button
@@ -451,7 +400,7 @@ export default function ActivePlans({
                       className="w-full sm:w-auto px-4 py-2.5 bg-brand-green hover:bg-brand-green-hover text-white font-extrabold text-xs rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>Renew 26-Day Plan</span>
+                      <span>Renew Plan</span>
                     </button>
                   </div>
 
