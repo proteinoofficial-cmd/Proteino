@@ -3,9 +3,10 @@
 
 let sharedAudioContext: AudioContext | null = null;
 let cachedBlobWavUrl: string | null = null;
+let cachedPreOrderBlobWavUrl: string | null = null;
 let isAudioUnlocked = false;
 
-// Create 16-bit PCM WAV binary for universal Desktop & Mobile HTML5 Audio playback
+// Create 16-bit PCM WAV binary for universal Desktop & Mobile HTML5 Audio playback (Normal Orders)
 function buildLoudChimeWavBlob(): string {
   if (cachedBlobWavUrl) return cachedBlobWavUrl;
 
@@ -37,14 +38,11 @@ function buildLoudChimeWavBlob(): string {
     view.setUint32(40, totalSamples * 2, true);
 
     // 4. Generate high-visibility, crisp restaurant bell chords
-    // Chord 1 (0.0s - 0.7s): High C Major bell (523.25Hz, 659.25Hz, 1046.5Hz, 1318.5Hz)
-    // Chord 2 (0.45s - 1.2s): High G Major resonant chime (783.99Hz, 987.77Hz, 1567.98Hz)
-    // Chord 3 (0.95s - 2.0s): High C6 triple ring (1046.5Hz, 1318.5Hz, 2093.0Hz)
     for (let i = 0; i < totalSamples; i++) {
       const t = i / sampleRate;
       let sample = 0;
 
-      // Note 1
+      // Note 1 (Ding)
       if (t >= 0.0 && t < 0.8) {
         const decay = Math.exp(-t * 5.0);
         const wave = 
@@ -54,7 +52,7 @@ function buildLoudChimeWavBlob(): string {
         sample += wave * decay;
       }
 
-      // Note 2 (Ding)
+      // Note 2 (Dong)
       if (t >= 0.35 && t < 1.3) {
         const t2 = t - 0.35;
         const decay2 = Math.exp(-t2 * 4.5);
@@ -65,7 +63,7 @@ function buildLoudChimeWavBlob(): string {
         sample += wave2 * decay2;
       }
 
-      // Note 3 (Dong - High Clarity Bell Finish)
+      // Note 3 (High Clarity Bell Finish)
       if (t >= 0.75 && t < 2.0) {
         const t3 = t - 0.75;
         const decay3 = Math.exp(-t3 * 3.5);
@@ -93,6 +91,89 @@ function buildLoudChimeWavBlob(): string {
   }
 }
 
+// Create distinct Pre-Order futuristic harmonic sequence WAV (Ascending crystal chime)
+function buildPreOrderChimeWavBlob(): string {
+  if (cachedPreOrderBlobWavUrl) return cachedPreOrderBlobWavUrl;
+
+  try {
+    const sampleRate = 44100;
+    const duration = 2.2; // 2.2 seconds
+    const totalSamples = Math.floor(sampleRate * duration);
+    const byteLength = 44 + totalSamples * 2;
+    const buffer = new ArrayBuffer(byteLength);
+    const view = new DataView(buffer);
+
+    writeAscii(view, 0, 'RIFF');
+    view.setUint32(4, 36 + totalSamples * 2, true);
+    writeAscii(view, 8, 'WAVE');
+
+    writeAscii(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+
+    writeAscii(view, 36, 'data');
+    view.setUint32(40, totalSamples * 2, true);
+
+    // 4-Note Ascending Crystal Harp / Electronic Chime:
+    // Note 1 (0.00s): A4 (440.00 Hz) + E5 (659.25 Hz)
+    // Note 2 (0.22s): C#5 (554.37 Hz) + A5 (880.00 Hz)
+    // Note 3 (0.45s): E5 (659.25 Hz) + C#6 (1108.73 Hz)
+    // Note 4 (0.70s): A5 (880.00 Hz) + E6 (1318.51 Hz) + A6 (1760.00 Hz) Shimmer
+    for (let i = 0; i < totalSamples; i++) {
+      const t = i / sampleRate;
+      let sample = 0;
+
+      // Note 1 (Pulse 1)
+      if (t >= 0.0 && t < 0.9) {
+        const d = Math.exp(-t * 5.5);
+        sample += (Math.sin(2 * Math.PI * 440.0 * t) * 0.4 + Math.sin(2 * Math.PI * 659.25 * t) * 0.3) * d;
+      }
+
+      // Note 2 (Pulse 2)
+      if (t >= 0.22 && t < 1.2) {
+        const t2 = t - 0.22;
+        const d2 = Math.exp(-t2 * 5.0);
+        sample += (Math.sin(2 * Math.PI * 554.37 * t2) * 0.45 + Math.sin(2 * Math.PI * 880.0 * t2) * 0.35) * d2;
+      }
+
+      // Note 3 (Pulse 3)
+      if (t >= 0.45 && t < 1.6) {
+        const t3 = t - 0.45;
+        const d3 = Math.exp(-t3 * 4.2);
+        sample += (Math.sin(2 * Math.PI * 659.25 * t3) * 0.45 + Math.sin(2 * Math.PI * 1108.73 * t3) * 0.35) * d3;
+      }
+
+      // Note 4 (Ascending Climax Ring)
+      if (t >= 0.70 && t < 2.2) {
+        const t4 = t - 0.70;
+        const d4 = Math.exp(-t4 * 2.8);
+        sample += (
+          Math.sin(2 * Math.PI * 880.0 * t4) * 0.45 + 
+          Math.sin(2 * Math.PI * 1318.51 * t4) * 0.40 + 
+          Math.sin(2 * Math.PI * 1760.0 * t4) * 0.35 +
+          Math.sin(2 * Math.PI * 2637.0 * t4) * 0.20
+        ) * d4;
+      }
+
+      sample = Math.max(-0.98, Math.min(0.98, sample * 1.9));
+      const pcm16 = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(44 + i * 2, pcm16, true);
+    }
+
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    cachedPreOrderBlobWavUrl = URL.createObjectURL(blob);
+    return cachedPreOrderBlobWavUrl;
+  } catch (err) {
+    console.warn("Pre-order WAV Blob error:", err);
+    return "";
+  }
+}
+
 function writeAscii(view: DataView, offset: number, text: string) {
   for (let i = 0; i < text.length; i++) {
     view.setUint8(offset + i, text.charCodeAt(i));
@@ -116,44 +197,37 @@ export function initAudioUnlock() {
         isAudioUnlocked = true;
       }
     }
-    // Pre-create the WAV blob
+    // Pre-create the WAV blobs
     buildLoudChimeWavBlob();
+    buildPreOrderChimeWavBlob();
   } catch (e) {
     console.warn("Audio unlock warning:", e);
   }
 }
 
-// Play sound simultaneously using Web Audio API + HTML5 Audio element for 100% desktop compatibility
+// Play sound for Normal / Single Meal / Instant Orders
 export function playOrderAlertSound(): Promise<void> {
   return new Promise(async (resolve) => {
     initAudioUnlock();
 
-    let playedHTML5 = false;
-
-    // --- STRATEGY 1: HTML5 Audio with WAV Blob (Most reliable on Desktop Chrome/Edge/Firefox) ---
+    // Strategy 1: HTML5 Audio with WAV Blob
     try {
       const wavUrl = buildLoudChimeWavBlob();
       if (wavUrl) {
         const audio = new Audio(wavUrl);
-        audio.volume = 1.0; // Max volume
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            playedHTML5 = true;
-          }).catch((err) => {
-            console.warn("HTML5 audio autoplay prevented by browser policy:", err);
-          });
-        }
+        audio.volume = 1.0;
+        audio.play().catch((err) => {
+          console.warn("HTML5 normal order audio autoplay error:", err);
+        });
       }
     } catch (e) {
       console.warn("HTML5 Audio player error:", e);
     }
 
-    // --- STRATEGY 2: Web Audio API Oscillator Bell Synthesis (Crisp, High-Gain Synth) ---
+    // Strategy 2: Web Audio API Oscillator Bell Synthesis
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
-        // Always instantiate or resume context
         let ctx = sharedAudioContext;
         if (!ctx || ctx.state === 'closed') {
           ctx = new AudioCtx();
@@ -163,71 +237,108 @@ export function playOrderAlertSound(): Promise<void> {
           await ctx.resume();
         }
 
-        const now = ctx.currentTime + 0.02; // Small offset to avoid past-timestamp dropouts
-
-        // Primary Master Output
+        const now = ctx.currentTime + 0.02;
         const master = ctx.createGain();
         master.gain.setValueAtTime(1.0, now);
         master.connect(ctx.destination);
 
-        // Bell Frequencies (Restaurant Chime: D5, A5, D6, F#6, A6)
         const chimeNotes = [
-          { freq: 587.33, start: 0.00, dur: 0.50, vol: 0.6 },  // D5
-          { freq: 880.00, start: 0.12, dur: 0.65, vol: 0.75 }, // A5
-          { freq: 1174.66, start: 0.35, dur: 0.85, vol: 0.85 }, // D6
-          { freq: 1479.98, start: 0.48, dur: 0.95, vol: 0.75 }, // F#6
-          { freq: 1760.00, start: 0.52, dur: 1.10, vol: 0.90 }, // A6
+          { freq: 587.33, start: 0.00, dur: 0.50, vol: 0.6 },
+          { freq: 880.00, start: 0.12, dur: 0.65, vol: 0.75 },
+          { freq: 1174.66, start: 0.35, dur: 0.85, vol: 0.85 },
+          { freq: 1479.98, start: 0.48, dur: 0.95, vol: 0.75 },
+          { freq: 1760.00, start: 0.52, dur: 1.10, vol: 0.90 },
         ];
 
         chimeNotes.forEach((n) => {
           if (!ctx) return;
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-
           osc.type = "sine";
           osc.frequency.setValueAtTime(n.freq, now + n.start);
-
-          // Linear rise, exponential decay
           gain.gain.setValueAtTime(0.001, now + n.start);
           gain.gain.linearRampToValueAtTime(n.vol, now + n.start + 0.015);
           gain.gain.setTargetAtTime(0.0001, now + n.start + 0.03, n.dur / 4);
-
           osc.connect(gain);
           gain.connect(master);
-
           osc.start(now + n.start);
           osc.stop(now + n.start + n.dur);
-        });
-
-        // Second Repeat Bell (Echo chime for loud recognition)
-        const repeatTime = now + 0.95;
-        const repeatNotes = [
-          { freq: 880.00, start: 0.00, dur: 0.5, vol: 0.7 },
-          { freq: 1174.66, start: 0.12, dur: 0.7, vol: 0.8 },
-          { freq: 1760.00, start: 0.22, dur: 0.9, vol: 0.85 }
-        ];
-
-        repeatNotes.forEach((n) => {
-          if (!ctx) return;
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-
-          osc2.type = "sine";
-          osc2.frequency.setValueAtTime(n.freq, repeatTime + n.start);
-
-          gain2.gain.setValueAtTime(0.001, repeatTime + n.start);
-          gain2.gain.linearRampToValueAtTime(n.vol, repeatTime + n.start + 0.015);
-          gain2.gain.setTargetAtTime(0.0001, repeatTime + n.start + 0.03, n.dur / 4);
-
-          osc2.connect(gain2);
-          gain2.connect(master);
-
-          osc2.start(repeatTime + n.start);
-          osc2.stop(repeatTime + n.start + n.dur);
         });
       }
     } catch (synthErr) {
       console.warn("Web Audio synth alert warning:", synthErr);
+    }
+
+    resolve();
+  });
+}
+
+// Play distinct sound for PRE-ORDERS (Crisp ascending crystal arpeggio + shimmer chime)
+export function playPreOrderAlertSound(): Promise<void> {
+  return new Promise(async (resolve) => {
+    initAudioUnlock();
+
+    // Strategy 1: HTML5 Audio with Distinct Pre-Order WAV Blob
+    try {
+      const wavUrl = buildPreOrderChimeWavBlob();
+      if (wavUrl) {
+        const audio = new Audio(wavUrl);
+        audio.volume = 1.0;
+        audio.play().catch((err) => {
+          console.warn("HTML5 pre-order audio autoplay error:", err);
+        });
+      }
+    } catch (e) {
+      console.warn("HTML5 Pre-order audio player error:", e);
+    }
+
+    // Strategy 2: Web Audio API Oscillator Arpeggio Synthesis (Distinct Ascending Futuristic Chords)
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) {
+        let ctx = sharedAudioContext;
+        if (!ctx || ctx.state === 'closed') {
+          ctx = new AudioCtx();
+          sharedAudioContext = ctx;
+        }
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
+        const now = ctx.currentTime + 0.02;
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(1.0, now);
+        master.connect(ctx.destination);
+
+        // Harmonic ascending 5-note melodic chime (distinct from normal order bell)
+        const preOrderChimes = [
+          { freq: 440.00, start: 0.00, dur: 0.65, vol: 0.65, type: 'triangle' as OscillatorType },  // A4
+          { freq: 554.37, start: 0.18, dur: 0.70, vol: 0.70, type: 'triangle' as OscillatorType },  // C#5
+          { freq: 659.25, start: 0.36, dur: 0.80, vol: 0.75, type: 'sine' as OscillatorType },      // E5
+          { freq: 880.00, start: 0.54, dur: 0.95, vol: 0.85, type: 'sine' as OscillatorType },      // A5
+          { freq: 1318.51, start: 0.72, dur: 1.30, vol: 0.90, type: 'sine' as OscillatorType },     // E6
+          { freq: 1760.00, start: 0.76, dur: 1.40, vol: 0.85, type: 'sine' as OscillatorType },     // A6 Shimmer
+        ];
+
+        preOrderChimes.forEach((n) => {
+          if (!ctx) return;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = n.type;
+          osc.frequency.setValueAtTime(n.freq, now + n.start);
+
+          gain.gain.setValueAtTime(0.001, now + n.start);
+          gain.gain.linearRampToValueAtTime(n.vol, now + n.start + 0.02);
+          gain.gain.setTargetAtTime(0.0001, now + n.start + 0.04, n.dur / 3.5);
+
+          osc.connect(gain);
+          gain.connect(master);
+          osc.start(now + n.start);
+          osc.stop(now + n.start + n.dur);
+        });
+      }
+    } catch (synthErr) {
+      console.warn("Web Audio pre-order synth warning:", synthErr);
     }
 
     resolve();

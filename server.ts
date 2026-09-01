@@ -101,6 +101,7 @@ app.use(async (req, res, next) => {
 let store = {
   orders: [] as any[],
   subscriptions: [] as any[],
+  deletedSubscriptions: [] as any[],
   users: [] as any[]
 };
 
@@ -111,8 +112,9 @@ if (fs.existsSync(DATA_FILE)) {
     store = JSON.parse(data);
     if (!Array.isArray(store.orders)) store.orders = [];
     if (!Array.isArray(store.subscriptions)) store.subscriptions = [];
+    if (!Array.isArray(store.deletedSubscriptions)) store.deletedSubscriptions = [];
     if (!Array.isArray(store.users)) store.users = [];
-    console.log("Loaded data store from file with", store.orders.length, "orders and", store.subscriptions.length, "subscriptions.");
+    console.log("Loaded data store from file with", store.orders.length, "orders,", store.subscriptions.length, "subscriptions, and", store.deletedSubscriptions.length, "deleted plans.");
   } catch (err) {
     console.error("Failed to parse data-store.json, using fresh store.", err);
   }
@@ -146,6 +148,7 @@ if (fs.existsSync(DATA_FILE)) {
       deliveryTimeRemaining: 24
     }
   ];
+  store.deletedSubscriptions = [];
 }
 
 // Ensure there is at least Sarah Connor as default user for testing
@@ -189,11 +192,13 @@ async function loadStoreFromFirebase(force = false) {
       if (dbStore) {
         if (Array.isArray(dbStore.orders)) store.orders = dbStore.orders;
         if (Array.isArray(dbStore.subscriptions)) store.subscriptions = dbStore.subscriptions;
+        if (Array.isArray(dbStore.deletedSubscriptions)) store.deletedSubscriptions = dbStore.deletedSubscriptions;
         if (Array.isArray(dbStore.users)) store.users = dbStore.users;
         lastLoadTime = Date.now();
         console.log(`Successfully synced state from Firebase! Loaded:
           - ${store.orders.length} orders
           - ${store.subscriptions.length} subscriptions
+          - ${store.deletedSubscriptions.length} deleted plans
           - ${store.users.length} users`);
       }
     } else {
@@ -743,10 +748,71 @@ app.post("/api/subscriptions", (req, res) => {
   res.json(newSub);
 });
 
-// Sync delete/cancel of sub
+// Sync delete/cancel of sub & archive to deletedSubscriptions with date and time
 app.delete("/api/subscriptions/:idOrPhone", (req, res) => {
   const { idOrPhone } = req.params;
-  store.subscriptions = store.subscriptions.filter(sub => sub.id !== idOrPhone && sub.customerPhone !== idOrPhone);
+  const toDelete = store.subscriptions.filter(sub => sub.id === idOrPhone || sub.customerPhone === idOrPhone);
+  
+  if (toDelete.length > 0) {
+    const now = new Date();
+    const formattedDeletedDate = now.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+    const formattedDeletedTime = now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+
+    toDelete.forEach(sub => {
+      const archived: any = {
+        ...sub,
+        deletedAt: now.toISOString(),
+        deletedDate: `${formattedDeletedTime}, ${formattedDeletedDate}`,
+        deletedBy: "Admin",
+        reason: req.body?.reason || "Cancelled/Deleted in Admin Panel"
+      };
+      // Prevent duplicate deleted entries
+      store.deletedSubscriptions = store.deletedSubscriptions.filter(d => d.id !== sub.id);
+      store.deletedSubscriptions.unshift(archived);
+    });
+
+    store.subscriptions = store.subscriptions.filter(sub => sub.id !== idOrPhone && sub.customerPhone !== idOrPhone);
+    saveStore();
+  }
+
+  res.json({ success: true, deletedCount: toDelete.length });
+});
+
+// Get Deleted Subscription Plans list
+app.get("/api/subscriptions/deleted", (req, res) => {
+  const { admin } = req.query;
+  if (admin === 'true') {
+    return res.json(store.deletedSubscriptions || []);
+  }
+  return res.json([]);
+});
+
+// Restore a deleted subscription back to active
+app.post("/api/subscriptions/deleted/:id/restore", (req, res) => {
+  const { id } = req.params;
+  const deletedIdx = store.deletedSubscriptions.findIndex(d => d.id === id);
+  if (deletedIdx !== -1) {
+    const [restored] = store.deletedSubscriptions.splice(deletedIdx, 1);
+    const { deletedAt, deletedDate, deletedBy, reason, ...cleanSub } = restored;
+    store.subscriptions.unshift({ ...cleanSub, status: "active" });
+    saveStore();
+    return res.json({ success: true, restored: cleanSub });
+  }
+  res.status(404).json({ error: "Deleted plan not found" });
+});
+
+// Permanently purge a deleted plan from history
+app.delete("/api/subscriptions/deleted/:id/purge", (req, res) => {
+  const { id } = req.params;
+  store.deletedSubscriptions = store.deletedSubscriptions.filter(d => d.id !== id);
   saveStore();
   res.json({ success: true });
 });

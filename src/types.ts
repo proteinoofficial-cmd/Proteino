@@ -97,3 +97,11 @@ export interface ActiveSubscription {
   status?: 'active' | 'completed';
 }
 
+export interface DeletedSubscription extends ActiveSubscription {
+  deletedAt: string;
+  deletedDate?: string;
+  deletedBy?: string;
+  mealsDeliveredCount?: number;
+  reason?: string;
+}
+
