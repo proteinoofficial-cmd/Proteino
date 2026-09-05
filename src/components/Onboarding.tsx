@@ -15,7 +15,7 @@ import {
   LogIn,
   X
 } from 'lucide-react';
-import proteinoLogo from '../assets/images/proteino_logo_1783248797173.jpg';
+import ProteinoLogo from './ProteinoLogo';
 import { apiFetch } from '../utils/api';
 
 interface OnboardingProps {
@@ -206,30 +206,22 @@ export default function Onboarding({
           >
             {/* Center Brand Identity Showcase */}
             <div className="flex flex-col items-center justify-center my-auto text-center px-2">
-              {/* Premium Dark Navy Brand Tile with Official Artwork */}
+              {/* Premium Dark Navy Brand Tile with Exact Official Artwork */}
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.4 }}
-                className="relative mb-5 w-40 h-40 rounded-3xl overflow-hidden shadow-xl border-2 border-brand-green/30 bg-[#0F1E36] p-2 flex items-center justify-center"
+                className="relative mb-3.5"
               >
-                <img 
-                  src={proteinoLogo} 
-                  alt="Proteino Brand Logo" 
-                  className="w-full h-full object-contain rounded-2xl"
-                  referrerPolicy="no-referrer"
+                <ProteinoLogo 
+                  size={208}
+                  variant="vector"
+                  className="w-48 h-48 sm:w-52 sm:h-52 rounded-3xl overflow-hidden shadow-2xl border-2 border-brand-green/30"
                 />
               </motion.div>
 
-              {/* Bold Athletic Slanted Typography Matching the Uploaded Artwork */}
-              <div className="relative inline-block">
-                <h1 className="text-4xl font-black italic tracking-widest text-[#74C043] font-['Kanit',sans-serif] uppercase transform -skew-x-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] select-none">
-                  PROTEINO
-                </h1>
-              </div>
-
               {/* Tagline */}
-              <p className="mt-2 text-sm font-bold text-brand-navy/70 max-w-[260px] leading-snug">
+              <p className="mt-1 text-sm font-bold text-brand-navy/80 max-w-[260px] leading-snug">
                 Pure high-protein fitness meals. Delivered to your gym.
               </p>
 
@@ -309,18 +301,25 @@ export default function Onboarding({
             transition={{ duration: 0.3 }}
             className="flex flex-col h-full flex-grow justify-between"
           >
-            {/* Top Navigation */}
+            {/* Top Navigation & Official Brand Header */}
             <div>
-              <button
-                onClick={() => { setStep('welcome'); setError(''); }}
-                className="flex items-center gap-1 text-xs font-bold text-brand-navy/50 hover:text-brand-navy mt-4 bg-transparent border-none cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Back</span>
-              </button>
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={() => { setStep('welcome'); setError(''); }}
+                  className="flex items-center gap-1 text-xs font-bold text-brand-navy/50 hover:text-brand-navy bg-transparent border-none cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <ProteinoLogo 
+                  size={44}
+                  variant="vector"
+                  className="w-11 h-11 rounded-2xl overflow-hidden shadow-xs border border-brand-green/30 shrink-0"
+                />
+              </div>
 
-              <div className="mt-6">
-                <h2 className="text-2xl font-black text-brand-navy tracking-tight">Create Account</h2>
+              <div className="mt-4">
+                <h2 className="text-2xl font-black text-brand-navy tracking-tight font-display">Create Account</h2>
                 <p className="text-xs font-semibold text-brand-navy/50 mt-1">
                   Enter your details to calculate customized fitness macros.
                 </p>
@@ -476,18 +475,25 @@ export default function Onboarding({
             transition={{ duration: 0.3 }}
             className="flex flex-col h-full flex-grow justify-between"
           >
-            {/* Top Navigation */}
+            {/* Top Navigation & Official Brand Header */}
             <div>
-              <button
-                onClick={() => { setStep('welcome'); setError(''); setSuccessMsg(''); }}
-                className="flex items-center gap-1 text-xs font-bold text-brand-navy/50 hover:text-brand-navy mt-4 bg-transparent border-none cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Back</span>
-              </button>
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={() => { setStep('welcome'); setError(''); setSuccessMsg(''); }}
+                  className="flex items-center gap-1 text-xs font-bold text-brand-navy/50 hover:text-brand-navy bg-transparent border-none cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <ProteinoLogo 
+                  size={44}
+                  variant="vector"
+                  className="w-11 h-11 rounded-2xl overflow-hidden shadow-xs border border-brand-green/30 shrink-0"
+                />
+              </div>
 
-              <div className="mt-6">
-                <h2 className="text-2xl font-black text-brand-navy tracking-tight">Welcome Back</h2>
+              <div className="mt-4">
+                <h2 className="text-2xl font-black text-brand-navy tracking-tight font-display">Welcome Back</h2>
                 <p className="text-xs font-semibold text-brand-navy/50 mt-1">
                   Log in to retrieve your high-protein diet goals.
                 </p>
@@ -627,18 +633,25 @@ export default function Onboarding({
             transition={{ duration: 0.3 }}
             className="flex flex-col h-full flex-grow justify-between"
           >
-            {/* Top Navigation */}
+            {/* Top Navigation & Official Brand Header */}
             <div>
-              <button
-                onClick={() => { setStep('login'); setError(''); setSuccessMsg(''); }}
-                className="flex items-center gap-1 text-xs font-bold text-brand-navy/50 hover:text-brand-navy mt-4 bg-transparent border-none cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Back to Log In</span>
-              </button>
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={() => { setStep('login'); setError(''); setSuccessMsg(''); }}
+                  className="flex items-center gap-1 text-xs font-bold text-brand-navy/50 hover:text-brand-navy bg-transparent border-none cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back to Log In</span>
+                </button>
+                <ProteinoLogo 
+                  size={44}
+                  variant="vector"
+                  className="w-11 h-11 rounded-2xl overflow-hidden shadow-xs border border-brand-green/30 shrink-0"
+                />
+              </div>
 
-              <div className="mt-6">
-                <h2 className="text-2xl font-black text-brand-navy tracking-tight">Reset Password</h2>
+              <div className="mt-4">
+                <h2 className="text-2xl font-black text-brand-navy tracking-tight font-display">Reset Password</h2>
                 <p className="text-xs font-semibold text-brand-navy/50 mt-1">
                   Enter your registered mobile number and choose a new password.
                 </p>

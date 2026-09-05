@@ -12,7 +12,8 @@ import {
   Sun, 
   Zap,
   AlertTriangle,
-  AlertCircle
+  AlertCircle,
+  Search
 } from 'lucide-react';
 import { Product, UserProfile, ActiveSubscription } from '../types';
 import { PRODUCTS, GYMS } from '../data';
@@ -41,6 +42,7 @@ export default function SubscriptionManager({
   // Buy plan states
   const [selectedProductId, setSelectedProductId] = useState<string>(PRODUCTS[0].id);
   const [selectedGymId, setSelectedGymId] = useState<string>(GYMS[0].id);
+  const [gymSearch, setGymSearch] = useState<string>('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(MORNING_DELIVERY_SLOTS[0]);
   const [durationMonths, setDurationMonths] = useState<1 | 2 | 3>(1); // 1 Month, 2 Months, 3 Months
   const [isTimeSlotValid, setIsTimeSlotValid] = useState<boolean>(true);
@@ -121,62 +123,53 @@ export default function SubscriptionManager({
     setSuccessMsg(true);
   };
 
-  return (
-    <div className="flex flex-col gap-6 pb-28 select-none">
-      
-      {/* Title block */}
-      <div className="bg-brand-navy text-white rounded-3xl p-6 relative overflow-hidden shadow-md">
-        <div className="absolute right-[-10px] top-[-10px] w-28 h-28 rounded-full bg-brand-green/10 blur-xl pointer-events-none" />
-        <span className="bg-brand-green/20 text-brand-green text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-brand-green/10">
-          🔥 HIGH PERFORMANCE PLANS
-        </span>
-        <h2 className="text-xl font-black mt-3 leading-tight font-display tracking-tight">Gym Partner Subscription Panel</h2>
-        <p className="text-xs text-white/60 font-medium mt-1.5 leading-relaxed">
-          Unlock maximum convenience with daily warm drop-offs directly to your partner gym desk. Includes premium heat-insulated boxes, high biological value proteins, and 15% permanent discount.
-        </p>
-      </div>
+  // Scroll to top immediately upon entering Monthly Subscription view
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
 
-      {/* Store Operating Hours & Ordering Session Banner */}
+  return (
+    <div className="flex flex-col gap-5 pb-28 select-none">
+      
+      {/* Session Operating Hours Notice */}
       <div 
-        className={`rounded-3xl p-4 border shadow-sm transition-all relative overflow-hidden ${
+        className={`rounded-2xl px-4 py-3 border shadow-xs transition-all flex items-center justify-between gap-3 ${
           storeStatus.isOpen
-            ? 'bg-gradient-to-r from-[#0F1E36] to-[#1a2f4c] text-white border-brand-green/30'
-            : 'bg-gradient-to-r from-[#0F1E36] via-[#162742] to-[#1E3250] text-white border-amber-400/40'
+            ? 'bg-emerald-50/90 text-emerald-950 border-emerald-300/80'
+            : 'bg-gradient-to-r from-[#0F1E36] to-[#1E3250] text-white border-brand-navy/60'
         }`}
       >
-        <div className="flex items-start gap-3.5 relative z-10">
-          <div className={`p-2.5 rounded-2xl shrink-0 flex items-center justify-center ${
-            storeStatus.isOpen ? 'bg-brand-green/20 text-brand-green border border-brand-green/40' : 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
+        <div className="flex items-center gap-2.5">
+          <div className={`p-1.5 rounded-xl shrink-0 ${
+            storeStatus.isOpen ? 'bg-brand-green/20 text-brand-green' : 'bg-amber-400/20 text-amber-300'
           }`}>
             {storeStatus.isOpen ? (
-              <Sun className="w-5 h-5 text-brand-green" />
+              <Sun className="w-4 h-4 text-brand-green" />
             ) : (
-              <Moon className="w-5 h-5 text-amber-300 animate-pulse" />
+              <Clock className="w-4 h-4 text-amber-300" />
             )}
           </div>
-          <div className="flex-grow">
-            <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                storeStatus.isOpen
-                  ? 'bg-brand-green/20 text-brand-green border-brand-green/30'
-                  : 'bg-amber-400/20 text-amber-300 border-amber-400/30'
-              }`}>
-                {storeStatus.isOpen ? '● Ordering Live Now' : '● Pre-orders & Subscriptions Open'}
-              </span>
-              <span className="text-[10px] font-extrabold text-white/50">{storeStatus.currentTimeString}</span>
-            </div>
-            <h4 className="text-xs sm:text-sm font-black text-white leading-snug">
-              {storeStatus.headline}
-            </h4>
-            <p className="text-[11px] font-semibold text-white/80 mt-1">
-              {storeStatus.statusMessage}
-            </p>
-            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-2 text-[10px] font-bold text-white/70 flex-wrap">
-              <span className="bg-white/10 px-2 py-0.5 rounded-md">🌅 Morning: 6:00 AM – 10:00 AM</span>
-              <span className="bg-white/10 px-2 py-0.5 rounded-md">🌆 Evening: 5:00 PM – 10:00 PM</span>
-            </div>
+          <div>
+            {storeStatus.isOpen ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-emerald-950">● Ordering Live Now</span>
+                <span className="text-[10px] font-bold text-emerald-800 hidden sm:inline">• Morning: 6:00 AM – 10:00 AM & Evening: 6:00 PM – 10:00 PM</span>
+              </div>
+            ) : (
+              <p className="text-xs sm:text-sm font-black text-white leading-tight">
+                Our morning session will open at 6:00 AM • Evening session will open at 6:00 PM
+              </p>
+            )}
           </div>
         </div>
+
+        <span className={`text-[9.5px] font-black px-2.5 py-1 rounded-lg shrink-0 ${
+          storeStatus.isOpen 
+            ? 'bg-brand-green text-white shadow-2xs' 
+            : 'bg-white/10 text-white/80 border border-white/15'
+        }`}>
+          {storeStatus.isOpen ? 'Live' : 'Sessions: 6 AM / 6 PM'}
+        </span>
       </div>
 
       {/* RENDER ACTIVE SUBSCRIPTION IF WE HAVE ONE */}
@@ -304,24 +297,93 @@ export default function SubscriptionManager({
           </div>
 
           {/* 2. Select Gym Partner */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">
-              2. Choose Destination Gym Partner
-            </label>
-            <div className="grid grid-cols-1 gap-2">
-              {GYMS.map(gym => (
-                <div
-                  key={gym.id}
-                  onClick={() => setSelectedGymId(gym.id)}
-                  className={`flex items-start gap-2.5 p-3 rounded-2xl border-2 cursor-pointer transition-all ${selectedGymId === gym.id ? 'bg-[#EBF4E0] border-brand-green' : 'bg-white border-slate-100 hover:border-slate-200'}`}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">
+                2. Choose Destination Gym Partner ({GYMS.length} Available in Hubballi)
+              </label>
+              <span className="text-[9px] font-bold text-brand-green bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+                Hubballi Desk Drop-off
+              </span>
+            </div>
+
+            {/* Quick Gym Search Filter */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search gym by name or area (e.g., Shirur Park, Vidya Nagar...)"
+                value={gymSearch}
+                onChange={(e) => setGymSearch(e.target.value)}
+                className="w-full bg-[#FAF9F6] border border-slate-200/90 rounded-xl px-3 py-2 pl-8 text-xs font-semibold text-brand-navy placeholder:text-brand-navy/35 focus:outline-none focus:border-brand-green/50"
+              />
+              <Search className="w-3.5 h-3.5 text-brand-navy/40 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              {gymSearch && (
+                <button
+                  type="button"
+                  onClick={() => setGymSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-navy/40 hover:text-brand-navy"
                 >
-                  <MapPin className="w-4 h-4 text-brand-green shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-extrabold text-xs text-brand-navy leading-tight">{gym.name}</h4>
-                    <p className="text-[9px] text-brand-navy/40 font-semibold mt-0.5">{gym.location}</p>
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1">
+              {(() => {
+                const filteredGyms = GYMS.filter(gym => 
+                  gym.name.toLowerCase().includes(gymSearch.toLowerCase()) || 
+                  gym.location.toLowerCase().includes(gymSearch.toLowerCase())
+                );
+
+                if (filteredGyms.length === 0) {
+                  return (
+                    <div className="text-center py-6 px-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                      <p className="text-xs font-bold text-brand-navy/60">No gyms matched "{gymSearch}"</p>
+                      <button
+                        type="button"
+                        onClick={() => setGymSearch('')}
+                        className="mt-2 text-[11px] font-black text-brand-green underline"
+                      >
+                        Show all {GYMS.length} partner gyms
+                      </button>
+                    </div>
+                  );
+                }
+
+                return filteredGyms.map(gym => (
+                  <div
+                    key={gym.id}
+                    onClick={() => setSelectedGymId(gym.id)}
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                      selectedGymId === gym.id 
+                        ? 'bg-emerald-50/70 border-brand-green shadow-xs' 
+                        : 'bg-white border-slate-100 hover:border-slate-200'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5 border ${
+                      selectedGymId === gym.id 
+                        ? 'bg-brand-green text-white border-brand-green' 
+                        : 'bg-slate-50 text-brand-navy/40 border-slate-200'
+                    }`}>
+                      <MapPin className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-grow">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-black text-xs text-brand-navy leading-tight">{gym.name}</h4>
+                        {selectedGymId === gym.id && (
+                          <span className="text-[9px] font-extrabold text-brand-green bg-emerald-100/90 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            Selected
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-brand-navy/60 font-medium leading-relaxed mt-1">
+                        {gym.location}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
 
@@ -523,11 +585,16 @@ export default function SubscriptionManager({
                   <span className="text-[11px] font-bold text-slate-500">Total Price:</span>
                   <span className="font-black text-brand-green text-sm">₹{finalPrice}</span>
                 </div>
-                <div className="flex justify-between items-start border-t border-slate-200/40 pt-1.5">
-                  <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
-                  <span className="font-bold text-brand-navy text-right max-w-[190px] truncate">
-                    {selectedGym.name}
-                  </span>
+                <div className="flex flex-col border-t border-slate-200/40 pt-2 gap-1">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
+                    <span className="font-extrabold text-brand-navy text-right">
+                      {selectedGym.name}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium text-right leading-tight">
+                    📍 {selectedGym.location}
+                  </p>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
@@ -616,7 +683,7 @@ export default function SubscriptionManager({
                       <span>🌆</span>
                       <span>Evening Session:</span>
                     </span>
-                    <span className="text-brand-green">5:00 PM – 10:00 PM</span>
+                    <span className="text-brand-green">6:00 PM – 10:00 PM</span>
                   </div>
                 </div>
               </div>

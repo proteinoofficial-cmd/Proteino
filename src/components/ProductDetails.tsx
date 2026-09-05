@@ -62,7 +62,7 @@ export default function ProductDetails({
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Direct Subscription configuration state
-  const [selectedGymId, setSelectedGymId] = useState('g1');
+  const [selectedGymId, setSelectedGymId] = useState<string>(() => GYMS[0]?.id || 'g6');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(MORNING_DELIVERY_SLOTS[0]);
   
   // Subscriber info (linked directly to user details)
@@ -649,19 +649,48 @@ export default function ProductDetails({
 
               {/* Gym Linker */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase text-brand-navy/40 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-brand-green" />
-                  <span>Select Delivery Destination Gym</span>
-                </label>
-                <select 
-                  value={selectedGymId}
-                  onChange={(e) => setSelectedGymId(e.target.value)}
-                  className="bg-[#FAF9F6] border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-brand-navy focus:outline-none focus:border-brand-green/30"
-                >
-                  {GYMS.map(g => (
-                    <option key={g.id} value={g.id}>{g.name} — {g.location}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase text-brand-navy/40 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-brand-green" />
+                    <span>Select Delivery Destination Gym</span>
+                  </label>
+                  <span className="text-[9px] font-bold text-brand-green bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+                    Hubballi Desk Drop-off
+                  </span>
+                </div>
+                <div className="relative">
+                  <select 
+                    value={selectedGymId}
+                    onChange={(e) => setSelectedGymId(e.target.value)}
+                    className="w-full bg-[#FAF9F6] border border-slate-200 rounded-xl px-3 py-2.5 pr-8 text-xs font-bold text-brand-navy focus:outline-none focus:border-brand-green/40 appearance-none cursor-pointer"
+                  >
+                    {GYMS.map(g => (
+                      <option key={g.id} value={g.id}>{g.name} — {g.location}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-brand-navy/40 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+                {(() => {
+                  const currentGym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
+                  return (
+                    <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xs flex items-start gap-2.5 mt-1">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center shrink-0 mt-0.5">
+                        <MapPin className="w-3.5 h-3.5 text-brand-green" />
+                      </div>
+                      <div className="flex-grow">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-brand-navy">{currentGym.name}</h4>
+                          <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                            Reception Desk Drop-off
+                          </span>
+                        </div>
+                        <p className="text-[10.5px] text-brand-navy/70 font-medium leading-relaxed mt-1">
+                          {currentGym.location}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Time Slot Selection */}
@@ -810,11 +839,16 @@ export default function ProductDetails({
                     )}
                   </div>
                 </div>
-                <div className="flex justify-between items-start border-t border-slate-200/40 pt-1.5">
-                  <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
-                  <span className="font-bold text-brand-navy text-right max-w-[190px] truncate">
-                    {GYMS.find(g => g.id === selectedGymId)?.name || "Gold's Gym"}
-                  </span>
+                <div className="flex flex-col border-t border-slate-200/40 pt-2 gap-1">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
+                    <span className="font-extrabold text-brand-navy text-right">
+                      {(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).name}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium text-right leading-tight">
+                    📍 {(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).location}
+                  </p>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
@@ -870,10 +904,11 @@ export default function ProductDetails({
             </div>
             <h3 className="text-xl font-black tracking-tight">Membership Subscribed!</h3>
             <p className="text-xs text-white/70 font-bold mt-2 max-w-xs">
-              Your 26-Day subscription for {product.name} is now active at {GYMS.find(g => g.id === selectedGymId)?.name || "Gold's Gym"}.
+              Your 26-Day subscription for {product.name} is now active at {(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).name}.
             </p>
             <div className="bg-white/10 p-4 rounded-2xl border border-white/5 mt-6 w-full text-left flex flex-col gap-1.5 text-xs font-mono">
-              <p>📍 Gym: <span className="text-brand-green font-bold">{GYMS.find(g => g.id === selectedGymId)?.name}</span></p>
+              <p>📍 Gym: <span className="text-brand-green font-bold">{(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).name}</span></p>
+              <p className="text-[10px] text-white/75 leading-tight">🏢 Address: <span>{(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).location}</span></p>
               <p>🕒 Delivery slot: <span className="text-brand-green font-bold">{selectedTimeSlot} Daily</span></p>
               <p>👤 Subscriber: <span>{customerName}</span></p>
             </div>

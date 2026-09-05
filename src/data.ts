@@ -204,9 +204,79 @@ export const PRODUCTS: Product[] = [
 ];
 
 export const GYMS: Gym[] = [
-  { id: 'g1', name: "Gold's Gym", location: 'Downtown Fitness Hub, Sector 4' },
-  { id: 'g2', name: 'Cult.fit Center', location: 'Active Life Park, Phase 1' },
-  { id: 'g3', name: 'Anytime Fitness', location: 'Metro Plaza, Level 2, Sector 15' },
-  { id: 'g4', name: 'Talwalkars Gym', location: 'High Street Galleria, Block C' },
-  { id: 'g5', name: 'Powerhouse Gym', location: 'Iron Arena Street, Sector 12' }
+  { 
+    id: 'g1', 
+    name: 'Jai Ho Fitness (Shirur Park)', 
+    location: '54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031' 
+  },
+  { 
+    id: 'g2', 
+    name: 'Body Tone Fitness (Shirur Park)', 
+    location: '4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031' 
+  },
+  { 
+    id: 'g3', 
+    name: 'Omkar Fitness', 
+    location: 'Lokappan Hakkal, Vidya Nagar, Hubballi, Karnataka 580021' 
+  },
+  { 
+    id: 'g4', 
+    name: 'Rocky Gym', 
+    location: '4th Floor, Shet Bellet Complex, Beside Big Mishra, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580021' 
+  },
+  { 
+    id: 'g5', 
+    name: 'Iron Lifters 2.0', 
+    location: '3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021' 
+  },
+  { 
+    id: 'g6', 
+    name: 'R11 Fitness', 
+    location: 'Govardhan Towers, Behind Vijay Hotel Extension, Ashok Nagar, Chandranath Nagar, Vidya Nagar, Hubballi, Karnataka 580032' 
+  },
+  { 
+    id: 'g7', 
+    name: 'Fitness Health Club', 
+    location: '1st Floor, Kailash Vihar Apartment, Near JK Road School, Rajnagar, Vidya Nagar, Gopanakoppa, Karnataka 580023' 
+  },
+  { 
+    id: 'g8', 
+    name: 'Hifi Gym', 
+    location: '17, Chetan College Road, Vidya Nagar, Hubballi, Karnataka 580031' 
+  },
+  { 
+    id: 'g9', 
+    name: 'My Gym', 
+    location: 'Kalidas Nagar, Hubballi, Karnataka 580031' 
+  },
+  { 
+    id: 'g10', 
+    name: "Khona's Gym", 
+    location: '2nd Floor, Guru Krupa, Above Professional Couriers, Bailappanavar Nagar, Vidya Nagar, Hubballi, Karnataka 580029' 
+  },
+  { 
+    id: 'g11', 
+    name: 'Pro-Fit Fitness', 
+    location: '1st Main, Girija Arcade, 1st Floor, 2nd Cross Rd, Deshpande Nagar, Hubballi, Karnataka 580029' 
+  },
+  { 
+    id: 'g12', 
+    name: 'Thews Gym', 
+    location: 'Negalur Plaza, 1st Floor, Near Durga Bakery, Bhavani Nagar, Hubballi, Karnataka 580023' 
+  },
+  { 
+    id: 'g13', 
+    name: 'Sri Sai Fitness', 
+    location: 'Gadagkar Complex, Opposite Ramesh Bhavan Hotel, Hemanth Nagar, Bengeri Extension, Keshwapur, Hubballi, Karnataka 580023' 
+  },
+  { 
+    id: 'g14', 
+    name: 'Muscle Tone Gym', 
+    location: '3rd Floor, Azad Colony, Above Muthoot Finance, Bengeri Extension, Keshwapur, Hubballi, Karnataka 580023' 
+  },
+  { 
+    id: 'g15', 
+    name: 'Revolution Fitness Gym', 
+    location: 'Kusugal Rd, Suncity Layout, Keshwapur, Hubballi, Karnataka 580023' 
+  }
 ];

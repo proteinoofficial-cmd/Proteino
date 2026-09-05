@@ -322,7 +322,7 @@ export default function ActivePlans({
                 onClick={onExploreClick}
                 className="px-5 py-2.5 bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black rounded-xl shadow-sm cursor-pointer transition-all active:scale-95"
               >
-                Browse Gym Plans
+                Browse Monthly Subscriptions
               </button>
             </div>
           ) : (

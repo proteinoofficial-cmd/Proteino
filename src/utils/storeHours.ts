@@ -16,7 +16,7 @@ export interface StoreStatus {
 /**
  * Operating Hours for Proteino:
  * Morning Session: 6:00 AM to 10:00 AM (06:00 - 10:00)
- * Evening Session: 5:00 PM to 10:00 PM (17:00 - 22:00)
+ * Evening Session: 6:00 PM to 10:00 PM (18:00 - 22:00)
  */
 export function getStoreStatus(date: Date = new Date()): StoreStatus {
   const hours = date.getHours();
@@ -25,7 +25,7 @@ export function getStoreStatus(date: Date = new Date()): StoreStatus {
 
   const MORNING_START = 6 * 60;   // 06:00 AM -> 360
   const MORNING_END = 10 * 60;    // 10:00 AM -> 600
-  const EVENING_START = 17 * 60;  // 05:00 PM -> 1020
+  const EVENING_START = 18 * 60;  // 06:00 PM -> 1080
   const EVENING_END = 22 * 60;    // 10:00 PM -> 1320
 
   const isMorningOpen = currentMinutes >= MORNING_START && currentMinutes < MORNING_END;
@@ -39,11 +39,11 @@ export function getStoreStatus(date: Date = new Date()): StoreStatus {
       isOpen: true,
       currentSession: 'morning',
       nextSession: 'evening',
-      nextSessionTime: '5:00 PM',
+      nextSessionTime: '6:00 PM',
       headline: 'Morning Session is Open!',
       shortNotice: 'Morning Session Live • Orders Open (6:00 AM – 10:00 AM)',
       statusMessage: 'Accepting fresh meal & gym subscription orders (6:00 AM – 10:00 AM).',
-      scheduleText: 'Morning: 6:00 AM – 10:00 AM | Evening: 5:00 PM – 10:00 PM',
+      scheduleText: 'Morning: 6:00 AM – 10:00 AM | Evening: 6:00 PM – 10:00 PM',
       openBadgeText: 'Morning Session Open (6–10 AM)',
       currentTimeString
     };
@@ -56,27 +56,27 @@ export function getStoreStatus(date: Date = new Date()): StoreStatus {
       nextSession: 'morning',
       nextSessionTime: '6:00 AM',
       headline: 'Evening Session is Open!',
-      shortNotice: 'Evening Session Live • Orders Open (5:00 PM – 10:00 PM)',
-      statusMessage: 'Accepting fresh meal & gym subscription orders (5:00 PM – 10:00 PM).',
-      scheduleText: 'Morning: 6:00 AM – 10:00 AM | Evening: 5:00 PM – 10:00 PM',
-      openBadgeText: 'Evening Session Open (5–10 PM)',
+      shortNotice: 'Evening Session Live • Orders Open (6:00 PM – 10:00 PM)',
+      statusMessage: 'Accepting fresh meal & gym subscription orders (6:00 PM – 10:00 PM).',
+      scheduleText: 'Morning: 6:00 AM – 10:00 AM | Evening: 6:00 PM – 10:00 PM',
+      openBadgeText: 'Evening Session Open (6–10 PM)',
       currentTimeString
     };
   }
 
   // Store is CLOSED: Determine which session opens next
   if (currentMinutes >= MORNING_END && currentMinutes < EVENING_START) {
-    // Between 10:00 AM and 5:00 PM (e.g., 1:00 PM)
+    // Between 10:00 AM and 6:00 PM (e.g., 1:00 PM)
     return {
       isOpen: false,
       currentSession: null,
       nextSession: 'evening',
-      nextSessionTime: '5:00 PM',
-      headline: 'Evening Session will open at 5:00 PM',
-      shortNotice: 'Evening Session opens at 5:00 PM • Please wait',
-      statusMessage: 'Our Proteino Evening Session will open at 5:00 PM, please wait to place your order.',
-      scheduleText: 'Ordering Hours: Morning 6:00 AM – 10:00 AM & Evening 5:00 PM – 10:00 PM',
-      openBadgeText: 'Opens 5:00 PM',
+      nextSessionTime: '6:00 PM',
+      headline: 'Evening Session will open at 6:00 PM',
+      shortNotice: 'Evening Session opens at 6:00 PM • Please wait',
+      statusMessage: 'Our Proteino Evening Session will open at 6:00 PM, please wait to place your order.',
+      scheduleText: 'Ordering Hours: Morning 6:00 AM – 10:00 AM & Evening 6:00 PM – 10:00 PM',
+      openBadgeText: 'Opens 6:00 PM',
       currentTimeString
     };
   } else {
@@ -89,7 +89,7 @@ export function getStoreStatus(date: Date = new Date()): StoreStatus {
       headline: 'Morning Session will open at 6:00 AM',
       shortNotice: 'Morning Session opens at 6:00 AM • Please wait',
       statusMessage: 'Our Proteino Morning Session will open at 6:00 AM, please wait to place your order.',
-      scheduleText: 'Ordering Hours: Morning 6:00 AM – 10:00 AM & Evening 5:00 PM – 10:00 PM',
+      scheduleText: 'Ordering Hours: Morning 6:00 AM – 10:00 AM & Evening 6:00 PM – 10:00 PM',
       openBadgeText: 'Opens 6:00 AM',
       currentTimeString
     };

@@ -15,6 +15,7 @@ import {
   ShieldCheck, 
   Activity, 
   ChevronRight, 
+  ChevronDown,
   X, 
   ChevronLeft, 
   CheckCircle2, 
@@ -25,7 +26,10 @@ import {
   Key,
   Check,
   Moon,
-  Sun
+  Sun,
+  Zap,
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -88,6 +92,11 @@ export default function App() {
   const [dashboardScrollY, setDashboardScrollY] = useState(0);
   const [showCart, setShowCart] = useState(false);
 
+  // Scroll to top immediately when switching views/tabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [currentView]);
+
   // --- Auth Modal Overlay State ---
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalStep, setAuthModalStep] = useState<'welcome' | 'register' | 'login' | 'forgot'>('welcome');
@@ -110,12 +119,26 @@ export default function App() {
   // --- Checkout Form States ---
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
-  const [selectedGymId, setSelectedGymId] = useState('g1');
+  const [selectedGymId, setSelectedGymId] = useState<string>(() => {
+    return GYMS[0]?.id || 'g6';
+  });
   const [checkoutTimeSlot, setCheckoutTimeSlot] = useState(MORNING_DELIVERY_SLOTS[0]);
   const [orderScheduleMode, setOrderScheduleMode] = useState<'preorder' | 'instant'>('preorder');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [showCheckoutConfirmModal, setShowCheckoutConfirmModal] = useState(false);
+  const [showOrderPlacedPopup, setShowOrderPlacedPopup] = useState(false);
+  const [cartItemToDelete, setCartItemToDelete] = useState<{ index: number; name: string } | 'all' | null>(null);
+
+  // Auto-dismiss the order placed popup after 5 seconds without any countdown timer
+  useEffect(() => {
+    if (showOrderPlacedPopup) {
+      const timer = setTimeout(() => {
+        setShowOrderPlacedPopup(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showOrderPlacedPopup]);
 
   // Pre-fill checkout form whenever profile changes
   useEffect(() => {
@@ -564,7 +587,7 @@ export default function App() {
 
   const handleUpdateCartQty = (index: number, newQty: number) => {
     if (newQty <= 0) {
-      handleRemoveFromCart(index);
+      setCartItemToDelete({ index, name: cart[index]?.product.name || 'this meal' });
       return;
     }
     setCart(prev => {
@@ -579,12 +602,39 @@ export default function App() {
   const handleCheckoutPrompt = () => {
     const hasSingleMeals = cart.some(item => item.purchaseOption === 'single');
     
-    // If user requested instant live prep during closed hours, switch them to pre-order for tomorrow
-    if (hasSingleMeals && orderScheduleMode === 'instant' && !storeStatus.isOpen) {
-      setOrderScheduleMode('preorder');
+    if (hasSingleMeals) {
+      setOrderScheduleMode('instant');
     }
 
-    // If not authenticated, require authentication before placing the order
+    // 1. First validate Recipient Name
+    if (!checkoutName.trim()) {
+      setCheckoutError('Please enter recipient name');
+      setTimeout(() => {
+        const errorBanner = document.getElementById('checkout-error-banner') || document.getElementById('checkout-name-group');
+        errorBanner?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const nameInput = document.getElementById('checkout-name-input') as HTMLInputElement | null;
+        nameInput?.focus();
+      }, 50);
+      return;
+    }
+
+    // 2. Second validate 10-digit mobile number
+    const cleanPhone = checkoutPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10) {
+      const errMessage = cleanPhone.length === 0
+        ? 'Please enter your 10-digit mobile number'
+        : `Invalid phone number: entered ${cleanPhone.length} of 10 digits. Please enter a valid 10-digit mobile number.`;
+      setCheckoutError(errMessage);
+      setTimeout(() => {
+        const errorBanner = document.getElementById('checkout-error-banner') || document.getElementById('checkout-phone-group');
+        errorBanner?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const phoneInput = document.getElementById('checkout-phone-input') as HTMLInputElement | null;
+        phoneInput?.focus();
+      }, 50);
+      return;
+    }
+
+    // 3. Require authentication before placing order
     if (!profile) {
       setAuthModalNotice('Please sign in or create an account to confirm and place your order.');
       setAuthModalStep('welcome');
@@ -592,22 +642,16 @@ export default function App() {
       return;
     }
 
-    if (!checkoutName.trim()) {
-      setCheckoutError('Please enter recipient name');
-      return;
-    }
-    const cleanPhone = checkoutPhone.replace(/[^0-9]/g, '');
-    if (cleanPhone.length < 10) {
-      setCheckoutError('Please enter a valid 10-digit mobile number');
-      return;
-    }
     setCheckoutError('');
     setShowCheckoutConfirmModal(true);
   };
 
   const executeCheckout = async () => {
     const hasSingleMeals = cart.some(item => item.purchaseOption === 'single');
-    if (hasSingleMeals && orderScheduleMode === 'instant' && !storeStatus.isOpen) {
+    const hasSubscription = cart.some(item => item.purchaseOption === 'subscription');
+
+    // Closed store check only if user specifically requested closed non-live subscription checkout
+    if (!hasSingleMeals && orderScheduleMode === 'instant' && !storeStatus.isOpen) {
       setShowCheckoutConfirmModal(false);
       setShowClosedStoreModal(true);
       return;
@@ -659,23 +703,19 @@ export default function App() {
 
       // 1. If we have single meal items, place a single order on the server
       if (singleMealItems.length > 0) {
-        const isPreOrderMeal = orderScheduleMode === 'preorder' || !storeStatus.isOpen;
-        const finalDeliverySlot = isPreOrderMeal ? checkoutTimeSlot : 'Immediate Live Prep';
-        const finalScheduledDate = isPreOrderMeal ? tomorrowInfo.label : 'Today (Live Session)';
-
         const orderPayload = {
           items: singleMealItems,
           total: singleMealItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0),
           status: 'cooking' as const,
-          deliveryTimeRemaining: 25, // mins for simulator countdown
+          deliveryTimeRemaining: 30, // mins for live kitchen prep countdown
           customerName: cleanName,
           customerPhone: cleanPhone,
           gymName: gym.name,
           gymLocation: gym.location,
-          deliveryTimeSlot: finalDeliverySlot,
-          isPreOrder: isPreOrderMeal,
-          orderType: isPreOrderMeal ? 'preorder' : 'instant',
-          scheduledDate: finalScheduledDate,
+          deliveryTimeSlot: 'Live Kitchen Delivery',
+          isPreOrder: false,
+          orderType: 'instant',
+          scheduledDate: 'Live Kitchen Delivery (Today)',
           createdAt: nowObj.toISOString(),
           date: orderDateDisplay
         };
@@ -749,6 +789,7 @@ export default function App() {
         setCurrentView('active_plans');
       } else {
         setCurrentView('orders');
+        setShowOrderPlacedPopup(true);
       }
 
     } catch (err: any) {
@@ -1170,13 +1211,16 @@ export default function App() {
               <span className="text-[10px] font-bold">Explore</span>
             </button>
 
-            {/* Gym Plans Button */}
+            {/* Monthly Subscription Button */}
             <button 
-              onClick={() => setCurrentView('subscriptions')}
+              onClick={() => {
+                setCurrentView('subscriptions');
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+              }}
               className={`flex flex-col items-center gap-1 cursor-pointer ${currentView === 'subscriptions' ? 'text-brand-green' : 'text-brand-navy/40'}`}
             >
               <Repeat className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Gym Plans</span>
+              <span className="text-[10px] font-bold whitespace-nowrap">Monthly Subscription</span>
             </button>
 
             {/* Active Tracker Button */}
@@ -1303,9 +1347,22 @@ export default function App() {
                     <>
                       {/* Cart Items List */}
                       <div className="flex flex-col gap-3">
-                        <h4 className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40 border-b border-slate-100 pb-1.5">
-                          Selected Items
-                        </h4>
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                          <h4 className="text-[10px] font-black uppercase tracking-wider text-brand-navy/40">
+                            Selected Items
+                          </h4>
+                          {cart.length > 0 && (
+                            <button 
+                              type="button"
+                              onClick={() => setCartItemToDelete('all')}
+                              className="text-[10px] font-extrabold text-red-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors px-2 py-0.5 rounded-lg hover:bg-red-50"
+                              title="Clear all meals from basket"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Clear Basket</span>
+                            </button>
+                          )}
+                        </div>
                         
                         {cart.map((item, idx) => {
                           const isSub = item.purchaseOption === 'subscription';
@@ -1360,8 +1417,10 @@ export default function App() {
 
                               {/* Delete Trash Button */}
                               <button 
-                                onClick={() => handleRemoveFromCart(idx)}
+                                type="button"
+                                onClick={() => setCartItemToDelete({ index: idx, name: item.product.name })}
                                 className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+                                title="Remove meal from basket"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -1379,21 +1438,39 @@ export default function App() {
 
                         {/* Error box */}
                         {checkoutError && (
-                          <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-[11px] font-bold flex items-center gap-1.5">
-                            <span>⚠️</span>
-                            <span>{checkoutError}</span>
+                          <div 
+                            id="checkout-error-banner"
+                            className="bg-red-50 border-2 border-red-300 text-red-700 rounded-2xl p-3.5 text-xs font-bold flex items-start gap-2.5 shadow-xs animate-shake"
+                          >
+                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                            <div className="flex-grow">
+                              <p className="font-extrabold text-xs text-red-800">{checkoutError}</p>
+                              <p className="text-[10.5px] text-red-600 font-medium mt-0.5">Please check and complete this field to place your order.</p>
+                            </div>
                           </div>
                         )}
 
                         {/* Name Input */}
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1.5" id="checkout-name-group">
                           <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">Recipient Name</label>
-                          <div className="flex items-center bg-[#FAF9F6] border border-slate-200 rounded-xl px-3 py-2.5">
-                            <User className="w-3.5 h-3.5 text-brand-navy/35 mr-2" />
+                          <div 
+                            className={`flex items-center bg-[#FAF9F6] border rounded-xl px-3 py-2.5 transition-all ${
+                              checkoutError && !checkoutName.trim()
+                                ? 'border-red-400 ring-2 ring-red-100 bg-red-50/20'
+                                : 'border-slate-200 focus-within:border-brand-green focus-within:ring-2 focus-within:ring-brand-green/20'
+                            }`}
+                          >
+                            <User className="w-3.5 h-3.5 text-brand-navy/35 mr-2 shrink-0" />
                             <input 
+                              id="checkout-name-input"
                               type="text" 
                               value={checkoutName}
-                              onChange={(e) => setCheckoutName(e.target.value)}
+                              onChange={(e) => {
+                                setCheckoutName(e.target.value);
+                                if (checkoutError && e.target.value.trim()) {
+                                  setCheckoutError('');
+                                }
+                              }}
                               placeholder="Recipient Name"
                               className="bg-transparent text-xs font-semibold text-brand-navy w-full focus:outline-none"
                             />
@@ -1401,73 +1478,145 @@ export default function App() {
                         </div>
 
                         {/* Phone Input */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">10-Digit Phone Number</label>
-                          <div className="flex items-center bg-[#FAF9F6] border border-slate-200 rounded-xl px-3 py-2.5">
-                            <span className="text-xs font-bold text-brand-navy/35 mr-2">+91</span>
+                        <div className="flex flex-col gap-1.5" id="checkout-phone-group">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">10-Digit Phone Number</label>
+                            {checkoutPhone.length > 0 && checkoutPhone.length < 10 && (
+                              <span className="text-[9px] font-black text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">
+                                {checkoutPhone.length}/10 digits
+                              </span>
+                            )}
+                          </div>
+                          <div 
+                            className={`flex items-center bg-[#FAF9F6] border rounded-xl px-3 py-2.5 transition-all ${
+                              checkoutError && checkoutPhone.replace(/[^0-9]/g, '').length < 10
+                                ? 'border-red-400 ring-2 ring-red-100 bg-red-50/20'
+                                : 'border-slate-200 focus-within:border-brand-green focus-within:ring-2 focus-within:ring-brand-green/20'
+                            }`}
+                          >
+                            <span className="text-xs font-bold text-brand-navy/35 mr-2 shrink-0">+91</span>
                             <input 
+                              id="checkout-phone-input"
                               type="tel" 
                               value={checkoutPhone}
-                              onChange={(e) => setCheckoutPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                setCheckoutPhone(val);
+                                if (val.length === 10 && checkoutError.toLowerCase().includes('phone')) {
+                                  setCheckoutError('');
+                                }
+                              }}
                               maxLength={10}
-                              placeholder="Recipient Phone"
+                              placeholder="Recipient 10-digit mobile number"
                               className="bg-transparent text-xs font-semibold text-brand-navy w-full focus:outline-none"
                             />
                           </div>
-                        </div>
-
-                        {/* Partner Gym Selector */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">Partner Gym Delivery Point</label>
-                          <select
-                            value={selectedGymId}
-                            onChange={(e) => setSelectedGymId(e.target.value)}
-                            className="bg-[#FAF9F6] border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-brand-navy focus:outline-none w-full cursor-pointer"
-                          >
-                            {GYMS.map(gym => (
-                              <option key={gym.id} value={gym.id}>
-                                {gym.name}
-                              </option>
-                            ))}
-                          </select>
-                          {GYMS.find(g => g.id === selectedGymId) && (
-                            <p className="text-[9px] text-brand-green font-semibold flex items-start gap-1 px-1">
-                              <span className="text-xs shrink-0">📍</span>
-                              <span>{GYMS.find(g => g.id === selectedGymId)?.location}</span>
+                          {checkoutPhone.length > 0 && checkoutPhone.length < 10 && (
+                            <p className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-0.5">
+                              <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                              <span>Please enter complete 10-digit number ({10 - checkoutPhone.length} more digit{10 - checkoutPhone.length > 1 ? 's' : ''} needed)</span>
                             </p>
                           )}
                         </div>
 
-                        {/* Pre-Order for 7th of September Grand Opening */}
+                        {/* Partner Gym Selector */}
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40">Partner Gym Delivery Point</label>
+                            <span className="text-[9px] font-bold text-brand-green bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+                              Hubballi Partner Desk
+                            </span>
+                          </div>
+                          <div className="relative">
+                            <select
+                              value={selectedGymId}
+                              onChange={(e) => setSelectedGymId(e.target.value)}
+                              className="bg-[#FAF9F6] border border-slate-200 rounded-xl p-2.5 pr-8 text-xs font-bold text-brand-navy focus:outline-none focus:border-brand-green/40 w-full cursor-pointer appearance-none"
+                            >
+                              {GYMS.map(gym => (
+                                <option key={gym.id} value={gym.id}>
+                                  {gym.name} — {gym.location}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="w-3.5 h-3.5 text-brand-navy/40 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          </div>
+                          {(() => {
+                            const currentGym = GYMS.find(g => g.id === selectedGymId) || GYMS[0];
+                            return (
+                              <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xs flex items-start gap-2.5">
+                                <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center shrink-0 mt-0.5">
+                                  <MapPin className="w-3.5 h-3.5 text-brand-green" />
+                                </div>
+                                <div className="flex-grow">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-black text-brand-navy">{currentGym.name}</h4>
+                                    <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                                      Desk Drop-off
+                                    </span>
+                                  </div>
+                                  <p className="text-[10.5px] text-brand-navy/70 font-medium leading-relaxed mt-1">
+                                    {currentGym.location}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Delivery Option */}
                         {cart.some(item => item.purchaseOption === 'single') ? (
-                          <div className="flex flex-col gap-2.5 bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/70">
-                            {/* Grand Opening Banner */}
-                            <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3 flex items-start gap-2.5">
-                              <span className="text-lg shrink-0">🎉</span>
+                          /* Live Kitchen Delivery for Single Meals - Morning & Evening tabs and 7th Sep pre-order banner removed */
+                          <div className="flex flex-col gap-3 bg-gradient-to-br from-emerald-50/80 via-white to-[#FAF9F6] p-4 rounded-2xl border-2 border-emerald-500/25 shadow-xs">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="flex h-2.5 w-2.5 relative">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <span className="text-xs font-black uppercase tracking-wider text-brand-navy">
+                                  Live Kitchen Delivery
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300/60 flex items-center gap-1">
+                                <Flame className="w-3 h-3 text-emerald-600" />
+                                <span>Fresh Prep</span>
+                              </span>
+                            </div>
+
+                            <div className="bg-white/90 border border-emerald-100/80 rounded-xl p-3 flex items-start gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200/50">
+                                <Zap className="w-4 h-4 text-emerald-600" />
+                              </div>
                               <div>
-                                <p className="text-xs font-black text-amber-950">Our Proteino is Opening on 7th of September!</p>
-                                <p className="text-[10px] text-amber-800 font-semibold leading-relaxed mt-0.5">
-                                  We are launching on 7th September. Pre-orders are exclusively open for Grand Opening delivery directly to your gym partner desk.
+                                <p className="text-xs font-black text-brand-navy">Live Kitchen Delivery</p>
+                                <p className="text-[11px] text-brand-navy/60 font-medium leading-relaxed mt-0.5">
+                                  Your single meal is cooked fresh to order in our live fitness kitchen and delivered hot & insulated directly to your partner gym desk.
                                 </p>
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-black uppercase tracking-wider text-brand-navy/50">Delivery Schedule</span>
-                              <span className="text-[9px] font-black bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full border border-sky-200">
-                                🗓️ Pre-Order: 7th of Sep
+                            <div className="flex items-center justify-between text-xs bg-emerald-50/70 px-3 py-2 rounded-xl border border-emerald-200/60">
+                              <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Estimated Time:</span>
+                              </span>
+                              <span className="font-black text-emerald-700">
+                                30–45 Mins • Hot & Fresh
                               </span>
                             </div>
 
-                            <div className="mt-0.5">
-                              <DeliverySlotPicker
-                                value={checkoutTimeSlot}
-                                onChange={setCheckoutTimeSlot}
-                                title="Select 7th September Delivery Slot"
-                                isPreOrder={true}
-                                scheduledDateText="7th Sep (Grand Opening)"
-                              />
-                            </div>
+                            {/* If cart also contains subscription items, show subscription delivery schedule */}
+                            {cart.some(item => item.purchaseOption === 'subscription') && (
+                              <div className="mt-2 pt-3 border-t border-slate-200/60 flex flex-col gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-brand-navy/50">Subscription Delivery Schedule</span>
+                                <DeliverySlotPicker
+                                  value={checkoutTimeSlot}
+                                  onChange={setCheckoutTimeSlot}
+                                  title="Daily Subscription Delivery Slot"
+                                />
+                              </div>
+                            )}
                           </div>
                         ) : (
                           /* Subscription Delivery Slot Picker */
@@ -1619,18 +1768,23 @@ export default function App() {
                     <span className="font-black text-brand-green text-sm">₹{cartTotal}</span>
                   </div>
 
-                  <div className="flex justify-between items-start border-t border-slate-200/40 pt-1.5">
-                    <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
-                    <span className="font-bold text-brand-navy text-right max-w-[180px] truncate">
-                      {GYMS.find(g => g.id === selectedGymId)?.name || "Gold's Gym"}
-                    </span>
+                  <div className="flex flex-col border-t border-slate-200/40 pt-2 gap-1">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[11px] font-bold text-slate-500">Partner Gym:</span>
+                      <span className="font-extrabold text-brand-navy text-right">
+                        {(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).name}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium text-right leading-tight">
+                      📍 {(GYMS.find(g => g.id === selectedGymId) || GYMS[0]).location}
+                    </p>
                   </div>
 
                   <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
                     <span className="text-[11px] font-bold text-slate-500">Order Timing:</span>
                     <span className="font-bold text-brand-navy">
                       {cart.some(i => i.purchaseOption === 'single')
-                        ? 'Pre-Order for 7th Sep Opening'
+                        ? '⚡ Live Kitchen Delivery'
                         : 'Daily Subscription (Starts 7th Sep)'}
                     </span>
                   </div>
@@ -1638,7 +1792,9 @@ export default function App() {
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
                     <span className="font-bold text-brand-navy">
-                      {checkoutTimeSlot}
+                      {cart.some(i => i.purchaseOption === 'single')
+                        ? 'Live Kitchen Delivery (30–45 Mins)'
+                        : checkoutTimeSlot}
                     </span>
                   </div>
 
@@ -1789,6 +1945,112 @@ export default function App() {
                 >
                   Understood, I'll Wait
                 </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 5-Second Auto-Closing "Order Placed" Floating Popup (No countdown display) */}
+        <AnimatePresence>
+          {showOrderPlacedPopup && (
+            <motion.div
+              initial={{ opacity: 0, y: -40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              className="fixed top-5 inset-x-4 max-w-sm mx-auto z-[130] pointer-events-auto"
+            >
+              <div className="bg-[#0F1E36] text-white p-3.5 sm:p-4 rounded-2xl shadow-2xl border-2 border-brand-green/60 flex items-center justify-between gap-3 backdrop-blur-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-green/20 text-brand-green flex items-center justify-center shrink-0 border border-brand-green/40">
+                    <CheckCircle2 className="w-5 h-5 text-brand-green stroke-[2.5]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-black text-white">Order Placed Successfully!</span>
+                      <span className="text-[8.5px] font-black uppercase tracking-wider text-brand-green bg-brand-green/20 px-2 py-0.5 rounded-full border border-brand-green/30 shrink-0">
+                        Live
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/70 font-semibold mt-0.5 leading-snug">
+                      Kitchen received your order. Tracking live updates below.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOrderPlacedPopup(false)}
+                  className="p-1 rounded-lg text-white/40 hover:text-white transition-colors cursor-pointer shrink-0"
+                  title="Close popup"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Confirmation Modal when clicking Dustbin in Cart */}
+        <AnimatePresence>
+          {cartItemToDelete !== null && (
+            <div className="fixed inset-0 z-[140] flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setCartItemToDelete(null)}
+                className="fixed inset-0 bg-[#0F1E36]/70 backdrop-blur-xs cursor-pointer z-40"
+              />
+
+              {/* Modal Box */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 15 }}
+                className="relative bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-slate-200/80 z-50 overflow-hidden text-center flex flex-col items-center"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center mb-3 border border-red-100 shadow-2xs">
+                  <Trash2 className="w-6 h-6" />
+                </div>
+
+                <h3 className="text-base font-black text-brand-navy">
+                  {cartItemToDelete === 'all' ? 'Clear Basket?' : 'Remove Meal?'}
+                </h3>
+
+                <p className="text-xs text-brand-navy/60 font-semibold mt-1 leading-relaxed px-1">
+                  {cartItemToDelete === 'all' 
+                    ? 'Are you sure you want to remove all meals from your basket?'
+                    : `Are you sure you want to remove "${cartItemToDelete.name}" from your basket?`
+                  }
+                </p>
+
+                <div className="grid grid-cols-2 gap-2.5 w-full mt-5">
+                  <button
+                    type="button"
+                    onClick={() => setCartItemToDelete(null)}
+                    className="py-2.5 px-4 rounded-xl border border-slate-200 text-brand-navy font-bold text-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (cartItemToDelete === 'all') {
+                        setCart([]);
+                        localStorage.removeItem('proteino_cart');
+                      } else if (typeof cartItemToDelete === 'object') {
+                        handleRemoveFromCart(cartItemToDelete.index);
+                      }
+                      setCartItemToDelete(null);
+                    }}
+                    className="py-2.5 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-extrabold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
+                  >
+                    Confirm
+                  </button>
+                </div>
               </motion.div>
             </div>
           )}

@@ -6,15 +6,48 @@ export interface DeliverySection {
   slots: string[];
 }
 
-export const MORNING_DELIVERY_SLOTS = [
+// Morning window slots
+export const MORNING_WINDOW_SLOTS = [
   '6:00 AM – 8:00 AM',
   '8:00 AM – 10:00 AM'
 ];
 
+// Morning specific drop-off slots (we deliver in between)
+export const MORNING_DELIVER_BETWEEN_SLOTS = [
+  '6:00 AM – 6:30 AM',
+  '8:00 AM – 8:30 AM',
+  '10:00 AM'
+];
+
+// Combined morning delivery slots for validation & selection
+export const MORNING_DELIVERY_SLOTS = [
+  '6:00 AM – 6:30 AM',
+  '6:00 AM – 8:00 AM',
+  '8:00 AM – 8:30 AM',
+  '8:00 AM – 10:00 AM',
+  '10:00 AM'
+];
+
+// Evening window slots
+export const EVENING_WINDOW_SLOTS = [
+  '6:00 PM – 8:00 PM',
+  '8:00 PM – 10:00 PM'
+];
+
+// Evening specific drop-off slots (we deliver in between)
+export const EVENING_DELIVER_BETWEEN_SLOTS = [
+  '6:00 PM – 6:30 PM',
+  '8:00 PM – 8:30 PM',
+  '10:00 PM'
+];
+
+// Combined evening delivery slots for validation & selection
 export const EVENING_DELIVERY_SLOTS = [
-  '5:00 PM – 7:00 PM',
-  '7:00 PM – 9:00 PM',
-  '9:00 PM – 10:00 PM'
+  '6:00 PM – 6:30 PM',
+  '6:00 PM – 8:00 PM',
+  '8:00 PM – 8:30 PM',
+  '8:00 PM – 10:00 PM',
+  '10:00 PM'
 ];
 
 export const ALL_DELIVERY_SECTIONS: DeliverySection[] = [
@@ -29,7 +62,7 @@ export const ALL_DELIVERY_SECTIONS: DeliverySection[] = [
     id: 'evening',
     title: 'Evening Section',
     emoji: '🌆',
-    hours: '5:00 PM – 10:00 PM',
+    hours: '6:00 PM – 10:00 PM',
     slots: EVENING_DELIVERY_SLOTS
   }
 ];

@@ -26,6 +26,7 @@ import { Product, ActiveSubscription, CartItem } from '../types';
 import { PRODUCTS } from '../data';
 import ProductImageSlider from './ProductImageSlider';
 import { useStoreHours } from '../utils/storeHours';
+import ProteinoLogo from './ProteinoLogo';
 
 interface DashboardProps {
   onProductClick: (product: Product) => void;
@@ -223,6 +224,12 @@ export default function Dashboard({
               <span>Sign In</span>
             </button>
           )}
+
+          <ProteinoLogo 
+            size={36} 
+            variant="vector" 
+            className="w-9 h-9 rounded-xl overflow-hidden shadow-xs border border-brand-green/20 shrink-0" 
+          />
 
           <div>
             <h1 className="text-2xl font-black text-brand-green tracking-wider font-display italic">
