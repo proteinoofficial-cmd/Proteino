@@ -43,15 +43,17 @@ export interface Order {
   id: string;
   date: string;
   createdAt?: string;
+  deliveredAt?: string;
   items: CartItem[];
   total: number;
-  status: 'cooking' | 'out_for_delivery' | 'delivered';
-  deliveryTimeRemaining: number; // in minutes for simulator
+  status: 'placed' | 'accepted' | 'cooking' | 'out_for_delivery' | 'delivered';
+  deliveryTimeRemaining: number; // in minutes (real 30 mins)
   customerName?: string;
   customerPhone?: string;
   gymName?: string;
   gymLocation?: string;
   deliveryTimeSlot?: string;
+  paymentMethod?: 'COD';
   isPreOrder?: boolean;
   scheduledDate?: string;
   orderType?: 'instant' | 'preorder';
@@ -95,6 +97,8 @@ export interface ActiveSubscription {
   isPaused: boolean;
   pausedAt?: string;
   status?: 'active' | 'completed';
+  mealsDelivered?: number;
+  paymentMethod?: 'COD';
 }
 
 export interface DeletedSubscription extends ActiveSubscription {

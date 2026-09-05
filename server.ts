@@ -210,6 +210,7 @@ async function loadStoreFromFirebase(force = false) {
 }
 
 function saveStore() {
+  lastLoadTime = Date.now(); // Mark as up-to-date immediately
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), "utf-8");
   } catch (err) {
@@ -219,11 +220,11 @@ function saveStore() {
   if (db) {
     const docRef = doc(db, "app_state", "proteino_store");
     setDoc(docRef, {
-  data: JSON.parse(JSON.stringify(store)),
-  updated_at: new Date().toISOString()
-})
+      data: JSON.parse(JSON.stringify(store)),
+      updated_at: new Date().toISOString()
+    })
     .then(() => {
-      lastLoadTime = Date.now(); // Mark as up-to-date since we just wrote our state
+      lastLoadTime = Date.now();
       console.log("Successfully synced store to Firebase Firestore!");
     })
     .catch((err: any) => {
@@ -632,7 +633,12 @@ app.get("/api/orders", (req, res) => {
   if (!phone) {
     return res.json([]);
   }
-  return res.json(store.orders.filter(o => o.customerPhone === phone));
+  const cleanPhone = (phone as string).replace(/\D/g, '').slice(-10);
+  return res.json(store.orders.filter(o => {
+    if (!o.customerPhone) return false;
+    const orderPhoneClean = o.customerPhone.replace(/\D/g, '').slice(-10);
+    return (cleanPhone && orderPhoneClean === cleanPhone) || o.customerPhone === phone;
+  }));
 });
 
 app.post("/api/orders", (req, res) => {
@@ -644,6 +650,10 @@ app.post("/api/orders", (req, res) => {
     orderId = `PRTN-${Math.floor(1000 + Math.random() * 9000)}`;
   }
   newOrder.id = orderId;
+
+  if (!newOrder.paymentMethod) {
+    newOrder.paymentMethod = 'COD';
+  }
 
   if (!newOrder.date) {
     newOrder.date = new Date().toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString("en-IN", { day: '2-digit', month: 'short' });
@@ -661,10 +671,16 @@ app.put("/api/orders/:id", (req, res) => {
   const { status, deliveryTimeRemaining } = req.body;
   const orderIdx = store.orders.findIndex(o => o.id === id);
   if (orderIdx !== -1) {
-    store.orders[orderIdx].status = status;
-    if (status === 'delivered') {
-      store.orders[orderIdx].deliveryTimeRemaining = 0;
-    } else if (deliveryTimeRemaining !== undefined) {
+    if (status) {
+      store.orders[orderIdx].status = status;
+      if (status === 'delivered') {
+        store.orders[orderIdx].deliveryTimeRemaining = 0;
+        if (!store.orders[orderIdx].deliveredAt) {
+          store.orders[orderIdx].deliveredAt = new Date().toISOString();
+        }
+      }
+    }
+    if (deliveryTimeRemaining !== undefined) {
       store.orders[orderIdx].deliveryTimeRemaining = deliveryTimeRemaining;
     }
     saveStore();
@@ -833,13 +849,45 @@ app.put("/api/subscriptions/:idOrPhone/pause", (req, res) => {
   }
 });
 
-// Update subscription status endpoint (active/completed)
+// Update subscription status endpoint (active/completed) and meals count
 app.put("/api/subscriptions/:id/status", (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, mealsDelivered } = req.body;
   const subIdx = store.subscriptions.findIndex(sub => sub.id === id);
   if (subIdx !== -1) {
-    store.subscriptions[subIdx].status = status;
+    if (status) {
+      store.subscriptions[subIdx].status = status;
+      if (status === 'completed') {
+        const totalMeals = store.subscriptions[subIdx].durationDays === 78 ? 78 : store.subscriptions[subIdx].durationDays === 52 ? 52 : 26;
+        store.subscriptions[subIdx].mealsDelivered = totalMeals;
+      }
+    }
+    if (typeof mealsDelivered === 'number') {
+      store.subscriptions[subIdx].mealsDelivered = mealsDelivered;
+    }
+    saveStore();
+    res.json(store.subscriptions[subIdx]);
+  } else {
+    res.status(404).json({ error: "Subscription not found" });
+  }
+});
+
+// General update endpoint for subscription (mealsDelivered, status, etc.)
+app.put("/api/subscriptions/:id", (req, res) => {
+  const { id } = req.params;
+  const { status, mealsDelivered } = req.body;
+  const subIdx = store.subscriptions.findIndex(sub => sub.id === id);
+  if (subIdx !== -1) {
+    if (status) {
+      store.subscriptions[subIdx].status = status;
+      if (status === 'completed') {
+        const totalMeals = store.subscriptions[subIdx].durationDays === 78 ? 78 : store.subscriptions[subIdx].durationDays === 52 ? 52 : 26;
+        store.subscriptions[subIdx].mealsDelivered = totalMeals;
+      }
+    }
+    if (typeof mealsDelivered === 'number') {
+      store.subscriptions[subIdx].mealsDelivered = mealsDelivered;
+    }
     saveStore();
     res.json(store.subscriptions[subIdx]);
   } else {

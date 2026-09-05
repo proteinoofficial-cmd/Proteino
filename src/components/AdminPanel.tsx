@@ -124,7 +124,18 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     if (order.orderType === 'preorder') return true;
     const slot = (order.deliveryTimeSlot || '').toLowerCase();
     const sched = (order.scheduledDate || '').toLowerCase();
-    return slot.includes('tomorrow') || sched.includes('tomorrow') || slot.includes('pre-order') || sched.includes('pre-order');
+    return (
+      slot.includes('tomorrow') ||
+      sched.includes('tomorrow') ||
+      slot.includes('pre-order') ||
+      sched.includes('pre-order') ||
+      slot.includes('7th') ||
+      sched.includes('7th') ||
+      slot.includes('sep') ||
+      sched.includes('sep') ||
+      slot.includes('opening') ||
+      sched.includes('opening')
+    );
   };
 
   // Helper to accurately format order placement time & date
@@ -349,12 +360,23 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     }
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: "cooking" | "out_for_delivery" | "delivered") => {
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: "placed" | "accepted" | "cooking" | "out_for_delivery" | "delivered") => {
+    // Instant optimistic update for Admin UI
+    setOrders(prev => prev.map(o => o.id === orderId ? {
+      ...o,
+      status: newStatus,
+      deliveredAt: newStatus === 'delivered' ? (o.deliveredAt || new Date().toISOString()) : o.deliveredAt,
+      deliveryTimeRemaining: newStatus === 'delivered' ? 0 : o.deliveryTimeRemaining
+    } : o));
+
     try {
       const res = await apiFetch(`/api/orders/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ 
+          status: newStatus,
+          deliveryTimeRemaining: newStatus === 'delivered' ? 0 : undefined
+        })
       });
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const updatedOrder = await res.json();
@@ -365,12 +387,44 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     }
   };
 
+  const handleAdjustSubscriptionMeals = async (subId: string, newDeliveredCount: number) => {
+    const sub = subscriptions.find(s => s.id === subId);
+    if (!sub) return;
+    const totalMeals = sub.durationDays === 78 ? 78 : sub.durationDays === 52 ? 52 : 26;
+    const safeCount = Math.max(0, Math.min(totalMeals, newDeliveredCount));
+    const newStatus = safeCount >= totalMeals ? "completed" : "active";
+
+    // Optimistic UI update
+    setSubscriptions(prev => prev.map(s => s.id === subId ? { ...s, mealsDelivered: safeCount, status: newStatus } : s));
+
+    try {
+      const res = await apiFetch(`/api/subscriptions/${subId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mealsDelivered: safeCount, status: newStatus })
+      });
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const updatedSub = await res.json();
+        setSubscriptions(prev => prev.map(s => s.id === subId ? updatedSub : s));
+      }
+    } catch (err) {
+      console.error("Failed to adjust subscription meals:", err);
+    }
+  };
+
   const handleUpdateSubscriptionStatus = async (subId: string, status: "active" | "completed") => {
+    const sub = subscriptions.find(s => s.id === subId);
+    const totalMeals = sub?.durationDays === 78 ? 78 : sub?.durationDays === 52 ? 52 : 26;
+    const targetMeals = status === "completed" ? totalMeals : (sub?.mealsDelivered || 0);
+
+    // Optimistic UI update
+    setSubscriptions(prev => prev.map(s => s.id === subId ? { ...s, status, mealsDelivered: targetMeals } : s));
+
     try {
       const res = await apiFetch(`/api/subscriptions/${subId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, mealsDelivered: targetMeals })
       });
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const updatedSub = await res.json();
@@ -1453,8 +1507,14 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                               ))}
                             </div>
                             <div className="flex justify-between items-center border-t border-slate-200/50 mt-3 pt-2">
-                              <span className="text-[10px] font-black uppercase text-brand-navy/40">TOTAL BILL PAID</span>
+                              <span className="text-[10px] font-black uppercase text-brand-navy/40">TOTAL BILL</span>
                               <span className="font-black text-sm text-brand-green">₹{order.total}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-1.5 text-xs">
+                              <span className="text-[10px] font-black uppercase text-brand-navy/40">PAYMENT METHOD</span>
+                              <span className="font-extrabold text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                                💵 Cash on Delivery (COD)
+                              </span>
                             </div>
                           </div>
 
@@ -1464,45 +1524,63 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                               <p className="text-[8px] font-black text-brand-navy/40 uppercase tracking-widest">LIVE TRACKER STATE</p>
                               <div className="flex items-center gap-1.5 mt-1">
                                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                  order.status === "cooking"
-                                    ? "bg-amber-100 text-amber-700"
+                                  order.status === "placed"
+                                    ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                    : order.status === "accepted"
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                    : order.status === "cooking"
+                                    ? "bg-amber-100 text-amber-700 border border-amber-300"
                                     : order.status === "out_for_delivery"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-[#EBF4E0] text-brand-green"
+                                    ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                    : "bg-[#EBF4E0] text-brand-green border border-brand-green/30"
                                 }`}>
+                                  {order.status === "placed" && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
+                                  {order.status === "accepted" && <Check className="w-3 h-3 text-emerald-600" />}
                                   {order.status === "cooking" && <Clock className="w-3 h-3 animate-spin" />}
                                   {order.status === "out_for_delivery" && <Truck className="w-3.5 h-3.5" />}
                                   {order.status === "delivered" && <CheckCircle className="w-3 h-3" />}
                                   <span>
-                                    {order.status === "cooking" ? "Cooking" : order.status === "out_for_delivery" ? "On the Way" : "Complete"}
+                                    {order.status === "placed" ? "New Placed" : order.status === "accepted" ? "Accepted" : order.status === "cooking" ? "Cooking" : order.status === "out_for_delivery" ? "On the Way" : "Delivered"}
                                   </span>
                                 </span>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button
+                                onClick={() => handleUpdateOrderStatus(order.id, "accepted")}
+                                disabled={order.status === "accepted"}
+                                className={`flex-1 sm:flex-none py-2 px-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                  order.status === "accepted"
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold"
+                                    : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95"
+                                }`}
+                              >
+                                {order.status === "accepted" ? "✓ Accepted" : "Accept"}
+                              </button>
+
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, "cooking")}
                                 disabled={order.status === "cooking"}
-                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`flex-1 sm:flex-none py-2 px-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   order.status === "cooking"
-                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                    ? "bg-amber-100 text-amber-800 border border-amber-300 font-extrabold"
                                     : "bg-amber-500 hover:bg-amber-600 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                Cooking
+                                {order.status === "cooking" ? "👨‍🍳 Cooking" : "Cooking"}
                               </button>
 
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, "out_for_delivery")}
                                 disabled={order.status === "out_for_delivery"}
-                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`flex-1 sm:flex-none py-2 px-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   order.status === "out_for_delivery"
-                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-blue-500 hover:bg-blue-600 text-white shadow-xs active:scale-95"
+                                    ? "bg-blue-100 text-blue-800 border border-blue-300 font-extrabold"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                On the Way
+                                {order.status === "out_for_delivery" ? "🛵 On the Way" : "On the Way"}
                               </button>
 
                               <button
@@ -1510,11 +1588,11 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                 disabled={order.status === "delivered"}
                                 className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   order.status === "delivered"
-                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                    ? "bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300 font-extrabold"
                                     : "bg-brand-green hover:bg-brand-green/90 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                {order.status === "delivered" ? "Arrived" : "Mark Arrived"}
+                                {order.status === "delivered" ? "✓ Delivered" : "Mark as Delivered"}
                               </button>
                             </div>
                           </div>
@@ -1944,7 +2022,14 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                               const proteinGrams = mealProduct ? mealProduct.protein : 40;
                               const caloriesKcal = mealProduct ? mealProduct.calories : 520;
                               
-                              const mealInfo = calculateMealsRemaining(sub.startDate, sub.durationDays || 26, sub.isPaused, sub.pausedAt);
+                               const mealInfo = calculateMealsRemaining(
+                                sub.startDate,
+                                sub.durationDays || 26,
+                                sub.isPaused,
+                                sub.pausedAt,
+                                sub.status,
+                                sub.mealsDelivered
+                              );
                               const durationLabel = sub.durationDays === 78 ? "78 Meals (3 Months)" : sub.durationDays === 52 ? "52 Meals (2 Months)" : "26 Meals (1 Month)";
 
                               return (
@@ -1965,9 +2050,14 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                         💪 {proteinGrams}g Protein • {caloriesKcal} Kcal
                                       </span>
                                     </div>
-                                    <span className="text-[9px] bg-[#FAF9F6] border border-slate-200 text-brand-navy/80 font-black px-2 py-0.5 rounded font-mono">
-                                      🕒 {sub.timeSlot}
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[9px] bg-[#FAF9F6] border border-slate-200 text-brand-navy/80 font-black px-2 py-0.5 rounded font-mono">
+                                        🕒 {sub.timeSlot}
+                                      </span>
+                                      <span className="text-[9px] bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold px-2 py-0.5 rounded">
+                                        💵 COD
+                                      </span>
+                                    </div>
                                   </div>
 
                                   {/* Delivery Gym & Meals Tracker */}
@@ -1985,7 +2075,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                     <div className="bg-[#0F1E36] text-white rounded-xl p-3 border border-brand-navy/10 shadow-sm flex flex-col justify-between relative">
                                       <div className="flex items-center justify-between">
                                         <p className="text-[8px] font-black text-brand-green tracking-widest uppercase leading-none">
-                                          {sub.status === "completed" ? "🏆 PLAN COMPLETED" : "🥗 MEALS REMAINING"}
+                                          {sub.status === "completed" ? "🏆 PLAN COMPLETED" : "🥗 MEALS PROGRESS"}
                                         </p>
                                         <span className="text-[8px] font-black bg-white/10 text-white/80 px-1.5 py-0.5 rounded">
                                           {durationLabel}
@@ -1995,11 +2085,13 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                       <div className="my-1.5">
                                         <p className="text-sm font-black font-mono tracking-tight text-white leading-none">
                                           {sub.status === "completed" 
-                                            ? `All ${mealInfo.totalMeals} Meals Delivered` 
-                                            : `${mealInfo.mealsRemaining} of ${mealInfo.totalMeals} Meals Remaining`}
+                                            ? `${mealInfo.totalMeals} of ${mealInfo.totalMeals} Meals Delivered (100%)` 
+                                            : `${mealInfo.mealsDelivered} of ${mealInfo.totalMeals} Meals Delivered`}
                                         </p>
-                                        <p className="text-[9px] text-white/60 font-medium mt-1">
-                                          {mealInfo.mealsDelivered} meals delivered • Excludes Sundays
+                                        <p className="text-[9px] text-white/70 font-semibold mt-1">
+                                          {sub.status === "completed" 
+                                            ? `All ${mealInfo.totalMeals} daily meals delivered to gym • Plan Finished` 
+                                            : `${mealInfo.mealsRemaining} meals remaining to deliver • Excludes Sundays`}
                                         </p>
                                       </div>
 
@@ -2014,18 +2106,56 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
 
                                   {/* Dates & Action Controls */}
                                   <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1 flex-wrap gap-2">
-                                    <span className="text-[10px] text-slate-500 font-mono">
-                                      Ordered: {formatOrderDateTime(sub.createdAt || sub.startDate, sub.date || sub.startDate).display}
-                                    </span>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-[10px] text-slate-500 font-mono">
+                                        Ordered: {formatOrderDateTime(sub.createdAt || sub.startDate, sub.date || sub.startDate).display}
+                                      </span>
+                                      <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
+                                        Payment Method: COD
+                                      </span>
+                                    </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {/* Meal Count Adjusters for Active Plans */}
                                       {sub.status !== "completed" && (
+                                        <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleAdjustSubscriptionMeals(sub.id, Math.max(0, mealInfo.mealsDelivered - 1))}
+                                            className="px-1.5 py-1 text-slate-600 hover:text-brand-navy text-[10px] font-black cursor-pointer"
+                                            title="Decrement 1 meal delivered"
+                                          >
+                                            -1
+                                          </button>
+                                          <span className="px-2 text-[10px] font-mono font-black text-brand-navy">
+                                            {mealInfo.mealsDelivered} / {mealInfo.totalMeals}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleAdjustSubscriptionMeals(sub.id, Math.min(mealInfo.totalMeals, mealInfo.mealsDelivered + 1))}
+                                            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-black cursor-pointer shadow-2xs"
+                                            title="Record +1 meal delivered"
+                                          >
+                                            +1 Delivered
+                                          </button>
+                                        </div>
+                                      )}
+
+                                      {sub.status !== "completed" ? (
                                         <button
                                           onClick={() => handleUpdateSubscriptionStatus(sub.id, "completed")}
                                           className="px-2.5 py-1.5 bg-[#6B9E35] hover:bg-[#59832B] text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
                                         >
                                           <Check className="w-3 h-3" />
-                                          <span>Complete Plan</span>
+                                          <span>Complete Plan ({mealInfo.totalMeals}/{mealInfo.totalMeals})</span>
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleUpdateSubscriptionStatus(sub.id, "active")}
+                                          className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-wider rounded-lg border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
+                                        >
+                                          <RotateCcw className="w-3 h-3" />
+                                          <span>Re-open Plan</span>
                                         </button>
                                       )}
 

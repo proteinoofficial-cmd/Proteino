@@ -34,14 +34,18 @@ export const ALL_DELIVERY_SECTIONS: DeliverySection[] = [
   }
 ];
 
-export function getTomorrowFormatted(): { label: string; dateStr: string } {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
-  const dateStr = tomorrow.toLocaleDateString('en-IN', options);
+export const GRAND_OPENING_DATE_STR = "7th of September";
+export const GRAND_OPENING_SHORT_DATE = "7th Sep";
+export const GRAND_OPENING_FULL_DATE = "07 Sep 2026";
+export const GRAND_OPENING_ANNOUNCEMENT = "🎉 Proteino is opening on 7th of September! Pre-orders are now live for Grand Opening day delivery directly to your gym desk.";
+
+export function getTomorrowFormatted(): { label: string; dateStr: string; isOpening: boolean; message: string } {
+  // Opening date is 7th of September
   return {
-    label: `Tomorrow (${dateStr})`,
-    dateStr
+    label: "7th Sep (Grand Opening)",
+    dateStr: "07 Sep 2026",
+    isOpening: true,
+    message: "Proteino is opening on 7th of September! Pre-order your meals now for Grand Opening delivery."
   };
 }
 
@@ -159,13 +163,15 @@ export function validateCustomDeliveryTime(rawInput: string): {
 
 /**
  * Calculates remaining meals for a subscription based on total plan meals (e.g. 26 for 1 mo, 52 for 2 mo, 78 for 3 mo)
- * and elapsed delivery days excluding Sundays.
+ * and elapsed delivery days excluding Sundays, accurately handling completed plans (100% / full count).
  */
 export function calculateMealsRemaining(
   startDateStr: string,
   totalPlanDaysOrMeals: number,
   isPaused: boolean = false,
-  pausedAt?: string
+  pausedAt?: string,
+  status?: 'active' | 'completed',
+  explicitMealsDelivered?: number
 ): {
   totalMeals: number;
   mealsDelivered: number;
@@ -173,7 +179,32 @@ export function calculateMealsRemaining(
   percentage: number;
   daysElapsed: number;
 } {
-  const totalMeals = totalPlanDaysOrMeals || 26;
+  const totalMeals = totalPlanDaysOrMeals === 78 ? 78 : totalPlanDaysOrMeals === 52 ? 52 : 26;
+
+  // If the plan is completed, always return 100% of meals delivered (26 of 26, 52 of 52, or 78 of 78)
+  if (status === 'completed') {
+    return {
+      totalMeals,
+      mealsDelivered: totalMeals,
+      mealsRemaining: 0,
+      percentage: 100,
+      daysElapsed: totalMeals
+    };
+  }
+
+  // If explicit mealsDelivered is recorded, use that
+  if (typeof explicitMealsDelivered === 'number' && explicitMealsDelivered >= 0) {
+    const delivered = Math.min(totalMeals, explicitMealsDelivered);
+    const remaining = Math.max(0, totalMeals - delivered);
+    return {
+      totalMeals,
+      mealsDelivered: delivered,
+      mealsRemaining: remaining,
+      percentage: Math.min(100, Math.round((delivered / totalMeals) * 100)),
+      daysElapsed: delivered + 1
+    };
+  }
+
   const start = new Date(startDateStr);
   const now = isPaused && pausedAt ? new Date(pausedAt) : new Date();
 

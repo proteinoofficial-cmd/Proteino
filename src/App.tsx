@@ -127,11 +127,13 @@ export default function App() {
 
   // --- Sync with Backend Server ---
   const fetchUserData = async () => {
-    if (!profile?.phone) return;
+    const activePhone = profile?.phone || localStorage.getItem('proteino_last_order_phone');
     try {
+      const ordersUrl = activePhone ? `/api/orders?phone=${encodeURIComponent(activePhone)}` : '/api/orders';
+      const subsUrl = activePhone ? `/api/subscriptions?phone=${encodeURIComponent(activePhone)}` : '/api/subscriptions';
       const [ordersRes, subsRes] = await Promise.all([
-        apiFetch(`/api/orders?phone=${profile.phone}`),
-        apiFetch(`/api/subscriptions?phone=${profile.phone}`)
+        apiFetch(ordersUrl),
+        apiFetch(subsUrl)
       ]);
       if (ordersRes.ok && ordersRes.headers.get('content-type')?.includes('application/json')) {
         const oData = await ordersRes.json();
@@ -147,13 +149,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (profile?.phone) {
+    fetchUserData();
+    const pollTimer = setInterval(() => {
       fetchUserData();
-      const pollTimer = setInterval(() => {
-        fetchUserData();
-      }, 3500);
-      return () => clearInterval(pollTimer);
-    }
+    }, 3000); // 3 seconds poll ensures live updates appear on customer site in seconds (well within 30s)
+    return () => clearInterval(pollTimer);
   }, [profile?.phone]);
 
   // Handle Firebase Google Sign-In redirect results on page load (essential for mobile devices!)
@@ -636,6 +636,7 @@ export default function App() {
     };
     setProfile(updatedProfile);
     localStorage.setItem('proteino_profile', JSON.stringify(updatedProfile));
+    localStorage.setItem('proteino_last_order_phone', cleanPhone);
 
     // Filter single meal items and subscription items
     const singleMealItems = cart.filter(item => item.purchaseOption === 'single');
@@ -1437,72 +1438,46 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Pre-Order for Tomorrow vs Live Prep Delivery Option */}
+                        {/* Pre-Order for 7th of September Grand Opening */}
                         {cart.some(item => item.purchaseOption === 'single') ? (
-                          <div className="flex flex-col gap-2 bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/60">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-black uppercase tracking-wider text-brand-navy/50">Single Meal Delivery Type</span>
-                              {orderScheduleMode === 'preorder' && (
-                                <span className="text-[9px] font-black bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-200">
-                                  🗓️ {getTomorrowFormatted().label}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-slate-200/60">
-                              <button
-                                type="button"
-                                onClick={() => setOrderScheduleMode('preorder')}
-                                className={`py-2 px-2 rounded-lg text-[10.5px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                                  orderScheduleMode === 'preorder'
-                                    ? 'bg-[#0F1E36] text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-brand-navy'
-                                }`}
-                              >
-                                <span>🗓️ Pre-Order (Tomorrow)</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (!storeStatus.isOpen) {
-                                    setShowClosedStoreModal(true);
-                                  } else {
-                                    setOrderScheduleMode('instant');
-                                  }
-                                }}
-                                className={`py-2 px-2 rounded-lg text-[10.5px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                                  orderScheduleMode === 'instant'
-                                    ? 'bg-brand-green text-white shadow-xs'
-                                    : storeStatus.isOpen
-                                    ? 'text-slate-600 hover:text-brand-navy'
-                                    : 'text-slate-400 opacity-60'
-                                }`}
-                              >
-                                <span>⚡ Live Kitchen Prep</span>
-                                {!storeStatus.isOpen && <span className="text-[8px] bg-slate-200 text-slate-600 px-1 py-0.2 rounded font-bold">Closed</span>}
-                              </button>
-                            </div>
-
-                            {orderScheduleMode === 'preorder' ? (
-                              <div className="mt-1">
-                                <DeliverySlotPicker
-                                  value={checkoutTimeSlot}
-                                  onChange={setCheckoutTimeSlot}
-                                  title="Select Tomorrow's Delivery Slot"
-                                  isPreOrder={true}
-                                  scheduledDateText={getTomorrowFormatted().label}
-                                />
+                          <div className="flex flex-col gap-2.5 bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/70">
+                            {/* Grand Opening Banner */}
+                            <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3 flex items-start gap-2.5">
+                              <span className="text-lg shrink-0">🎉</span>
+                              <div>
+                                <p className="text-xs font-black text-amber-950">Our Proteino is Opening on 7th of September!</p>
+                                <p className="text-[10px] text-amber-800 font-semibold leading-relaxed mt-0.5">
+                                  We are launching on 7th September. Pre-orders are exclusively open for Grand Opening delivery directly to your gym partner desk.
+                                </p>
                               </div>
-                            ) : (
-                              <p className="text-[10px] text-brand-green font-bold bg-brand-green/10 p-2.5 rounded-xl border border-brand-green/20">
-                                ⚡ Live order: Fresh kitchen prep starts immediately during our active open session.
-                              </p>
-                            )}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-brand-navy/50">Delivery Schedule</span>
+                              <span className="text-[9px] font-black bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full border border-sky-200">
+                                🗓️ Pre-Order: 7th of Sep
+                              </span>
+                            </div>
+
+                            <div className="mt-0.5">
+                              <DeliverySlotPicker
+                                value={checkoutTimeSlot}
+                                onChange={setCheckoutTimeSlot}
+                                title="Select 7th September Delivery Slot"
+                                isPreOrder={true}
+                                scheduledDateText="7th Sep (Grand Opening)"
+                              />
+                            </div>
                           </div>
                         ) : (
                           /* Subscription Delivery Slot Picker */
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-col gap-2 bg-[#FAF9F6] p-3.5 rounded-2xl border border-slate-200/70">
+                            <div className="bg-sky-50 border border-sky-200/90 rounded-xl p-2.5 flex items-center gap-2">
+                              <span className="text-base shrink-0">🎉</span>
+                              <p className="text-[10px] font-bold text-sky-900 leading-snug">
+                                Proteino launches on 7th of September. Daily subscription meals begin delivery on opening day.
+                              </p>
+                            </div>
                             <DeliverySlotPicker
                               value={checkoutTimeSlot}
                               onChange={setCheckoutTimeSlot}
@@ -1510,6 +1485,20 @@ export default function App() {
                             />
                           </div>
                         )}
+                      </div>
+
+                      {/* Payment Method Display (COD) */}
+                      <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-2xl p-3.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">💵</span>
+                          <div>
+                            <p className="text-xs font-black text-emerald-950">Payment Method: Cash on Delivery (COD)</p>
+                            <p className="text-[10.5px] text-emerald-700 font-medium">Pay cash upon meal drop-off at your gym desk</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2.5 py-1 rounded-lg shrink-0">
+                          COD
+                        </span>
                       </div>
 
                       {/* Cost Summary Section */}
@@ -1641,17 +1630,22 @@ export default function App() {
                     <span className="text-[11px] font-bold text-slate-500">Order Timing:</span>
                     <span className="font-bold text-brand-navy">
                       {cart.some(i => i.purchaseOption === 'single')
-                        ? (orderScheduleMode === 'preorder' ? `Pre-Order (${getTomorrowFormatted().label})` : 'Live Prep (Immediate)')
-                        : 'Daily Subscription Delivery'}
+                        ? 'Pre-Order for 7th Sep Opening'
+                        : 'Daily Subscription (Starts 7th Sep)'}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-bold text-slate-500">Delivery Slot:</span>
                     <span className="font-bold text-brand-navy">
-                      {cart.some(i => i.purchaseOption === 'single') && orderScheduleMode === 'instant'
-                        ? 'Immediate Dispatch'
-                        : checkoutTimeSlot}
+                      {checkoutTimeSlot}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center border-t border-slate-200/40 pt-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">Payment Method:</span>
+                    <span className="font-extrabold text-[11px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300/60">
+                      💵 Cash on Delivery (COD)
                     </span>
                   </div>
 

@@ -183,7 +183,7 @@ export default function OrdersTracker({
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-brand-green animate-ping" />
+                        <span className={`w-2 h-2 rounded-full ${order.status === 'delivered' ? 'bg-emerald-400' : 'bg-brand-green animate-ping'}`} />
                         <p className="text-[10px] text-white/60 font-black uppercase tracking-wider">Live Status</p>
                       </div>
                       <p className="text-xs font-black text-brand-green tracking-mono mt-0.5">{order.id}</p>
@@ -193,11 +193,59 @@ export default function OrdersTracker({
                       <p className="text-xs font-black text-white mt-0.5 flex items-center gap-1.5 justify-end">
                         <Clock className="w-3.5 h-3.5 text-brand-green" />
                         <span>
-                          {order.status === 'cooking' ? 'Preparing in Kitchen' : 'Out for Delivery'}
+                          {order.status === 'placed'
+                            ? 'Order Placed'
+                            : order.status === 'accepted'
+                            ? 'Order Accepted'
+                            : order.status === 'cooking'
+                            ? 'Preparing in Kitchen'
+                            : order.status === 'out_for_delivery'
+                            ? 'Out for Delivery'
+                            : 'Delivered at Gym Desk'}
                         </span>
                       </p>
                     </div>
                   </div>
+
+                  {/* Real 30 Mins Estimated Delivery Time Card */}
+                  {(() => {
+                    // Calculate real 30 mins: real elapsed time in minutes from order creation
+                    let minsRemaining = 30;
+                    if (order.createdAt) {
+                      const createdMs = new Date(order.createdAt).getTime();
+                      if (!isNaN(createdMs)) {
+                        const elapsedMins = Math.floor((Date.now() - createdMs) / 60000);
+                        minsRemaining = Math.max(1, 30 - elapsedMins);
+                      }
+                    }
+                    if (order.status === 'delivered') minsRemaining = 0;
+
+                    return (
+                      <div className="bg-white/10 border border-white/10 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-brand-green/20 text-brand-green flex items-center justify-center shrink-0">
+                            <Clock className="w-5 h-5 text-brand-green" />
+                          </div>
+                          <div>
+                            <p className="text-[9px] text-white/50 font-black uppercase tracking-wider">ESTIMATED DELIVERY TIME</p>
+                            <p className="text-xs font-black text-white mt-0.5">
+                              {order.status === 'delivered'
+                                ? '✓ Delivered at Gym Front Desk'
+                                : `${minsRemaining} Mins Remaining (Real 30 Mins Delivery)`}
+                            </p>
+                            <p className="text-[9.5px] text-white/60 font-medium">
+                              {order.status === 'delivered'
+                                ? 'Handed over in insulated bag'
+                                : 'Takes real 30 mins to prepare & deliver fresh to gym'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[9.5px] font-black uppercase tracking-wider bg-brand-green text-white px-2.5 py-1 rounded-full shrink-0 shadow-xs">
+                          {order.status === 'delivered' ? 'Completed' : 'Real 30 Mins'}
+                        </span>
+                      </div>
+                    );
+                  })()}
 
                   {/* Visual Status Progress Stepper */}
                   <div className="relative flex items-center justify-between px-2 pt-1 pb-1">
@@ -207,7 +255,11 @@ export default function OrdersTracker({
                       <div 
                         className="absolute left-0 top-0 bottom-0 bg-brand-green rounded-full transition-all duration-500" 
                         style={{ 
-                          width: order.status === 'cooking' ? '20%' : '75%' 
+                          width: order.status === 'cooking' || order.status === 'accepted' || order.status === 'placed'
+                            ? '25%' 
+                            : order.status === 'out_for_delivery' 
+                            ? '65%' 
+                            : '100%' 
                         }} 
                       />
                     </div>
@@ -215,9 +267,9 @@ export default function OrdersTracker({
                     {/* Step 1: Cooking */}
                     <div className="relative z-10 flex flex-col items-center">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                        order.status === 'cooking' 
+                        order.status === 'cooking' || order.status === 'accepted' || order.status === 'placed'
                           ? 'bg-brand-green text-white scale-110 shadow-lg shadow-brand-green/30 ring-4 ring-brand-green/20' 
-                          : 'bg-brand-green/40 text-brand-green'
+                          : 'bg-brand-green text-white'
                       }`}>
                         <ChefHat className="w-4 h-4" />
                       </div>
@@ -229,21 +281,29 @@ export default function OrdersTracker({
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                         order.status === 'out_for_delivery' 
                           ? 'bg-brand-green text-white scale-110 shadow-lg shadow-brand-green/30 ring-4 ring-brand-green/20' 
+                          : order.status === 'delivered'
+                          ? 'bg-brand-green text-white'
                           : 'bg-white/10 text-white/40'
                       }`}>
                         <Bike className="w-4 h-4" />
                       </div>
-                      <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'out_for_delivery' ? 'text-white font-black' : 'text-white/60'}`}>
+                      <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'out_for_delivery' || order.status === 'delivered' ? 'text-white font-black' : 'text-white/60'}`}>
                         On the Way
                       </span>
                     </div>
 
-                    {/* Step 3: Arrived */}
+                    {/* Step 3: Arrived / Delivered */}
                     <div className="relative z-10 flex flex-col items-center">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/10 text-white/40">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                        order.status === 'delivered'
+                          ? 'bg-brand-green text-white scale-110 shadow-lg shadow-brand-green/30 ring-4 ring-brand-green/20'
+                          : 'bg-white/10 text-white/40'
+                      }`}>
                         <MapPin className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-bold mt-1.5 text-white/45">Arrived</span>
+                      <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'delivered' ? 'text-brand-green font-black' : 'text-white/45'}`}>
+                        {order.status === 'delivered' ? 'Delivered' : 'Arrived'}
+                      </span>
                     </div>
                   </div>
 
@@ -307,10 +367,18 @@ export default function OrdersTracker({
                     ))}
                   </div>
 
-                  {/* Total Amount */}
-                  <div className="flex justify-between items-center text-xs px-1">
-                    <span className="text-white/60 font-semibold">Total Paid (incl. taxes)</span>
-                    <span className="font-black text-brand-green text-base">₹{order.total}</span>
+                  {/* Total Amount & Payment Method */}
+                  <div className="flex flex-col gap-1.5 pt-1 border-t border-white/10">
+                    <div className="flex justify-between items-center text-xs px-1">
+                      <span className="text-white/60 font-semibold">Total Amount</span>
+                      <span className="font-black text-brand-green text-base">₹{order.total}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs px-1">
+                      <span className="text-white/60 font-semibold">Payment Method</span>
+                      <span className="font-bold text-[10.5px] text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                        💵 Cash on Delivery (COD)
+                      </span>
+                    </div>
                   </div>
 
                   {/* Live Status Notice */}
@@ -383,11 +451,16 @@ export default function OrdersTracker({
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end">
                       <p className="font-black text-sm text-brand-navy">₹{order.total}</p>
-                      <span className="text-[9px] font-bold text-brand-green bg-[#EBF4E0] px-1.5 py-0.5 rounded-full inline-block mt-0.5">
-                        Delivered & Paid
-                      </span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[8.5px] font-extrabold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                          💵 COD
+                        </span>
+                        <span className="text-[8.5px] font-bold text-brand-green bg-[#EBF4E0] px-1.5 py-0.5 rounded-full">
+                          Delivered & Paid
+                        </span>
+                      </div>
                     </div>
                   </div>
 
