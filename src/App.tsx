@@ -63,7 +63,14 @@ export default function App() {
   });
 
   // --- Core Lists ---
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    try {
+      const saved = localStorage.getItem('proteino_orders');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [activeSubscriptions, setActiveSubscriptions] = useState<ActiveSubscription[]>([]);
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -151,8 +158,18 @@ export default function App() {
   // --- Sync with Backend Server ---
   const fetchUserData = async () => {
     const activePhone = profile?.phone || localStorage.getItem('proteino_last_order_phone');
+    let savedOrderIds: string[] = [];
     try {
-      const ordersUrl = activePhone ? `/api/orders?phone=${encodeURIComponent(activePhone)}` : '/api/orders';
+      savedOrderIds = JSON.parse(localStorage.getItem('proteino_customer_order_ids') || '[]');
+    } catch (e) {}
+
+    try {
+      let ordersUrl = '/api/orders';
+      if (activePhone) {
+        ordersUrl += `?phone=${encodeURIComponent(activePhone)}`;
+      } else if (savedOrderIds.length > 0) {
+        ordersUrl += `?orderIds=${encodeURIComponent(savedOrderIds.join(','))}`;
+      }
       const subsUrl = activePhone ? `/api/subscriptions?phone=${encodeURIComponent(activePhone)}` : '/api/subscriptions';
       const [ordersRes, subsRes] = await Promise.all([
         apiFetch(ordersUrl),
@@ -161,6 +178,9 @@ export default function App() {
       if (ordersRes.ok && ordersRes.headers.get('content-type')?.includes('application/json')) {
         const oData = await ordersRes.json();
         setOrders(oData);
+        try {
+          localStorage.setItem('proteino_orders', JSON.stringify(oData));
+        } catch (e) {}
       }
       if (subsRes.ok && subsRes.headers.get('content-type')?.includes('application/json')) {
         const sData = await subsRes.json();
@@ -175,8 +195,62 @@ export default function App() {
     fetchUserData();
     const pollTimer = setInterval(() => {
       fetchUserData();
-    }, 3000); // 3 seconds poll ensures live updates appear on customer site in seconds (well within 30s)
-    return () => clearInterval(pollTimer);
+    }, 1000); // 1-second fast poll ensures live status changes in Admin update within a second
+
+    const handleSyncEvent = (e?: any) => {
+      if (e?.detail?.orderId && e?.detail?.status) {
+        setOrders(prev => prev.map(o => o.id === e.detail.orderId ? {
+          ...o,
+          status: e.detail.status,
+          acceptedAt: (e.detail.status === 'accepted' || e.detail.status === 'out_for_delivery') ? (o.acceptedAt || e.detail.acceptedAt || new Date().toISOString()) : o.acceptedAt,
+          deliveredAt: e.detail.status === 'delivered' ? (o.deliveredAt || e.detail.deliveredAt || new Date().toISOString()) : o.deliveredAt,
+          deliveryTimeRemaining: e.detail.status === 'delivered' ? 0 : o.deliveryTimeRemaining
+        } : o));
+      }
+      fetchUserData();
+    };
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('proteino_sync');
+        bc.onmessage = (event) => {
+          if (event.data?.orderId && event.data?.status) {
+            setOrders(prev => prev.map(o => o.id === event.data.orderId ? {
+              ...o,
+              status: event.data.status,
+              acceptedAt: (event.data.status === 'accepted' || event.data.status === 'out_for_delivery') ? (o.acceptedAt || event.data.acceptedAt || new Date().toISOString()) : o.acceptedAt,
+              deliveredAt: event.data.status === 'delivered' ? (o.deliveredAt || event.data.deliveredAt || new Date().toISOString()) : o.deliveredAt,
+              deliveryTimeRemaining: event.data.status === 'delivered' ? 0 : o.deliveryTimeRemaining
+            } : o));
+          }
+          fetchUserData();
+        };
+      }
+    } catch (e) {}
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'proteino_order_sync_trigger' || e.key === 'proteino_last_order_phone' || e.key === 'proteino_orders') {
+        if (e.key === 'proteino_orders' && e.newValue) {
+          try {
+            setOrders(JSON.parse(e.newValue));
+          } catch (err) {}
+        }
+        fetchUserData();
+      }
+    };
+
+    window.addEventListener('proteino_orders_updated', handleSyncEvent);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      clearInterval(pollTimer);
+      try {
+        bc?.close();
+      } catch (e) {}
+      window.removeEventListener('proteino_orders_updated', handleSyncEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, [profile?.phone]);
 
   // Handle Firebase Google Sign-In redirect results on page load (essential for mobile devices!)
@@ -642,6 +716,12 @@ export default function App() {
       return;
     }
 
+    // 4. Kitchen Live Validation: Orders cannot be placed if kitchen is off
+    if (!storeStatus.isOpen) {
+      setShowClosedStoreModal(true);
+      return;
+    }
+
     setCheckoutError('');
     setShowCheckoutConfirmModal(true);
   };
@@ -650,8 +730,8 @@ export default function App() {
     const hasSingleMeals = cart.some(item => item.purchaseOption === 'single');
     const hasSubscription = cart.some(item => item.purchaseOption === 'subscription');
 
-    // Closed store check only if user specifically requested closed non-live subscription checkout
-    if (!hasSingleMeals && orderScheduleMode === 'instant' && !storeStatus.isOpen) {
+    // Kitchen Live Validation: Block order submission if kitchen is turned off
+    if (!storeStatus.isOpen) {
       setShowCheckoutConfirmModal(false);
       setShowClosedStoreModal(true);
       return;
@@ -706,8 +786,8 @@ export default function App() {
         const orderPayload = {
           items: singleMealItems,
           total: singleMealItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0),
-          status: 'cooking' as const,
-          deliveryTimeRemaining: 30, // mins for live kitchen prep countdown
+          status: 'placed' as const,
+          deliveryTimeRemaining: 30, // 30 mins estimated delivery countdown
           customerName: cleanName,
           customerPhone: cleanPhone,
           gymName: gym.name,
@@ -727,7 +807,23 @@ export default function App() {
         });
 
         if (!orderRes.ok) {
-          throw new Error('Failed to submit single delivery order');
+          const errJson = await orderRes.json().catch(() => ({}));
+          if (orderRes.status === 403 || errJson.isClosed) {
+            setShowCheckoutConfirmModal(false);
+            setShowClosedStoreModal(true);
+            return;
+          }
+          throw new Error(errJson.error || 'Failed to submit single delivery order');
+        } else {
+          const createdOrder = await orderRes.json().catch(() => null);
+          if (createdOrder && createdOrder.id) {
+            try {
+              const prevIds = JSON.parse(localStorage.getItem('proteino_customer_order_ids') || '[]');
+              if (!prevIds.includes(createdOrder.id)) {
+                localStorage.setItem('proteino_customer_order_ids', JSON.stringify([createdOrder.id, ...prevIds]));
+              }
+            } catch (e) {}
+          }
         }
       }
 
@@ -760,6 +856,12 @@ export default function App() {
             });
 
             if (!subRes.ok) {
+              const errJson = await subRes.json().catch(() => ({}));
+              if (subRes.status === 403 || errJson.isClosed) {
+                setShowCheckoutConfirmModal(false);
+                setShowClosedStoreModal(true);
+                return;
+              }
               console.error('Failed to register subscription for item:', item.product.id);
             }
           }
@@ -1988,6 +2090,73 @@ export default function App() {
                 </button>
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Kitchen Currently Off / Closed Decline Modal */}
+        <AnimatePresence>
+          {showClosedStoreModal && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowClosedStoreModal(false)}
+                className="fixed inset-0 bg-[#0F1E36]/80 backdrop-blur-xs cursor-pointer z-40"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-red-200 z-50 overflow-hidden text-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 text-red-600 mx-auto flex items-center justify-center mb-3.5 shadow-xs">
+                  <Clock className="w-7 h-7 animate-pulse text-red-600" />
+                </div>
+
+                <span className="text-[10px] font-black uppercase tracking-widest text-red-700 bg-red-100 px-3 py-1 rounded-full inline-block mb-2">
+                  Kitchen is Currently Off
+                </span>
+
+                <h3 className="text-base font-black text-brand-navy leading-snug">
+                  Our kitchen is currently off, please wait for a while
+                </h3>
+
+                <p className="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
+                  Orders cannot be placed right now. Please wait for a while or wait for our evening session. Orders can only be placed when our kitchen is live!
+                </p>
+
+                <div className="bg-[#FAF9F6] border border-slate-200/80 rounded-2xl p-3.5 my-4 text-left flex flex-col gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Proteino Operating Sessions:
+                  </span>
+                  <div className="flex flex-col gap-1.5 text-xs font-extrabold text-brand-navy">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                      <span className="flex items-center gap-1.5">
+                        <span>🌅</span>
+                        <span>Morning Session:</span>
+                      </span>
+                      <span className="text-brand-green">6:00 AM – 10:00 AM</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100">
+                      <span className="flex items-center gap-1.5">
+                        <span>🌆</span>
+                        <span>Evening Session:</span>
+                      </span>
+                      <span className="text-brand-green">6:00 PM – 10:00 PM</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowClosedStoreModal(false)}
+                  className="w-full py-3 bg-[#0F1E36] hover:bg-brand-navy text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  Understood, I'll Wait
+                </button>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
 

@@ -12,6 +12,7 @@ import {
   RotateCcw,
   ShoppingBag,
   Check,
+  X,
   Flame,
   ChevronRight
 } from 'lucide-react';
@@ -34,9 +35,23 @@ export default function OrdersTracker({
   onExploreClick,
   onReorder
 }: OrdersTrackerProps) {
-  // Separate orders: Current (ongoing: cooking or out_for_delivery) vs Past (delivered)
+  // Live 1-second ticking clock for instant real-time countdown updates
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Separate orders: Current (ongoing placed, accepted, on the way, declined, OR delivered within last 30 minutes so customer sees instant delivered card) vs Past (all delivered)
+  const isRecentlyDelivered = (o: Order) => {
+    if (o.status !== 'delivered') return false;
+    if (!o.deliveredAt) return true;
+    const deliveredMs = new Date(o.deliveredAt).getTime();
+    return !isNaN(deliveredMs) && (currentTime - deliveredMs) < 30 * 60 * 1000;
+  };
+
   const currentOrders = orders.filter(
-    o => o.status !== 'delivered' && !o.items.some(item => item.purchaseOption === 'subscription')
+    o => (o.status !== 'delivered' || isRecentlyDelivered(o)) && !o.items.some(item => item.purchaseOption === 'subscription')
   );
   const pastOrders = orders.filter(
     o => o.status === 'delivered' && !o.items.some(item => item.purchaseOption === 'subscription')
@@ -183,7 +198,15 @@ export default function OrdersTracker({
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${order.status === 'delivered' ? 'bg-emerald-400' : 'bg-brand-green animate-ping'}`} />
+                        <span className={`w-2 h-2 rounded-full ${
+                          order.status === 'delivered' 
+                            ? 'bg-emerald-400' 
+                            : order.status === 'declined'
+                            ? 'bg-red-500'
+                            : order.status === 'placed'
+                            ? 'bg-amber-400 animate-ping'
+                            : 'bg-brand-green animate-ping'
+                        }`} />
                         <p className="text-[10px] text-white/60 font-black uppercase tracking-wider">Live Status</p>
                       </div>
                       <p className="text-xs font-black text-brand-green tracking-mono mt-0.5">{order.id}</p>
@@ -191,61 +214,129 @@ export default function OrdersTracker({
                     <div className="text-right">
                       <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider">Current Stage</p>
                       <p className="text-xs font-black text-white mt-0.5 flex items-center gap-1.5 justify-end">
-                        <Clock className="w-3.5 h-3.5 text-brand-green" />
-                        <span>
-                          {order.status === 'placed'
-                            ? 'Order Placed'
-                            : order.status === 'accepted'
-                            ? 'Order Accepted'
-                            : order.status === 'cooking'
-                            ? 'Preparing in Kitchen'
-                            : order.status === 'out_for_delivery'
-                            ? 'Out for Delivery'
-                            : 'Delivered at Gym Desk'}
-                        </span>
+                        {order.status === 'placed' ? (
+                          <>
+                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="text-amber-300">Waiting for Order Accept</span>
+                          </>
+                        ) : (order.status === 'accepted' || order.status === 'out_for_delivery') ? (
+                          <>
+                            <Bike className="w-3.5 h-3.5 text-brand-green" />
+                            <span className="text-brand-green">On the Way</span>
+                          </>
+                        ) : order.status === 'declined' ? (
+                          <>
+                            <X className="w-3.5 h-3.5 text-red-400" />
+                            <span className="text-red-400">Order Declined</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-brand-green" />
+                            <span className="text-brand-green">Delivered at Gym Desk</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
 
-                  {/* Real 30 Mins Estimated Delivery Time Card */}
-                  {(() => {
-                    // Calculate real 30 mins: real elapsed time in minutes from order creation
-                    let minsRemaining = 30;
-                    if (order.createdAt) {
-                      const createdMs = new Date(order.createdAt).getTime();
-                      if (!isNaN(createdMs)) {
-                        const elapsedMins = Math.floor((Date.now() - createdMs) / 60000);
-                        minsRemaining = Math.max(1, 30 - elapsedMins);
-                      }
-                    }
-                    if (order.status === 'delivered') minsRemaining = 0;
-
-                    return (
-                      <div className="bg-white/10 border border-white/10 rounded-2xl p-3.5 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-brand-green/20 text-brand-green flex items-center justify-center shrink-0">
-                            <Clock className="w-5 h-5 text-brand-green" />
-                          </div>
-                          <div>
-                            <p className="text-[9px] text-white/50 font-black uppercase tracking-wider">ESTIMATED DELIVERY TIME</p>
-                            <p className="text-xs font-black text-white mt-0.5">
-                              {order.status === 'delivered'
-                                ? '✓ Delivered at Gym Front Desk'
-                                : `${minsRemaining} Mins Remaining (Real 30 Mins Delivery)`}
-                            </p>
-                            <p className="text-[9.5px] text-white/60 font-medium">
-                              {order.status === 'delivered'
-                                ? 'Handed over in insulated bag'
-                                : 'Takes real 30 mins to prepare & deliver fresh to gym'}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-[9.5px] font-black uppercase tracking-wider bg-brand-green text-white px-2.5 py-1 rounded-full shrink-0 shadow-xs">
-                          {order.status === 'delivered' ? 'Completed' : 'Real 30 Mins'}
-                        </span>
+                  {/* If Order is Declined by Admin */}
+                  {order.status === 'declined' ? (
+                    <div className="bg-red-500/15 border border-red-500/35 rounded-2xl p-4 flex flex-col items-center text-center gap-2.5">
+                      <div className="w-10 h-10 rounded-2xl bg-red-500/25 text-red-300 flex items-center justify-center">
+                        <X className="w-5 h-5 text-red-300" />
                       </div>
-                    );
-                  })()}
+                      <div>
+                        <p className="text-xs font-black text-red-200">
+                          The admin has declined your order, pls order again later
+                        </p>
+                        <p className="text-[10px] text-white/65 mt-1 max-w-[280px] leading-relaxed">
+                          Our kitchen could not fulfill this order right now. Please try placing your order again later.
+                        </p>
+                      </div>
+                      {onExploreClick && (
+                        <button
+                          onClick={onExploreClick}
+                          className="mt-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-black rounded-xl cursor-pointer transition-all active:scale-95 shadow-sm flex items-center gap-1.5"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Order Again Later</span>
+                        </button>
+                      )}
+                    </div>
+                  ) : order.status === 'delivered' ? (
+                    /* Instant Delivered Card */
+                    <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                          <Check className="w-5 h-5 text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-emerald-300/80 font-black uppercase tracking-wider">DELIVERY STATUS</p>
+                          <p className="text-xs font-black text-emerald-300 mt-0.5">
+                            ✓ Delivered at Gym Front Desk
+                          </p>
+                          <p className="text-[9.5px] text-white/65 font-medium">
+                            Handed over fresh in insulated meal bag
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[9.5px] font-black uppercase tracking-wider bg-emerald-500 text-white px-2.5 py-1 rounded-full shrink-0 shadow-xs">
+                        Delivered
+                      </span>
+                    </div>
+                  ) : order.status === 'placed' ? (
+                    /* Waiting for Accept Card - Timer has NOT started */
+                    <div className="bg-amber-500/15 border border-amber-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 animate-pulse">
+                          <Clock className="w-5 h-5 text-amber-400" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-amber-300/80 font-black uppercase tracking-wider">ESTIMATED DELIVERY TIME</p>
+                          <p className="text-xs font-black text-amber-300 mt-0.5">
+                            Waiting for Order Accept
+                          </p>
+                          <p className="text-[9.5px] text-white/60 font-medium">
+                            30 mins estimated timer will start once kitchen accepts
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[9.5px] font-black uppercase tracking-wider bg-amber-500/25 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-full shrink-0 shadow-xs">
+                        Waiting
+                      </span>
+                    </div>
+                  ) : (
+                    /* 30 Mins Estimated Delivery Time Card - Starts when Admin clicks Accept */
+                    (() => {
+                      const startTimeMs = order.acceptedAt 
+                        ? new Date(order.acceptedAt).getTime() 
+                        : (order.createdAt ? new Date(order.createdAt).getTime() : currentTime);
+                      const elapsedMins = !isNaN(startTimeMs) ? Math.max(0, Math.floor((currentTime - startTimeMs) / 60000)) : 0;
+                      const minsRemaining = Math.max(0, 30 - elapsedMins);
+
+                      return (
+                        <div className="bg-white/10 border border-white/10 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-xl bg-brand-green/20 text-brand-green flex items-center justify-center shrink-0">
+                              <Bike className="w-5 h-5 text-brand-green" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-white/50 font-black uppercase tracking-wider">ESTIMATED DELIVERY TIME</p>
+                              <p className="text-xs font-black text-white mt-0.5">
+                                {minsRemaining > 0 ? `${minsRemaining} mins remaining` : 'Arriving at Gym Desk Any Moment'}
+                              </p>
+                              <p className="text-[9.5px] text-white/60 font-medium">
+                                On the way • Freshly prepared and delivered directly to your gym desk
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[9.5px] font-black uppercase tracking-wider bg-brand-green text-white px-2.5 py-1 rounded-full shrink-0 shadow-xs">
+                            {minsRemaining > 0 ? `${minsRemaining} mins` : 'Arrived'}
+                          </span>
+                        </div>
+                      );
+                    })()
+                  )}
 
                   {/* Visual Status Progress Stepper */}
                   <div className="relative flex items-center justify-between px-2 pt-1 pb-1">
@@ -255,39 +346,41 @@ export default function OrdersTracker({
                       <div 
                         className="absolute left-0 top-0 bottom-0 bg-brand-green rounded-full transition-all duration-500" 
                         style={{ 
-                          width: order.status === 'cooking' || order.status === 'accepted' || order.status === 'placed'
-                            ? '25%' 
-                            : order.status === 'out_for_delivery' 
+                          width: order.status === 'placed'
+                            ? '15%' 
+                            : (order.status === 'accepted' || order.status === 'out_for_delivery' || order.status === 'cooking')
                             ? '65%' 
                             : '100%' 
                         }} 
                       />
                     </div>
 
-                    {/* Step 1: Cooking */}
+                    {/* Step 1: Waiting for Accept / Accepted */}
                     <div className="relative z-10 flex flex-col items-center">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                        order.status === 'cooking' || order.status === 'accepted' || order.status === 'placed'
-                          ? 'bg-brand-green text-white scale-110 shadow-lg shadow-brand-green/30 ring-4 ring-brand-green/20' 
+                        order.status === 'placed'
+                          ? 'bg-amber-500 text-white scale-110 shadow-lg shadow-amber-500/30 ring-4 ring-amber-500/20 animate-pulse' 
                           : 'bg-brand-green text-white'
                       }`}>
-                        <ChefHat className="w-4 h-4" />
+                        {order.status === 'placed' ? <Clock className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                       </div>
-                      <span className="text-[10px] font-extrabold mt-1.5 text-white">Cooking</span>
+                      <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'placed' ? 'text-amber-300 font-black' : 'text-white'}`}>
+                        {order.status === 'placed' ? 'Waiting for Accept' : 'Order Accepted'}
+                      </span>
                     </div>
 
                     {/* Step 2: On The Way */}
                     <div className="relative z-10 flex flex-col items-center">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                        order.status === 'out_for_delivery' 
+                        order.status === 'accepted' || order.status === 'out_for_delivery' || order.status === 'cooking'
                           ? 'bg-brand-green text-white scale-110 shadow-lg shadow-brand-green/30 ring-4 ring-brand-green/20' 
                           : order.status === 'delivered'
                           ? 'bg-brand-green text-white'
                           : 'bg-white/10 text-white/40'
                       }`}>
-                        <Bike className="w-4 h-4" />
+                        {order.status === 'delivered' ? <Check className="w-4 h-4" /> : <Bike className="w-4 h-4" />}
                       </div>
-                      <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'out_for_delivery' || order.status === 'delivered' ? 'text-white font-black' : 'text-white/60'}`}>
+                      <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'accepted' || order.status === 'out_for_delivery' || order.status === 'cooking' ? 'text-brand-green font-black' : order.status === 'delivered' ? 'text-white' : 'text-white/60'}`}>
                         On the Way
                       </span>
                     </div>
@@ -299,10 +392,10 @@ export default function OrdersTracker({
                           ? 'bg-brand-green text-white scale-110 shadow-lg shadow-brand-green/30 ring-4 ring-brand-green/20'
                           : 'bg-white/10 text-white/40'
                       }`}>
-                        <MapPin className="w-4 h-4" />
+                        {order.status === 'delivered' ? <Check className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
                       </div>
                       <span className={`text-[10px] font-extrabold mt-1.5 ${order.status === 'delivered' ? 'text-brand-green font-black' : 'text-white/45'}`}>
-                        {order.status === 'delivered' ? 'Delivered' : 'Arrived'}
+                        Delivered
                       </span>
                     </div>
                   </div>

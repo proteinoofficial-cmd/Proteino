@@ -43,11 +43,12 @@ export interface Order {
   id: string;
   date: string;
   createdAt?: string;
+  acceptedAt?: string;
   deliveredAt?: string;
   items: CartItem[];
   total: number;
-  status: 'placed' | 'accepted' | 'cooking' | 'out_for_delivery' | 'delivered';
-  deliveryTimeRemaining: number; // in minutes (real 30 mins)
+  status: 'placed' | 'accepted' | 'cooking' | 'out_for_delivery' | 'delivered' | 'declined';
+  deliveryTimeRemaining: number; // in minutes (30 mins estimated delivery)
   customerName?: string;
   customerPhone?: string;
   gymName?: string;
@@ -57,6 +58,8 @@ export interface Order {
   isPreOrder?: boolean;
   scheduledDate?: string;
   orderType?: 'instant' | 'preorder';
+  declinedAt?: string;
+  declinedDate?: string;
 }
 
 export interface UserProfile {

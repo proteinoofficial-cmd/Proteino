@@ -332,23 +332,23 @@ export default function Dashboard({
           className={`rounded-2xl px-3.5 py-2.5 border shadow-2xs transition-all flex items-center justify-between gap-2.5 ${
             storeStatus.isOpen
               ? 'bg-[#0F1E36] border-emerald-500/40 text-white'
-              : 'bg-gradient-to-r from-[#0B1528] via-[#102244] to-[#18335D] border-sky-400/30 text-white'
+              : 'bg-gradient-to-r from-[#180d1e] via-[#241328] to-[#121b2d] border-red-400/30 text-white'
           }`}
         >
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm shrink-0">
-              {storeStatus.isOpen ? '🥗' : storeStatus.nextSession === 'evening' ? '🌆' : '🌅'}
+              {storeStatus.isOpen ? '🥗' : '🔒'}
             </span>
             <p className="text-xs font-black tracking-tight truncate text-white">
-              {storeStatus.shortNotice}
+              {storeStatus.isOpen ? 'Our Kitchen is Live Now' : 'Our kitchen is currently off, please wait for a while'}
             </p>
           </div>
           <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shrink-0 border ${
             storeStatus.isOpen 
               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
-              : 'bg-sky-500/20 text-sky-300 border-sky-400/40'
+              : 'bg-red-500/20 text-red-300 border-red-400/40'
           }`}>
-            {storeStatus.isOpen ? '● Live Now' : storeStatus.openBadgeText}
+            {storeStatus.isOpen ? '● Live Now' : 'Kitchen Off'}
           </span>
         </div>
 
@@ -787,7 +787,7 @@ export default function Dashboard({
                       <span>🌆</span>
                       <span>Evening Session:</span>
                     </span>
-                    <span className="text-brand-green">5:00 PM – 10:00 PM</span>
+                    <span className="text-brand-green">6:00 PM – 10:00 PM</span>
                   </div>
                 </div>
               </div>

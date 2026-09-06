@@ -102,7 +102,12 @@ let store = {
   orders: [] as any[],
   subscriptions: [] as any[],
   deletedSubscriptions: [] as any[],
-  users: [] as any[]
+  users: [] as any[],
+  kitchenStatus: {
+    isLive: true,
+    updatedAt: new Date().toISOString(),
+    updatedBy: "Admin"
+  }
 };
 
 // Load existing data from file if present
@@ -114,7 +119,14 @@ if (fs.existsSync(DATA_FILE)) {
     if (!Array.isArray(store.subscriptions)) store.subscriptions = [];
     if (!Array.isArray(store.deletedSubscriptions)) store.deletedSubscriptions = [];
     if (!Array.isArray(store.users)) store.users = [];
-    console.log("Loaded data store from file with", store.orders.length, "orders,", store.subscriptions.length, "subscriptions, and", store.deletedSubscriptions.length, "deleted plans.");
+    if (!store.kitchenStatus || typeof store.kitchenStatus.isLive !== 'boolean') {
+      store.kitchenStatus = {
+        isLive: true,
+        updatedAt: new Date().toISOString(),
+        updatedBy: "Admin"
+      };
+    }
+    console.log("Loaded data store from file with", store.orders.length, "orders,", store.subscriptions.length, "subscriptions, and", store.deletedSubscriptions.length, "deleted plans. Kitchen status:", store.kitchenStatus?.isLive ? "LIVE" : "OFF");
   } catch (err) {
     console.error("Failed to parse data-store.json, using fresh store.", err);
   }
@@ -194,6 +206,9 @@ async function loadStoreFromFirebase(force = false) {
         if (Array.isArray(dbStore.subscriptions)) store.subscriptions = dbStore.subscriptions;
         if (Array.isArray(dbStore.deletedSubscriptions)) store.deletedSubscriptions = dbStore.deletedSubscriptions;
         if (Array.isArray(dbStore.users)) store.users = dbStore.users;
+        if (dbStore.kitchenStatus && typeof dbStore.kitchenStatus.isLive === 'boolean') {
+          store.kitchenStatus = dbStore.kitchenStatus;
+        }
         lastLoadTime = Date.now();
         console.log(`Successfully synced state from Firebase! Loaded:
           - ${store.orders.length} orders
@@ -625,23 +640,61 @@ app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
   `);
 });
 
+// Kitchen Live / Off Status Endpoints
+app.get("/api/kitchen/status", (req, res) => {
+  if (!store.kitchenStatus) {
+    store.kitchenStatus = {
+      isLive: true,
+      updatedAt: new Date().toISOString(),
+      updatedBy: "Admin"
+    };
+  }
+  res.json(store.kitchenStatus);
+});
+
+app.post("/api/kitchen/status", (req, res) => {
+  const { isLive, updatedBy } = req.body;
+  if (typeof isLive !== 'boolean') {
+    return res.status(400).json({ error: "isLive boolean is required" });
+  }
+  store.kitchenStatus = {
+    isLive,
+    updatedAt: new Date().toISOString(),
+    updatedBy: updatedBy || "Admin"
+  };
+  saveStore();
+  console.log(`[Kitchen Status] Changed to: ${isLive ? 'LIVE (ON)' : 'OFF (CLOSED)'} by ${updatedBy || 'Admin'}`);
+  res.json(store.kitchenStatus);
+});
+
 app.get("/api/orders", (req, res) => {
-  const { phone, admin } = req.query;
+  const { phone, admin, orderIds } = req.query;
   if (admin === 'true') {
     return res.json(store.orders);
   }
-  if (!phone) {
-    return res.json([]);
+  if (phone) {
+    const cleanPhone = (phone as string).replace(/\D/g, '').slice(-10);
+    return res.json(store.orders.filter(o => {
+      if (!o.customerPhone) return false;
+      const orderPhoneClean = o.customerPhone.replace(/\D/g, '').slice(-10);
+      return (cleanPhone && orderPhoneClean === cleanPhone) || o.customerPhone === phone;
+    }));
   }
-  const cleanPhone = (phone as string).replace(/\D/g, '').slice(-10);
-  return res.json(store.orders.filter(o => {
-    if (!o.customerPhone) return false;
-    const orderPhoneClean = o.customerPhone.replace(/\D/g, '').slice(-10);
-    return (cleanPhone && orderPhoneClean === cleanPhone) || o.customerPhone === phone;
-  }));
+  if (orderIds) {
+    const idList = (orderIds as string).split(',').map(s => s.trim()).filter(Boolean);
+    return res.json(store.orders.filter(o => idList.includes(o.id)));
+  }
+  return res.json([]);
 });
 
 app.post("/api/orders", (req, res) => {
+  // Decline order placement if kitchen is OFF
+  if (store.kitchenStatus && !store.kitchenStatus.isLive) {
+    return res.status(403).json({
+      error: "Our kitchen is currently off, please wait for a while / wait for our evening session. Orders can only be placed when our kitchen is live."
+    });
+  }
+
   const newOrder = req.body;
   let orderId = newOrder.id || `PRTN-${Math.floor(1000 + Math.random() * 9000)}`;
   
@@ -668,17 +721,45 @@ app.post("/api/orders", (req, res) => {
 
 app.put("/api/orders/:id", (req, res) => {
   const { id } = req.params;
-  const { status, deliveryTimeRemaining } = req.body;
+  const { status, deliveryTimeRemaining, acceptedAt, deliveredAt, declinedAt, declinedDate } = req.body;
   const orderIdx = store.orders.findIndex(o => o.id === id);
   if (orderIdx !== -1) {
     if (status) {
       store.orders[orderIdx].status = status;
+      if (status === 'accepted' || status === 'out_for_delivery') {
+        if (!store.orders[orderIdx].acceptedAt) {
+          store.orders[orderIdx].acceptedAt = acceptedAt || new Date().toISOString();
+        }
+      }
       if (status === 'delivered') {
         store.orders[orderIdx].deliveryTimeRemaining = 0;
         if (!store.orders[orderIdx].deliveredAt) {
-          store.orders[orderIdx].deliveredAt = new Date().toISOString();
+          store.orders[orderIdx].deliveredAt = deliveredAt || new Date().toISOString();
         }
       }
+      if (status === 'declined') {
+        if (!store.orders[orderIdx].declinedAt) {
+          store.orders[orderIdx].declinedAt = declinedAt || new Date().toISOString();
+        }
+        if (!store.orders[orderIdx].declinedDate) {
+          const now = new Date();
+          const t = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+          const d = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+          store.orders[orderIdx].declinedDate = declinedDate || `${t}, ${d}`;
+        }
+      }
+    }
+    if (acceptedAt) {
+      store.orders[orderIdx].acceptedAt = acceptedAt;
+    }
+    if (deliveredAt) {
+      store.orders[orderIdx].deliveredAt = deliveredAt;
+    }
+    if (declinedAt) {
+      store.orders[orderIdx].declinedAt = declinedAt;
+    }
+    if (declinedDate) {
+      store.orders[orderIdx].declinedDate = declinedDate;
     }
     if (deliveryTimeRemaining !== undefined) {
       store.orders[orderIdx].deliveryTimeRemaining = deliveryTimeRemaining;
@@ -702,6 +783,13 @@ app.get("/api/subscriptions", (req, res) => {
 });
 
 app.post("/api/subscriptions", (req, res) => {
+  // Decline subscription order placement if kitchen is OFF
+  if (store.kitchenStatus && !store.kitchenStatus.isLive) {
+    return res.status(403).json({
+      error: "Our kitchen is currently off, please wait for a while / wait for our evening session. Orders can only be placed when our kitchen is live."
+    });
+  }
+
   const {
     planId,
     planName,
@@ -788,7 +876,7 @@ app.delete("/api/subscriptions/:idOrPhone", (req, res) => {
         deletedAt: now.toISOString(),
         deletedDate: `${formattedDeletedTime}, ${formattedDeletedDate}`,
         deletedBy: "Admin",
-        reason: req.body?.reason || "Cancelled/Deleted in Admin Panel"
+        reason: req.body?.reason || "Subscription Declined / Deleted by Admin"
       };
       // Prevent duplicate deleted entries
       store.deletedSubscriptions = store.deletedSubscriptions.filter(d => d.id !== sub.id);
@@ -804,9 +892,16 @@ app.delete("/api/subscriptions/:idOrPhone", (req, res) => {
 
 // Get Deleted Subscription Plans list
 app.get("/api/subscriptions/deleted", (req, res) => {
-  const { admin } = req.query;
+  const { admin, phone } = req.query;
   if (admin === 'true') {
     return res.json(store.deletedSubscriptions || []);
+  }
+  if (phone) {
+    const cleanPhone = (phone as string).replace(/\D/g, '').slice(-10);
+    return res.json((store.deletedSubscriptions || []).filter(s => {
+      const subPhone = (s.customerPhone || '').replace(/\D/g, '').slice(-10);
+      return (cleanPhone && subPhone === cleanPhone) || s.customerPhone === phone;
+    }));
   }
   return res.json([]);
 });

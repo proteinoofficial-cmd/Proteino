@@ -24,13 +24,17 @@ import {
   X,
   Trash2,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Power,
+  Dumbbell,
+  MapPin
 } from "lucide-react";
 import { Order, ActiveSubscription, DeletedSubscription } from "../types";
-import { PRODUCTS } from "../data";
+import { PRODUCTS, GYMS } from "../data";
 import { apiFetch } from "../utils/api";
-import { playOrderAlertSound, playPreOrderAlertSound, initAudioUnlock } from "../utils/audio";
+import { playOrderAlertSound, playPreOrderAlertSound, playKitchenOpeningAlertSound, initAudioUnlock } from "../utils/audio";
 import { calculateMealsRemaining } from "../utils/deliverySlots";
+import { setLocalKitchenStatus } from "../utils/storeHours";
 
 interface NewOrderNotification {
   id: string;
@@ -63,8 +67,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const [loginError, setLoginError] = useState("");
   
   // Navigation tabs
-  const [activeTab, setActiveTab] = useState<"single" | "plan" | "total">("single");
-  const [singleOrderSubTab, setSingleOrderSubTab] = useState<"current" | "past">("current");
+  const [activeTab, setActiveTab] = useState<"single" | "plan" | "gym" | "total">("single");
+  const [singleOrderSubTab, setSingleOrderSubTab] = useState<"current" | "past" | "deleted">("current");
   const [subscriptionSubTab, setSubscriptionSubTab] = useState<"current" | "past" | "deleted">("current");
   const [timeFilter, setTimeFilter] = useState<"24h" | "month" | "all">("24h");
   const [typeFilter, setTypeFilter] = useState<"all" | "single" | "subscription">("all");
@@ -89,9 +93,36 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const [subSelectedMonth, setSubSelectedMonth] = useState<number>(() => new Date().getMonth());
   const [subSelectedYear, setSubSelectedYear] = useState<number>(() => new Date().getFullYear());
 
+  // Gym Orders Filters (Daily, Weekly, Monthly with all 12 months, and Gym selector)
+  const [selectedGymFilter, setSelectedGymFilter] = useState<string>("all");
+  const [gymOrderTypeFilter, setGymOrderTypeFilter] = useState<"all" | "single" | "subscription">("all");
+  const [gymPastFilterType, setGymPastFilterType] = useState<"all" | "daily" | "weekly" | "monthly">("all");
+  const [gymSelectedDailyMode, setGymSelectedDailyMode] = useState<"today" | "yesterday" | "custom">("today");
+  const [gymCustomDailyDate, setGymCustomDailyDate] = useState<string>(() => {
+    return new Date().toISOString().split("T")[0];
+  });
+  const [gymSelectedWeeklyRange, setGymSelectedWeeklyRange] = useState<"this_week" | "last_week" | "past_14d">("this_week");
+  const [gymSelectedMonth, setGymSelectedMonth] = useState<number>(() => new Date().getMonth());
+  const [gymSelectedYear, setGymSelectedYear] = useState<number>(() => new Date().getFullYear());
+
   // Sound toggle & 15-sec notifications state
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [activeAlerts, setActiveAlerts] = useState<NewOrderNotification[]>([]);
+  const [now, setNow] = useState(Date.now());
+
+  // Kitchen live status state
+  const [isKitchenLive, setIsKitchenLive] = useState<boolean>(true);
+  const [isTogglingKitchen, setIsTogglingKitchen] = useState<boolean>(false);
+
+  // 30-Second Kitchen Opening Alert state (6:00 AM & 6:00 PM session open)
+  const [kitchenOpeningAlert, setKitchenOpeningAlert] = useState<{
+    session: 'Morning' | 'Evening';
+    timeStr: string;
+    message: string;
+    expiresAt: number;
+  } | null>(null);
+  const [openingAlertSecondsLeft, setOpeningAlertSecondsLeft] = useState<number>(30);
+  const lastOpeningAlertKeyRef = useRef<string>("");
 
   // Server data states
   const [orders, setOrders] = useState<Order[]>([]);
@@ -106,8 +137,129 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const knownSubIdsRef = useRef<Set<string>>(new Set());
 
-  // Ticking state for countdowns & 15s popups
-  const [now, setNow] = useState(Date.now());
+  // Countdown effect for 30-second Kitchen Opening Alert
+  useEffect(() => {
+    if (!kitchenOpeningAlert) return;
+    const remaining = Math.max(0, kitchenOpeningAlert.expiresAt - Date.now());
+    setOpeningAlertSecondsLeft(Math.ceil(remaining / 1000));
+
+    const countdownInterval = setInterval(() => {
+      const left = Math.max(0, kitchenOpeningAlert.expiresAt - Date.now());
+      const sec = Math.ceil(left / 1000);
+      setOpeningAlertSecondsLeft(sec);
+      if (left <= 0) {
+        setKitchenOpeningAlert(null);
+      }
+    }, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [kitchenOpeningAlert]);
+
+  // Check for Kitchen Opening Time (6:00 AM & 6:00 PM) every 5 seconds
+  useEffect(() => {
+    const checkOpeningSession = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const todayDateStr = now.toISOString().split('T')[0];
+
+      // Morning session check: 6:00 AM
+      if (hours === 6 && minutes === 0) {
+        const sessionKey = `${todayDateStr}-morning`;
+        if (lastOpeningAlertKeyRef.current !== sessionKey) {
+          lastOpeningAlertKeyRef.current = sessionKey;
+          triggerKitchenOpeningAlert("Morning", "6:00 AM");
+        }
+      }
+
+      // Evening session check: 6:00 PM
+      if (hours === 18 && minutes === 0) {
+        const sessionKey = `${todayDateStr}-evening`;
+        if (lastOpeningAlertKeyRef.current !== sessionKey) {
+          lastOpeningAlertKeyRef.current = sessionKey;
+          triggerKitchenOpeningAlert("Evening", "6:00 PM");
+        }
+      }
+    };
+
+    checkOpeningSession();
+    const timer = setInterval(checkOpeningSession, 5000);
+    return () => clearInterval(timer);
+  }, [isSoundEnabled]);
+
+  const triggerKitchenOpeningAlert = (session: 'Morning' | 'Evening', timeStr: string) => {
+    if (isSoundEnabled) {
+      playKitchenOpeningAlertSound();
+    }
+    const expiresAt = Date.now() + 30000; // 30 seconds duration
+    setKitchenOpeningAlert({
+      session,
+      timeStr,
+      message: `Our ${session} Session will open at ${timeStr}! Turn Kitchen ON now to allow customer orders.`,
+      expiresAt
+    });
+  };
+
+  const handleToggleKitchen = async () => {
+    initAudioUnlock();
+    const nextState = !isKitchenLive;
+    setIsKitchenLive(nextState);
+    setLocalKitchenStatus(nextState);
+    setIsTogglingKitchen(true);
+
+    try {
+      const res = await fetch("/api/kitchen/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLive: nextState, updatedBy: "Admin" })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsKitchenLive(data.isLive);
+        setLocalKitchenStatus(data.isLive);
+        setActionNotice(data.isLive ? "🟢 Kitchen is now LIVE! Customers can place orders." : "🔴 Kitchen turned OFF. Customer ordering paused.");
+        setTimeout(() => setActionNotice(null), 3500);
+      }
+    } catch (e) {
+      console.error("Toggle kitchen error:", e);
+    } finally {
+      setIsTogglingKitchen(false);
+    }
+  };
+
+  const handleTurnKitchenOn = async () => {
+    initAudioUnlock();
+    setIsKitchenLive(true);
+    setLocalKitchenStatus(true);
+    setIsTogglingKitchen(true);
+
+    try {
+      const res = await fetch("/api/kitchen/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLive: true, updatedBy: "Admin" })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsKitchenLive(data.isLive);
+        setLocalKitchenStatus(data.isLive);
+        setActionNotice("🟢 Kitchen is now LIVE! Session orders open.");
+        setTimeout(() => setActionNotice(null), 3500);
+      }
+    } catch (e) {
+      console.error("Turn kitchen on error:", e);
+    } finally {
+      setIsTogglingKitchen(false);
+    }
+  };
+
+  const testKitchenOpeningAlert = () => {
+    initAudioUnlock();
+    const nowHours = new Date().getHours();
+    const session = nowHours >= 14 ? "Evening" : "Morning";
+    const timeStr = session === "Evening" ? "6:00 PM" : "6:00 AM";
+    triggerKitchenOpeningAlert(session, timeStr);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -242,11 +394,20 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const fetchData = async (isBackground = false) => {
     if (!isBackground) setIsLoading(true);
     try {
-      const [ordersRes, subsRes, deletedRes] = await Promise.all([
+      const [ordersRes, subsRes, deletedRes, kitchenRes] = await Promise.all([
         apiFetch("/api/orders?admin=true"),
         apiFetch("/api/subscriptions?admin=true"),
-        apiFetch("/api/subscriptions/deleted?admin=true")
+        apiFetch("/api/subscriptions/deleted?admin=true"),
+        apiFetch("/api/kitchen/status")
       ]);
+
+      if (kitchenRes && kitchenRes.ok && kitchenRes.headers.get('content-type')?.includes('application/json')) {
+        const kData = await kitchenRes.json();
+        if (kData && typeof kData.isLive === 'boolean') {
+          setIsKitchenLive(kData.isLive);
+          setLocalKitchenStatus(kData.isLive);
+        }
+      }
 
       let newOrdersList: Order[] = [];
       let newSubsList: ActiveSubscription[] = [];
@@ -360,14 +521,60 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     }
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: "placed" | "accepted" | "cooking" | "out_for_delivery" | "delivered") => {
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: "placed" | "accepted" | "declined" | "out_for_delivery" | "delivered") => {
+    const nowIso = new Date().toISOString();
+    const now = new Date();
+    const formattedDeletedDate = now.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+    const formattedDeletedTime = now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+    const declinedDateStr = `${formattedDeletedTime}, ${formattedDeletedDate}`;
+
     // Instant optimistic update for Admin UI
-    setOrders(prev => prev.map(o => o.id === orderId ? {
-      ...o,
-      status: newStatus,
-      deliveredAt: newStatus === 'delivered' ? (o.deliveredAt || new Date().toISOString()) : o.deliveredAt,
-      deliveryTimeRemaining: newStatus === 'delivered' ? 0 : o.deliveryTimeRemaining
-    } : o));
+    let updatedList: Order[] = [];
+    setOrders(prev => {
+      updatedList = prev.map(o => o.id === orderId ? {
+        ...o,
+        status: newStatus,
+        declinedDate: newStatus === 'declined' ? (o.declinedDate || declinedDateStr) : o.declinedDate,
+        acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? (o.acceptedAt || nowIso) : o.acceptedAt,
+        deliveredAt: newStatus === 'delivered' ? (o.deliveredAt || nowIso) : o.deliveredAt,
+        deliveryTimeRemaining: newStatus === 'delivered' ? 0 : o.deliveryTimeRemaining
+      } : o);
+      return updatedList;
+    });
+
+    try {
+      if (updatedList.length > 0) {
+        localStorage.setItem('proteino_orders', JSON.stringify(updatedList));
+      }
+      localStorage.setItem('proteino_order_sync_trigger', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('proteino_orders_updated', { 
+        detail: { 
+          orderId, 
+          status: newStatus, 
+          acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
+          deliveredAt: newStatus === 'delivered' ? nowIso : undefined
+        } 
+      }));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('proteino_sync');
+        bc.postMessage({ 
+          type: 'order_updated', 
+          orderId, 
+          status: newStatus,
+          acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
+          deliveredAt: newStatus === 'delivered' ? nowIso : undefined
+        });
+        bc.close();
+      }
+    } catch (e) {}
 
     try {
       const res = await apiFetch(`/api/orders/${orderId}`, {
@@ -375,12 +582,29 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           status: newStatus,
+          acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
+          deliveredAt: newStatus === 'delivered' ? nowIso : undefined,
           deliveryTimeRemaining: newStatus === 'delivered' ? 0 : undefined
         })
       });
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const updatedOrder = await res.json();
-        setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
+        setOrders(prev => {
+          const next = prev.map(o => o.id === orderId ? updatedOrder : o);
+          try {
+            localStorage.setItem('proteino_orders', JSON.stringify(next));
+          } catch (e) {}
+          return next;
+        });
+        try {
+          localStorage.setItem('proteino_order_sync_trigger', Date.now().toString());
+          window.dispatchEvent(new CustomEvent('proteino_orders_updated', { detail: { orderId, status: newStatus } }));
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('proteino_sync');
+            bc.postMessage({ type: 'order_updated', orderId, status: newStatus });
+            bc.close();
+          }
+        } catch (e) {}
       }
     } catch (err) {
       console.error("Failed to update order status:", err);
@@ -437,21 +661,82 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
 
   // Delete subscription & move to Deleted Plans list
   const handleDeleteSubscription = async (subId: string) => {
-    if (!window.confirm("Are you sure you want to delete this subscription plan? It will be archived in the 'Deleted Plans' section.")) {
+    const sub = subscriptions.find(s => s.id === subId);
+    if (!window.confirm("Are you sure you want to decline/delete this subscription plan? It will be archived in 'Deleted Plans' and a decline notification will be sent to the customer.")) {
       return;
     }
+
+    const now = new Date();
+    const formattedDeletedDate = now.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+    const formattedDeletedTime = now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+    const deletedDateStr = `${formattedDeletedTime}, ${formattedDeletedDate}`;
+
+    const archivedSub: DeletedSubscription = {
+      ...(sub || {
+        id: subId,
+        customerName: "Athlete",
+        customerPhone: "",
+        planId: "protein-bowl",
+        planName: "Gym Plan",
+        gymName: "Partner Gym",
+        gymLocation: "City",
+        price: 349,
+        startDate: new Date().toISOString(),
+        timeSlot: "Morning",
+        status: "active",
+        createdAt: new Date().toISOString(),
+        date: new Date().toISOString()
+      }),
+      deletedAt: now.toISOString(),
+      deletedDate: deletedDateStr,
+      deletedBy: "Admin",
+      reason: "Subscription Declined / Deleted by Admin"
+    };
+
+    // Optimistic state update
+    setSubscriptions(prev => prev.filter(s => s.id !== subId));
+    setDeletedSubscriptions(prev => [archivedSub, ...prev.filter(d => d.id !== subId)]);
+
     try {
       const res = await apiFetch(`/api/subscriptions/${subId}`, {
         method: "DELETE"
       });
       if (res.ok) {
-        // Refresh subscriptions and deleted list
         fetchData(true);
-        setActionNotice("Plan moved to Deleted Plans archive.");
+        setActionNotice("Plan declined & archived in Deleted Plans. Customer notified.");
         setTimeout(() => setActionNotice(null), 4000);
+
+        // Notify customer via broadcast & localStorage
+        try {
+          const payload = {
+            id: subId,
+            planName: sub?.planName || 'Gym High-Protein Plan',
+            phone: sub?.customerPhone || '',
+            date: deletedDateStr,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('proteino_last_declined_sub', JSON.stringify(payload));
+          window.dispatchEvent(new CustomEvent('proteino_subscription_declined', { detail: payload }));
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('proteino_sync');
+            bc.postMessage({ type: 'subscription_declined', ...payload });
+            bc.close();
+          }
+        } catch (e) {}
+      } else {
+        fetchData(true);
       }
     } catch (err) {
       console.error("Failed to delete subscription:", err);
+      fetchData(true);
     }
   };
 
@@ -616,11 +901,15 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   }, [orders, searchQuery]);
 
   const currentSingleOrders = useMemo(() => {
-    return filteredOrders.filter(o => o.status !== 'delivered');
+    return filteredOrders.filter(o => o.status !== 'delivered' && o.status !== 'declined');
   }, [filteredOrders]);
 
   const allPastSingleOrders = useMemo(() => {
     return filteredOrders.filter(o => o.status === 'delivered');
+  }, [filteredOrders]);
+
+  const deletedSingleOrders = useMemo(() => {
+    return filteredOrders.filter(o => o.status === 'declined');
   }, [filteredOrders]);
 
   // Filtered Past Single Orders based on Daily, Weekly, Monthly filter
@@ -915,6 +1204,145 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     });
   }, [unifiedOrdersList, timeFilter, typeFilter, searchQuery]);
 
+  // Gym Orders List & Statistics
+  const gymOrdersList = useMemo(() => {
+    const list: Array<{
+      id: string;
+      orderType: 'single' | 'subscription';
+      dateStr: string;
+      timestamp: number;
+      customerName: string;
+      customerPhone: string;
+      gymName: string;
+      gymLocation: string;
+      deliveryTimeSlot?: string;
+      totalPieces: number;
+      totalAmount: number;
+      status: string;
+      itemsList: Array<{ name: string; quantity: number; price: number }>;
+      isBulk: boolean;
+      singleOrder?: Order;
+      subscription?: ActiveSubscription;
+    }> = [];
+
+    orders.forEach((o, index) => {
+      const ts = getOrderTimestamp(o.createdAt, o.date, index * 60000);
+      const totalPieces = o.items.reduce((acc, i) => acc + i.quantity, 0);
+      const itemsList = o.items.map(i => ({ name: i.product.name, quantity: i.quantity, price: i.product.price }));
+      list.push({
+        id: o.id,
+        orderType: 'single',
+        dateStr: formatOrderDateTime(o.createdAt, o.date).display,
+        timestamp: ts,
+        customerName: o.customerName || 'Customer',
+        customerPhone: o.customerPhone || '',
+        gymName: o.gymName || 'Jai Ho Fitness (Shirur Park)',
+        gymLocation: o.gymLocation || 'Shirur Park, Hubballi',
+        deliveryTimeSlot: o.deliveryTimeSlot || 'Live Kitchen Delivery',
+        totalPieces,
+        totalAmount: o.total || 0,
+        status: o.status,
+        itemsList,
+        isBulk: totalPieces >= 10,
+        singleOrder: o
+      });
+    });
+
+    subscriptions.forEach((s, index) => {
+      const ts = getOrderTimestamp(s.createdAt || s.startDate, s.date || s.startDate, index * 60000);
+      const totalPieces = s.durationDays || 26;
+      list.push({
+        id: s.id,
+        orderType: 'subscription',
+        dateStr: new Date(ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        timestamp: ts,
+        customerName: s.customerName || 'Subscriber',
+        customerPhone: s.customerPhone || '',
+        gymName: s.gymName || 'Jai Ho Fitness (Shirur Park)',
+        gymLocation: s.gymLocation || 'Shirur Park, Hubballi',
+        deliveryTimeSlot: s.timeSlot || 'Morning Delivery Slot',
+        totalPieces,
+        totalAmount: s.price || 0,
+        status: s.status,
+        itemsList: [{ name: s.planName, quantity: totalPieces, price: Math.round(s.price / totalPieces) }],
+        isBulk: true,
+        subscription: s
+      });
+    });
+
+    return list.sort((a, b) => b.timestamp - a.timestamp);
+  }, [orders, subscriptions]);
+
+  const gymOverviewStats = useMemo(() => {
+    const map: Record<string, {
+      gymName: string;
+      gymLocation: string;
+      totalOrders: number;
+      totalPieces: number;
+      totalRevenue: number;
+    }> = {};
+
+    GYMS.forEach(g => {
+      map[g.name] = {
+        gymName: g.name,
+        gymLocation: g.location,
+        totalOrders: 0,
+        totalPieces: 0,
+        totalRevenue: 0
+      };
+    });
+
+    gymOrdersList.forEach(entry => {
+      const name = entry.gymName || GYMS[0].name;
+      if (!map[name]) {
+        map[name] = {
+          gymName: name,
+          gymLocation: entry.gymLocation || 'Partner Gym Location',
+          totalOrders: 0,
+          totalPieces: 0,
+          totalRevenue: 0
+        };
+      }
+      map[name].totalOrders += 1;
+      map[name].totalPieces += entry.totalPieces;
+      map[name].totalRevenue += entry.totalAmount;
+    });
+
+    return Object.values(map);
+  }, [gymOrdersList]);
+
+  const filteredGymOrders = useMemo(() => {
+    return gymOrdersList.filter(item => {
+      if (selectedGymFilter !== "all" && item.gymName !== selectedGymFilter) {
+        return false;
+      }
+      if (gymOrderTypeFilter !== "all" && item.orderType !== gymOrderTypeFilter) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesQuery = (
+          item.customerName.toLowerCase().includes(q) ||
+          item.customerPhone.includes(q) ||
+          item.gymName.toLowerCase().includes(q) ||
+          item.id.toLowerCase().includes(q) ||
+          item.itemsList.some(i => i.name.toLowerCase().includes(q))
+        );
+        if (!matchesQuery) return false;
+      }
+      const d = new Date(item.timestamp);
+      return matchDateFilter(
+        d,
+        gymPastFilterType,
+        gymSelectedDailyMode,
+        gymCustomDailyDate,
+        gymSelectedWeeklyRange,
+        gymSelectedMonth,
+        gymSelectedYear
+      );
+    });
+  }, [gymOrdersList, selectedGymFilter, gymOrderTypeFilter, searchQuery, gymPastFilterType, gymSelectedDailyMode, gymCustomDailyDate, gymSelectedWeeklyRange, gymSelectedMonth, gymSelectedYear]);
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 select-none">
@@ -985,6 +1413,35 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Admin Kitchen Live / Off Toggle Switch */}
+          <div className="flex items-center gap-2.5 bg-black/40 border border-white/15 px-3.5 py-1.5 rounded-2xl shadow-inner">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-full ${isKitchenLive ? 'bg-emerald-400 animate-pulse shadow-[0_0_10px_#34d399]' : 'bg-red-500'}`} />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-wider text-white">
+                  {isKitchenLive ? 'Kitchen is ON' : 'Kitchen is OFF'}
+                </span>
+                <span className="text-[8.5px] font-semibold text-white/50">
+                  {isKitchenLive ? 'Orders Open Live' : 'Customer Site Paused'}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleKitchen}
+              disabled={isTogglingKitchen}
+              className={`px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 active:scale-95 ${
+                isKitchenLive 
+                  ? 'bg-red-500 hover:bg-red-600 text-white shadow-xs' 
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-xs'
+              }`}
+              title={isKitchenLive ? "Click to turn kitchen OFF (Pauses customer orders)" : "Click to turn kitchen ON (Live customer ordering)"}
+            >
+              <Power className="w-3.5 h-3.5" />
+              <span>{isKitchenLive ? 'TURN OFF' : 'TURN ON'}</span>
+            </button>
+          </div>
+
           {/* Live Sound Toggle */}
           <button
             onClick={toggleSound}
@@ -1021,6 +1478,16 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
             <span className="hidden md:inline">Test Pre-Order Sound</span>
           </button>
 
+          {/* Test Kitchen Opening Alert (30s) */}
+          <button
+            onClick={testKitchenOpeningAlert}
+            className="px-2.5 py-2 bg-purple-500/30 hover:bg-purple-500/50 text-purple-200 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 cursor-pointer border border-purple-400/40"
+            title="Simulate 6:00 AM / 6:00 PM session opening alert sound & 30-second banner"
+          >
+            <Clock className="w-3.5 h-3.5 text-purple-300" />
+            <span className="hidden lg:inline">Test Session Alert (30s)</span>
+          </button>
+
           <button
             onClick={() => fetchData(false)}
             disabled={isLoading}
@@ -1046,6 +1513,62 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
           </button>
         </div>
       </header>
+
+      {/* 30-Second Kitchen Opening Alert Banner */}
+      {kitchenOpeningAlert && (
+        <div className="bg-gradient-to-r from-purple-900 via-[#1d1136] to-indigo-950 text-white border-b-2 border-purple-400/50 shadow-xl px-5 py-3.5 relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-purple-500/25 border border-purple-400/50 flex items-center justify-center shrink-0 shadow-inner">
+                <Clock className="w-5 h-5 text-purple-300 animate-spin" style={{ animationDuration: '6s' }} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="bg-purple-500 text-white text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                    ⏰ SESSION OPENING ALERT ({openingAlertSecondsLeft}s)
+                  </span>
+                  <span className="text-xs font-black text-purple-200">
+                    {kitchenOpeningAlert.session} Session ({kitchenOpeningAlert.timeStr})
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-white/95 mt-1">
+                  {kitchenOpeningAlert.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end md:self-auto">
+              {!isKitchenLive && (
+                <button
+                  onClick={async () => {
+                    await handleTurnKitchenOn();
+                    setKitchenOpeningAlert(null);
+                  }}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <Power className="w-3.5 h-3.5" />
+                  <span>Turn Kitchen ON Now 🟢</span>
+                </button>
+              )}
+              <button
+                onClick={() => setKitchenOpeningAlert(null)}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                title="Dismiss alert"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* 30-Second Countdown Progress Bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-950/80">
+            <div 
+              className="h-full bg-gradient-to-r from-purple-400 via-emerald-400 to-amber-400 transition-all duration-1000 ease-linear"
+              style={{ width: `${Math.max(0, Math.min(100, (openingAlertSecondsLeft / 30) * 100))}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Action Notice Banner */}
       {actionNotice && (
@@ -1092,6 +1615,21 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 <span>Subscription Orders</span>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === 'plan' ? 'bg-brand-green text-white' : 'bg-slate-200 text-brand-navy/60'}`}>
                   {subscriptions.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("gym")}
+                className={`py-2 px-4 rounded-xl text-xs font-black tracking-tight transition-all flex items-center gap-2 cursor-pointer ${
+                  activeTab === "gym"
+                    ? "bg-brand-navy text-white shadow-sm"
+                    : "text-brand-navy/60 hover:bg-slate-100"
+                }`}
+              >
+                <Dumbbell className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Gym Orders</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === 'gym' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-brand-navy/60'}`}>
+                  {gymOrdersList.length}
                 </span>
               </button>
 
@@ -1145,20 +1683,20 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 </span>
               </div>
 
-              {/* Sub-tabs: Current Orders vs Past Orders */}
-              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60">
+              {/* Sub-tabs: Current Orders vs Past Orders vs Deleted Meals */}
+              <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60">
                 <button
                   type="button"
                   onClick={() => setSingleOrderSubTab("current")}
-                  className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     singleOrderSubTab === "current"
                       ? "bg-[#0F1E36] text-white shadow-xs"
                       : "text-slate-600 hover:text-brand-navy"
                   }`}
                 >
-                  <Clock className="w-3.5 h-3.5 text-brand-green" />
-                  <span>Current Orders</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                  <Clock className="w-3.5 h-3.5 text-brand-green shrink-0" />
+                  <span>Current</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
                     singleOrderSubTab === "current" ? "bg-brand-green text-white" : "bg-slate-200 text-slate-700"
                   }`}>
                     {currentSingleOrders.length}
@@ -1168,18 +1706,36 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 <button
                   type="button"
                   onClick={() => setSingleOrderSubTab("past")}
-                  className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     singleOrderSubTab === "past"
                       ? "bg-[#0F1E36] text-white shadow-xs"
                       : "text-slate-600 hover:text-brand-navy"
                   }`}
                 >
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Past Orders</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Past</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
                     singleOrderSubTab === "past" ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-700"
                   }`}>
                     {allPastSingleOrders.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSingleOrderSubTab("deleted")}
+                  className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    singleOrderSubTab === "deleted"
+                      ? "bg-[#0F1E36] text-white shadow-xs"
+                      : "text-slate-600 hover:text-brand-navy"
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span>Deleted</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                    singleOrderSubTab === "deleted" ? "bg-red-600 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {deletedSingleOrders.length}
                   </span>
                 </button>
               </div>
@@ -1526,69 +2082,60 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
                                   order.status === "placed"
                                     ? "bg-amber-100 text-amber-800 border border-amber-300"
-                                    : order.status === "accepted"
+                                    : (order.status === "accepted" || order.status === "out_for_delivery")
                                     ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                    : order.status === "cooking"
-                                    ? "bg-amber-100 text-amber-700 border border-amber-300"
-                                    : order.status === "out_for_delivery"
-                                    ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                    : order.status === "declined"
+                                    ? "bg-red-100 text-red-800 border border-red-300"
                                     : "bg-[#EBF4E0] text-brand-green border border-brand-green/30"
                                 }`}>
                                   {order.status === "placed" && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
-                                  {order.status === "accepted" && <Check className="w-3 h-3 text-emerald-600" />}
-                                  {order.status === "cooking" && <Clock className="w-3 h-3 animate-spin" />}
-                                  {order.status === "out_for_delivery" && <Truck className="w-3.5 h-3.5" />}
+                                  {(order.status === "accepted" || order.status === "out_for_delivery") && <Truck className="w-3.5 h-3.5 text-emerald-600" />}
+                                  {order.status === "declined" && <X className="w-3 h-3 text-red-600" />}
                                   {order.status === "delivered" && <CheckCircle className="w-3 h-3" />}
                                   <span>
-                                    {order.status === "placed" ? "New Placed" : order.status === "accepted" ? "Accepted" : order.status === "cooking" ? "Cooking" : order.status === "out_for_delivery" ? "On the Way" : "Delivered"}
+                                    {order.status === "placed"
+                                      ? "Waiting for Accept"
+                                      : (order.status === "accepted" || order.status === "out_for_delivery")
+                                      ? "Accepted (On the Way)"
+                                      : order.status === "declined"
+                                      ? "Declined"
+                                      : "Delivered"}
                                   </span>
                                 </span>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Option 1: Accept */}
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, "accepted")}
-                                disabled={order.status === "accepted"}
-                                className={`flex-1 sm:flex-none py-2 px-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                  order.status === "accepted"
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold"
+                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                  order.status === "accepted" || order.status === "out_for_delivery"
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-400 font-extrabold shadow-inner"
                                     : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                {order.status === "accepted" ? "✓ Accepted" : "Accept"}
+                                {order.status === "accepted" || order.status === "out_for_delivery" ? "✓ Accepted" : "Accept"}
                               </button>
 
+                              {/* Option 2: Decline */}
                               <button
-                                onClick={() => handleUpdateOrderStatus(order.id, "cooking")}
-                                disabled={order.status === "cooking"}
-                                className={`flex-1 sm:flex-none py-2 px-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                  order.status === "cooking"
-                                    ? "bg-amber-100 text-amber-800 border border-amber-300 font-extrabold"
-                                    : "bg-amber-500 hover:bg-amber-600 text-white shadow-xs active:scale-95"
+                                onClick={() => handleUpdateOrderStatus(order.id, "declined")}
+                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                  order.status === "declined"
+                                    ? "bg-red-100 text-red-800 border border-red-400 font-extrabold shadow-inner"
+                                    : "bg-red-600 hover:bg-red-700 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                {order.status === "cooking" ? "👨‍🍳 Cooking" : "Cooking"}
+                                {order.status === "declined" ? "✕ Declined" : "Decline"}
                               </button>
 
-                              <button
-                                onClick={() => handleUpdateOrderStatus(order.id, "out_for_delivery")}
-                                disabled={order.status === "out_for_delivery"}
-                                className={`flex-1 sm:flex-none py-2 px-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                  order.status === "out_for_delivery"
-                                    ? "bg-blue-100 text-blue-800 border border-blue-300 font-extrabold"
-                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-xs active:scale-95"
-                                }`}
-                              >
-                                {order.status === "out_for_delivery" ? "🛵 On the Way" : "On the Way"}
-                              </button>
-
+                              {/* Option 3: Mark as Delivered */}
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, "delivered")}
-                                disabled={order.status === "delivered"}
-                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`flex-1 sm:flex-none py-2 px-3.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   order.status === "delivered"
-                                    ? "bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300 font-extrabold"
+                                    ? "bg-slate-200 text-slate-500 border border-slate-300 font-extrabold"
                                     : "bg-brand-green hover:bg-brand-green/90 text-white shadow-xs active:scale-95"
                                 }`}
                               >
@@ -1603,6 +2150,83 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                   </div>
                 );
               })()}
+
+              {/* 3. DELETED MEALS VIEW */}
+              {singleOrderSubTab === "deleted" && (
+                <div className="space-y-4">
+                  <div className="bg-red-50 border border-red-200 rounded-3xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Trash2 className="w-5 h-5 text-red-600" />
+                      <div>
+                        <h4 className="text-xs font-black text-red-950 uppercase tracking-wider">
+                          Deleted / Declined Single Meals Archive
+                        </h4>
+                        <p className="text-[10px] text-red-700 font-medium">
+                          All declined single meal orders with exact date and time timestamps.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-black bg-red-600 text-white px-3 py-1 rounded-full">
+                      {deletedSingleOrders.length} DELETED
+                    </span>
+                  </div>
+
+                  {deletedSingleOrders.length === 0 ? (
+                    <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
+                      No deleted or declined single meal orders found.
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
+                      {deletedSingleOrders.map((order) => {
+                        const dtInfo = formatOrderDateTime(order.createdAt, order.date);
+                        return (
+                          <div key={order.id} className="bg-white rounded-3xl border border-red-200 p-5 shadow-xs flex flex-col gap-3 relative">
+                            <div className="bg-red-100/80 border border-red-300/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">🗑️</span>
+                                <div>
+                                  <p className="text-[11px] font-black text-red-950">
+                                    Declined / Deleted On: {order.declinedDate || dtInfo.display}
+                                  </p>
+                                  <p className="text-[9px] font-bold text-red-700">
+                                    By: Admin • Status: Order Declined
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-mono font-black text-red-900 bg-red-200/90 px-3 py-1 rounded-xl border border-red-300 shadow-2xs">
+                                ⏱️ {order.declinedDate || dtInfo.display}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ORDER #{order.id}</span>
+                                <h4 className="font-black text-sm text-brand-navy">{order.customerName}</h4>
+                              </div>
+                              <span className="font-mono text-xs font-black text-brand-navy">📞 {order.customerPhone}</span>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              {order.items.map((it, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-xs font-semibold text-slate-700">
+                                  <span>{it.quantity}x {it.product.name}</span>
+                                  <span className="font-mono font-bold">₹{it.product.price * it.quantity}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="flex justify-between items-center border-t border-slate-200/50 mt-2 pt-2 text-xs">
+                              <span className="font-black uppercase text-slate-400">Total Bill</span>
+                              <span className="font-black text-brand-green">₹{order.total}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           )}
 
@@ -1909,7 +2533,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                           <div key={delSub.id} className="bg-white rounded-3xl border border-red-200 p-5 shadow-xs flex flex-col gap-3 relative">
                             
                             {/* Deletion Date & Time Prominent Header Badge */}
-                            <div className="bg-red-100/80 border border-red-300/80 rounded-2xl px-3.5 py-2 flex items-center justify-between flex-wrap gap-2">
+                            <div className="bg-red-100/80 border border-red-300/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between flex-wrap gap-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-base">🗑️</span>
                                 <div>
@@ -1917,28 +2541,14 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                     Deleted On: {delSub.deletedDate || (delSub.deletedAt ? new Date(delSub.deletedAt).toLocaleString('en-IN') : 'N/A')}
                                   </p>
                                   <p className="text-[9px] font-bold text-red-700">
-                                    By: {delSub.deletedBy || "Admin"} • {delSub.reason || "Removed in Admin Panel"}
+                                    By: {delSub.deletedBy || "Admin"} • {delSub.reason || "Declined / Removed by Admin"}
                                   </p>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleRestoreSubscription(delSub.id)}
-                                  className="px-3 py-1.5 bg-brand-green hover:bg-brand-green/90 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                                >
-                                  <RotateCcw className="w-3 h-3" />
-                                  <span>Restore Plan</span>
-                                </button>
-
-                                <button
-                                  onClick={() => handlePurgeDeletedSubscription(delSub.id)}
-                                  className="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-xs"
-                                  title="Permanently remove from archive"
-                                >
-                                  <span>Purge</span>
-                                </button>
-                              </div>
+                              <span className="text-[10px] font-mono font-black text-red-900 bg-red-200/90 px-3 py-1 rounded-xl border border-red-300 shadow-2xs">
+                                ⏱️ {delSub.deletedDate || (delSub.deletedAt ? new Date(delSub.deletedAt).toLocaleString('en-IN') : 'N/A')}
+                              </span>
                             </div>
 
                             {/* Plan details */}
@@ -2184,7 +2794,340 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
             </div>
           )}
 
-          {/* TAB 3: TOTAL ORDERS */}
+          {/* TAB 3: GYM ORDERS */}
+          {activeTab === "gym" && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between bg-emerald-800 text-white px-5 py-4 rounded-3xl shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-white/15 text-emerald-300 rounded-xl">
+                    <Dumbbell className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm tracking-tight">Partner Gym Orders & Bulk Quantities</h3>
+                    <p className="text-[9px] text-white/70 font-bold uppercase tracking-wider">
+                      Orders grouped by partner gym with date & time filters
+                    </p>
+                  </div>
+                </div>
+                <span className="bg-emerald-600 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-xs uppercase tracking-tight">
+                  {filteredGymOrders.length} GYM {filteredGymOrders.length === 1 ? 'ORDER' : 'ORDERS'}
+                </span>
+              </div>
+
+              {/* Gym Selector Horizontal Scrollable Strip (Shows ~2 cards at a time, scrollable on cursor hover / wheel) */}
+              <div className="flex overflow-x-auto gap-3.5 pb-3 pt-1 scroll-smooth snap-x scrollbar-thin scrollbar-thumb-emerald-500">
+                <button
+                  type="button"
+                  onClick={() => setSelectedGymFilter("all")}
+                  className={`min-w-[240px] sm:min-w-[280px] max-w-[300px] shrink-0 snap-start p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
+                    selectedGymFilter === "all"
+                      ? "bg-brand-navy text-white border-brand-navy shadow-sm"
+                      : "bg-white text-brand-navy border-slate-200 hover:border-brand-green/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase">All Partner Gyms</span>
+                    <Dumbbell className={`w-4 h-4 ${selectedGymFilter === "all" ? "text-brand-green" : "text-slate-400"}`} />
+                  </div>
+                  <div>
+                    <p className="text-xl font-black font-mono">{gymOrdersList.length}</p>
+                    <p className={`text-[10px] font-semibold ${selectedGymFilter === "all" ? "text-white/70" : "text-slate-500"}`}>
+                      Total Gym Orders
+                    </p>
+                  </div>
+                </button>
+
+                {gymOverviewStats.map(gym => (
+                  <button
+                    key={gym.gymName}
+                    type="button"
+                    onClick={() => setSelectedGymFilter(gym.gymName)}
+                    className={`min-w-[240px] sm:min-w-[280px] max-w-[300px] shrink-0 snap-start p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
+                      selectedGymFilter === gym.gymName
+                        ? "bg-emerald-700 text-white border-emerald-700 shadow-sm"
+                        : "bg-white text-brand-navy border-slate-200 hover:border-brand-green/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black truncate max-w-[170px]" title={gym.gymName}>{gym.gymName.split('(')[0]}</span>
+                      <MapPin className={`w-3.5 h-3.5 shrink-0 ${selectedGymFilter === gym.gymName ? "text-white" : "text-emerald-600"}`} />
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-xl font-black font-mono">{gym.totalOrders}</p>
+                        <span className={`text-[10px] font-bold ${selectedGymFilter === gym.gymName ? "text-white/90" : "text-emerald-700 font-mono"}`}>
+                          ({gym.totalPieces}P)
+                        </span>
+                      </div>
+                      <p className={`text-[10px] font-medium truncate ${selectedGymFilter === gym.gymName ? "text-white/70" : "text-slate-500"}`} title={gym.gymLocation}>
+                        📍 {gym.gymLocation}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Gym Order Type & Time Filters */}
+              <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-emerald-600" />
+                    <h4 className="text-xs font-black text-brand-navy uppercase tracking-wider">
+                      Gym Orders Filter & Period Range
+                    </h4>
+                  </div>
+                  
+                  {/* Order Type Toggle */}
+                  <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setGymOrderTypeFilter("all")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${gymOrderTypeFilter === "all" ? "bg-brand-navy text-white shadow-2xs" : "text-slate-600 hover:text-brand-navy"}`}
+                    >
+                      All Types
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymOrderTypeFilter("single")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${gymOrderTypeFilter === "single" ? "bg-brand-navy text-white shadow-2xs" : "text-slate-600 hover:text-brand-navy"}`}
+                    >
+                      Single Meals
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymOrderTypeFilter("subscription")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${gymOrderTypeFilter === "subscription" ? "bg-brand-navy text-white shadow-2xs" : "text-slate-600 hover:text-brand-navy"}`}
+                    >
+                      Subscriptions
+                    </button>
+                  </div>
+                </div>
+
+                {/* Period Range Buttons (Daily, Weekly, Monthly, All) */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setGymPastFilterType("all")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gymPastFilterType === "all" ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    All Time
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGymPastFilterType("daily")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gymPastFilterType === "daily" ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    📅 Daily
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGymPastFilterType("weekly")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gymPastFilterType === "weekly" ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    ⏱️ Weekly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGymPastFilterType("monthly")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gymPastFilterType === "monthly" ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    🗓️ Monthly
+                  </button>
+                </div>
+
+                {/* Daily Sub-controls */}
+                {gymPastFilterType === "daily" && (
+                  <div className="flex items-center gap-2 flex-wrap bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Day:</span>
+                    <button
+                      type="button"
+                      onClick={() => setGymSelectedDailyMode("today")}
+                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymSelectedDailyMode === "today" ? "bg-emerald-600 text-white shadow-xs" : "bg-white text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      Today
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymSelectedDailyMode("yesterday")}
+                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymSelectedDailyMode === "yesterday" ? "bg-emerald-600 text-white shadow-xs" : "bg-white text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      Yesterday
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymSelectedDailyMode("custom")}
+                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymSelectedDailyMode === "custom" ? "bg-emerald-600 text-white shadow-xs" : "bg-white text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      Custom Date
+                    </button>
+                    {gymSelectedDailyMode === "custom" && (
+                      <input
+                        type="date"
+                        value={gymCustomDailyDate}
+                        onChange={(e) => setGymCustomDailyDate(e.target.value)}
+                        className="bg-white border border-slate-200 rounded-xl px-3 py-1 text-xs font-bold text-slate-700"
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* Weekly Sub-controls */}
+                {gymPastFilterType === "weekly" && (
+                  <div className="flex items-center gap-2 flex-wrap bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Range:</span>
+                    <button
+                      type="button"
+                      onClick={() => setGymSelectedWeeklyRange("this_week")}
+                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymSelectedWeeklyRange === "this_week" ? "bg-emerald-600 text-white shadow-xs" : "bg-white text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      This Week (Last 7 Days)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymSelectedWeeklyRange("last_week")}
+                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymSelectedWeeklyRange === "last_week" ? "bg-emerald-600 text-white shadow-xs" : "bg-white text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      Previous Week
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymSelectedWeeklyRange("past_14d")}
+                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymSelectedWeeklyRange === "past_14d" ? "bg-emerald-600 text-white shadow-xs" : "bg-white text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      Past 14 Days
+                    </button>
+                  </div>
+                )}
+
+                {/* Monthly Sub-controls */}
+                {gymPastFilterType === "monthly" && (
+                  <div className="flex items-center gap-2 flex-wrap bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Month:</span>
+                    <select
+                      value={gymSelectedMonth}
+                      onChange={(e) => setGymSelectedMonth(Number(e.target.value))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700"
+                    >
+                      {MONTH_NAMES.map((m, idx) => (
+                        <option key={idx} value={idx}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={gymSelectedYear}
+                      onChange={(e) => setGymSelectedYear(Number(e.target.value))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700"
+                    >
+                      <option value={2025}>2025</option>
+                      <option value={2026}>2026</option>
+                      <option value={2027}>2027</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="text-[11px] font-black text-brand-navy/70 flex items-center justify-between">
+                  <span>
+                    Showing <strong>{filteredGymOrders.length}</strong> gym orders
+                    {selectedGymFilter !== "all" && ` for ${selectedGymFilter}`}
+                  </span>
+                  <span className="text-emerald-700 font-mono">
+                    Total Revenue: ₹{filteredGymOrders.reduce((s, o) => s + o.totalAmount, 0)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Gym Orders List */}
+              {filteredGymOrders.length === 0 ? (
+                <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
+                  No gym orders found matching the selected filter criteria.
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
+                  {filteredGymOrders.map((order) => (
+                    <div key={order.id} className="bg-white rounded-3xl border border-slate-200/60 p-5 shadow-xs flex flex-col gap-4 relative">
+                      
+                      {/* Gym & Quantity Badge Header */}
+                      <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🏋️</span>
+                          <div>
+                            <p className="text-xs font-black text-brand-navy">{order.gymName}</p>
+                            <p className="text-[10px] text-slate-500 font-medium">📍 {order.gymLocation}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-black px-3 py-1 rounded-xl uppercase tracking-wider ${
+                            order.isBulk ? 'bg-amber-500 text-white shadow-2xs' : 'bg-emerald-600 text-white'
+                          }`}>
+                            🔥 {order.orderType === 'single' ? (order.isBulk ? `Bulk ${order.totalPieces}P` : `${order.totalPieces} Meals`) : `${order.totalPieces}-Day Subscription`}
+                          </span>
+                          <span className="text-[10px] font-mono font-black text-slate-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                            🗓️ {order.dateStr}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Customer & Items */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div className="bg-[#FAF9F6] p-3 rounded-2xl border border-slate-100 flex flex-col justify-center">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Customer Details</span>
+                          <p className="font-black text-brand-navy mt-0.5">{order.customerName}</p>
+                          <p className="text-[11px] text-slate-600 font-mono font-bold">📞 {order.customerPhone}</p>
+                        </div>
+
+                        <div className="bg-[#0F1E36]/5 p-3 rounded-2xl flex flex-col justify-center">
+                          <span className="text-[9px] font-black text-brand-navy/40 uppercase tracking-wider">Ordered Items</span>
+                          <div className="space-y-1 mt-1">
+                            {order.itemsList.map((it, i) => (
+                              <div key={i} className="flex justify-between items-center text-xs font-semibold text-brand-navy">
+                                <span>{it.quantity}x {it.name}</span>
+                                <span className="font-mono text-slate-500 font-bold">₹{it.price * it.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+                        <span className="text-slate-400 font-black uppercase tracking-wider text-[10px]">Payment & Status</span>
+                        <div className="flex items-center gap-3">
+                          <span className="font-extrabold text-[10px] text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                            💵 Cash on Delivery (COD)
+                          </span>
+                          <span className="font-black text-brand-green font-mono text-sm">
+                            ₹{order.totalAmount}
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: TOTAL ORDERS */}
           {activeTab === "total" && (
             <div className="space-y-5">
               <div className="flex items-center justify-between bg-brand-navy text-white px-5 py-4 rounded-3xl shadow-sm">

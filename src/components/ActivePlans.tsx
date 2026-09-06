@@ -9,7 +9,9 @@ import {
   ShieldCheck, 
   TrendingUp,
   Utensils,
-  PauseCircle
+  PauseCircle,
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { ActiveSubscription } from '../types';
 import { PRODUCTS } from '../data';
@@ -48,6 +50,68 @@ export default function ActivePlans({
     }
   }, [currentSubscriptions.length, pastSubscriptions.length]);
 
+  // Declined Subscription Notification State
+  const [declinedNotice, setDeclinedNotice] = useState<{ planName?: string; date?: string } | null>(null);
+  const [isDeclinedDismissed, setIsDeclinedDismissed] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkDeclined = async () => {
+      try {
+        const lastDeclinedRaw = localStorage.getItem('proteino_last_declined_sub');
+        if (lastDeclinedRaw) {
+          const parsed = JSON.parse(lastDeclinedRaw);
+          if (Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000) {
+            setDeclinedNotice({ planName: parsed.planName || 'Gym High-Protein Plan', date: parsed.date || 'Recent' });
+          }
+        }
+
+        const phone = localStorage.getItem('proteino_last_order_phone') || '';
+        if (phone) {
+          const clean = phone.replace(/\D/g, '').slice(-10);
+          const res = await fetch(`/api/subscriptions/deleted?phone=${encodeURIComponent(clean)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              const latest = data[0];
+              setDeclinedNotice({ planName: latest.planName, date: latest.deletedDate || 'Recent' });
+            }
+          }
+        }
+      } catch (e) {}
+    };
+
+    checkDeclined();
+
+    const handleDeclined = (e: any) => {
+      setDeclinedNotice({
+        planName: e.detail?.planName || 'Gym High-Protein Plan',
+        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      setIsDeclinedDismissed(false);
+    };
+
+    window.addEventListener('proteino_subscription_declined', handleDeclined);
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('proteino_sync');
+      bc.onmessage = (msg) => {
+        if (msg.data && msg.data.type === 'subscription_declined') {
+          setDeclinedNotice({
+            planName: msg.data.planName || 'Gym High-Protein Plan',
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+          setIsDeclinedDismissed(false);
+        }
+      };
+    }
+
+    return () => {
+      window.removeEventListener('proteino_subscription_declined', handleDeclined);
+      if (bc) bc.close();
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-[#FAF9F6] p-5 pb-28 overflow-y-auto select-none">
       
@@ -63,6 +127,50 @@ export default function ActivePlans({
           Real-time meal tracking & drop-off history (Excluding Sundays)
         </p>
       </div>
+
+      {/* Customer Notification: Subscription Declined */}
+      {declinedNotice && !isDeclinedDismissed && (
+        <div className="mb-5 bg-red-50 border-2 border-red-300 rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Subscription Declined
+                </span>
+                <span className="text-[10px] font-mono font-bold text-red-600">
+                  {declinedNotice.date}
+                </span>
+              </div>
+              <h3 className="text-sm font-black text-red-950 mt-1">
+                Your subscription is declined. Please order again later.
+              </h3>
+              <p className="text-xs font-semibold text-red-800/80 mt-0.5">
+                The kitchen administrator has declined your subscription plan{declinedNotice.planName ? ` (${declinedNotice.planName})` : ''}. You can order again at a later time.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            {onExploreClick && (
+              <button
+                onClick={onExploreClick}
+                className="py-2 px-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black transition-all cursor-pointer whitespace-nowrap shadow-xs"
+              >
+                Order Again Later
+              </button>
+            )}
+            <button
+              onClick={() => setIsDeclinedDismissed(true)}
+              className="p-1.5 rounded-xl hover:bg-red-100 text-red-600 border border-red-200 text-xs font-black cursor-pointer transition-all"
+              title="Dismiss notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Guest Mode Notice */}
       {isGuest && (
