@@ -119,6 +119,7 @@ export default function ProductDetails({
 
   const [isAdded, setIsAdded] = useState(false);
   const [isSubmittingSub, setIsSubmittingSub] = useState(false);
+  const isSubmittingSubRef = useRef(false);
   const [subSuccess, setSubSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -185,9 +186,13 @@ export default function ProductDetails({
   };
 
   const handleConfirmSubscription = async () => {
+    if (isSubmittingSubRef.current || isSubmittingSub) return;
+    isSubmittingSubRef.current = true;
+
     if (!storeStatus.isOpen) {
       setShowConfirmModal(false);
       setShowClosedModal(true);
+      isSubmittingSubRef.current = false;
       return;
     }
     setIsSubmittingSub(true);
@@ -233,7 +238,10 @@ export default function ProductDetails({
       setErrorMsg(err.message || 'Failed to place direct subscription. Please try again.');
       setShowConfirmModal(false);
     } finally {
-      setIsSubmittingSub(false);
+      setTimeout(() => {
+        isSubmittingSubRef.current = false;
+        setIsSubmittingSub(false);
+      }, 2500);
     }
   };
 

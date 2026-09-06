@@ -1,161 +1,5812 @@
 {
   "orders": [
     {
-      "id": "PRTN-9236",
-      "date": "10:55 pm, 03 Jul",
+      "gymName": "Muscle Tone Gym",
+      "orderType": "instant",
+      "createdAt": "2026-09-06T17:44:30.305Z",
+      "date": "11:14 pm, 06 Sept 2026",
+      "paymentMethod": "COD",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "deliveryTimeRemaining": 30,
+      "customerName": "Karthik",
+      "gymLocation": "3rd Floor, Azad Colony, Above Muthoot Finance, Bengeri Extension, Keshwapur, Hubballi, Karnataka 580023",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "isPreOrder": false,
+      "status": "declined",
+      "id": "PRTN-8485",
+      "total": 109,
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "tags": [
+              "Paneer Salad",
+              "Cottage Cheese",
+              "Veg Protein",
+              "Keto Friendly"
+            ],
+            "isVeg": true,
+            "price": 109,
+            "images": [
+              "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80"
+            ],
+            "ingredients": [
+              "Tandoori Spiced Paneer",
+              "Tri-color Bell Peppers",
+              "English Cucumber",
+              "Cracked Walnuts",
+              "Thick Mint Greek Yogurt Dressing"
+            ],
+            "category": "salad",
+            "carbs": 16,
+            "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+            "name": "Paneer Salad",
+            "id": "panner-salad",
+            "fats": 18,
+            "monthlyPrice": 2699,
+            "calories": 360,
+            "protein": 22,
+            "description": "Cottage cheese with fresh veggies and a light dressing. Soft high-protein paneer tossed with bell peppers, cucumber, and herbs."
+          }
+        }
+      ],
+      "customerPhone": "9113237706",
+      "declinedDate": "11:15 pm, 06 Sept 2026",
+      "acceptedAt": "2026-09-06T17:45:02.411Z",
+      "declinedAt": "2026-09-06T17:45:04.346Z"
+    },
+    {
+      "id": "PRTN-5665",
+      "customerPhone": "7892354063",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "total": 99,
+      "isPreOrder": false,
+      "items": [
+        {
+          "purchaseOption": "single",
+          "product": {
+            "fats": 13.4,
+            "category": "weight_gain",
+            "price": 99,
+            "isVeg": true,
+            "eaa": 21.05,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "protein": 52.9,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "bcaa": 9.42,
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "carbs": 70,
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "eaa": 12.84,
+                "calories": 213,
+                "name": "Soya Chunks",
+                "quantity": "60g",
+                "protein": 31.4,
+                "bcaa": 5.76,
+                "carbs": 27.2
+              },
+              {
+                "eaa": 2.46,
+                "fats": 6,
+                "carbs": 0.9,
+                "name": "Paneer",
+                "protein": 5.4,
+                "calories": 65,
+                "bcaa": 1.14,
+                "quantity": "30g"
+              },
+              {
+                "fats": 0.3,
+                "eaa": 1.98,
+                "protein": 4.8,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "calories": 51,
+                "quantity": "60g",
+                "bcaa": 0.81
+              },
+              {
+                "bcaa": 1.04,
+                "quantity": "30g",
+                "name": "Roasted Chana",
+                "protein": 5.5,
+                "calories": 104,
+                "carbs": 16.6,
+                "eaa": 2.17,
+                "fats": 1.5
+              },
+              {
+                "fats": 0.1,
+                "carbs": 7.5,
+                "eaa": 0.22,
+                "bcaa": 0.11,
+                "protein": 0.8,
+                "name": "Mixed Fruits",
+                "quantity": "50g",
+                "calories": 30
+              },
+              {
+                "protein": 4,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "calories": 111,
+                "bcaa": 0.56,
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "carbs": 11.6
+              }
+            ],
+            "calories": 574,
+            "id": "veg-bulk-50p",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "250g (Total)",
+            "monthlyPrice": 2499
+          },
+          "quantity": 1
+        }
+      ],
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "acceptedAt": "2026-09-06T17:36:56.494Z",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "date": "11:06 pm, 06 Sept 2026",
+      "paymentMethod": "COD",
+      "createdAt": "2026-09-06T17:36:38.527Z",
+      "orderType": "instant",
+      "status": "delivered",
+      "customerName": "Chetan Jartarghar",
+      "deliveredAt": "2026-09-06T17:37:04.997Z",
+      "deliveryTimeRemaining": 0
+    },
+    {
+      "orderType": "instant",
+      "createdAt": "2026-09-06T17:35:29.225Z",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "paymentMethod": "COD",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeRemaining": 0,
+      "date": "11:05 pm, 06 Sept 2026",
+      "total": 99,
+      "customerName": "Karthik",
+      "deliveredAt": "2026-09-06T17:37:12.885Z",
       "items": [
         {
           "product": {
-            "id": "soya-salad",
-            "name": "Soya salad",
-            "category": "salad",
-            "price": 139,
-            "protein": 24,
-            "calories": 310,
-            "carbs": 24,
-            "fats": 10,
-            "description": "High-protein vegan salad with air-fried soya chunks, roasted peanuts, onion, tomatoes, and spicy lemon tamarind dressing.",
+            "totalWeight": "250g (Total)",
+            "category": "weight_gain",
             "ingredients": [
-              "Air-fried Soya Chunks",
-              "Roasted Peanuts",
-              "Red Onions",
-              "Juicy Tomatoes",
-              "Fresh Coriander",
-              "Lemon Tamarind Dressing"
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
             ],
             "tags": [
-              "100% Vegan",
-              "High Plant Protein",
-              "Crunchy Texture",
-              "Spicy Kick"
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "monthlyPrice": 2499,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "carbs": 70,
+            "calories": 574,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "eaa": 21.05,
+            "mealItems": [
+              {
+                "name": "Soya Chunks",
+                "carbs": 27.2,
+                "eaa": 12.84,
+                "protein": 31.4,
+                "quantity": "60g",
+                "calories": 213,
+                "bcaa": 5.76,
+                "fats": 0.36
+              },
+              {
+                "bcaa": 1.14,
+                "protein": 5.4,
+                "carbs": 0.9,
+                "name": "Paneer",
+                "eaa": 2.46,
+                "calories": 65,
+                "quantity": "30g",
+                "fats": 6
+              },
+              {
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "bcaa": 0.81,
+                "eaa": 1.98,
+                "protein": 4.8,
+                "fats": 0.3,
+                "quantity": "60g",
+                "calories": 51
+              },
+              {
+                "carbs": 16.6,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "bcaa": 1.04,
+                "eaa": 2.17,
+                "protein": 5.5,
+                "calories": 104,
+                "fats": 1.5
+              },
+              {
+                "fats": 0.1,
+                "carbs": 7.5,
+                "quantity": "50g",
+                "eaa": 0.22,
+                "bcaa": 0.11,
+                "calories": 30,
+                "name": "Mixed Fruits",
+                "protein": 0.8
+              },
+              {
+                "carbs": 11.6,
+                "protein": 4,
+                "bcaa": 0.56,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "eaa": 1.38,
+                "fats": 5.1,
+                "calories": 111,
+                "quantity": "20g (Total)"
+              }
+            ],
+            "id": "veg-bulk-50p",
+            "fats": 13.4,
+            "isVeg": true,
+            "price": 99,
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "protein": 52.9,
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ]
+          },
+          "quantity": 1,
+          "purchaseOption": "single"
+        }
+      ],
+      "acceptedAt": "2026-09-06T17:36:23.742Z",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerPhone": "9113237701",
+      "isPreOrder": false,
+      "id": "PRTN-7636",
+      "status": "delivered"
+    },
+    {
+      "date": "08:48 pm, 06 Sept 2026",
+      "customerPhone": "9113237706",
+      "orderType": "instant",
+      "createdAt": "2026-09-06T15:18:38.317Z",
+      "acceptedAt": "2026-09-06T15:22:56.762Z",
+      "declinedAt": "2026-09-06T15:22:59.330Z",
+      "gymLocation": "Gadagkar Complex, Opposite Ramesh Bhavan Hotel, Hemanth Nagar, Bengeri Extension, Keshwapur, Hubballi, Karnataka 580023",
+      "customerName": "Karthik",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "isPreOrder": false,
+      "total": 45,
+      "items": [
+        {
+          "purchaseOption": "single",
+          "product": {
+            "carbs": 42,
+            "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+            "images": [
+              "https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "description": "Protein rich sprouts with crunchy veggies and herbs. Traditional protein booster with sprouted green gram, kala chana, cucumber, and lemon chaat masala.",
+            "monthlyPrice": 1149,
+            "protein": 14,
+            "name": "Sprouts Salad",
+            "isVeg": true,
+            "price": 45,
+            "category": "salad",
+            "fats": 4,
+            "id": "sprouts-salad",
+            "ingredients": [
+              "Sprouted Moong",
+              "Sprouted Kala Chana",
+              "Crunchy Cucumber",
+              "Fresh Tomatoes",
+              "Coriander Leaves",
+              "Tangy Lemon Juice",
+              "Chaat Masala"
+            ],
+            "tags": [
+              "Sprouts Salad",
+              "Digestive Health",
+              "High Fiber",
+              "Traditional Food",
+              "Zero Oil"
+            ],
+            "calories": 280
+          },
+          "quantity": 1
+        }
+      ],
+      "declinedDate": "03:22 pm, 06 Sept 2026",
+      "gymName": "Sri Sai Fitness",
+      "deliveryTimeRemaining": 30,
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "paymentMethod": "COD",
+      "status": "declined",
+      "id": "PRTN-4297"
+    },
+    {
+      "declinedAt": "2026-09-06T15:07:47.828Z",
+      "paymentMethod": "COD",
+      "id": "PRTN-9890",
+      "gymName": "Sri Sai Fitness",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "deliveryTimeRemaining": 30,
+      "customerName": "Karthik",
+      "status": "declined",
+      "createdAt": "2026-09-06T15:07:07.355Z",
+      "orderType": "instant",
+      "isPreOrder": false,
+      "declinedDate": "03:07 pm, 06 Sept 2026",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "id": "veg-bulk-50p",
+            "carbs": 70,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "mealItems": [
+              {
+                "calories": 213,
+                "fats": 0.36,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "carbs": 27.2,
+                "name": "Soya Chunks",
+                "protein": 31.4,
+                "bcaa": 5.76
+              },
+              {
+                "quantity": "30g",
+                "name": "Paneer",
+                "calories": 65,
+                "eaa": 2.46,
+                "bcaa": 1.14,
+                "carbs": 0.9,
+                "fats": 6,
+                "protein": 5.4
+              },
+              {
+                "fats": 0.3,
+                "carbs": 7.2,
+                "protein": 4.8,
+                "bcaa": 0.81,
+                "quantity": "60g",
+                "eaa": 1.98,
+                "calories": 51,
+                "name": "Sprouts"
+              },
+              {
+                "eaa": 2.17,
+                "fats": 1.5,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "calories": 104,
+                "carbs": 16.6,
+                "protein": 5.5,
+                "bcaa": 1.04
+              },
+              {
+                "fats": 0.1,
+                "eaa": 0.22,
+                "name": "Mixed Fruits",
+                "protein": 0.8,
+                "carbs": 7.5,
+                "calories": 30,
+                "bcaa": 0.11,
+                "quantity": "50g"
+              },
+              {
+                "bcaa": 0.56,
+                "calories": 111,
+                "carbs": 11.6,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "protein": 4,
+                "eaa": 1.38,
+                "fats": 5.1
+              }
+            ],
+            "eaa": 21.05,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "category": "weight_gain",
+            "price": 99,
+            "isVeg": true,
+            "monthlyPrice": 2499,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "bcaa": 9.42,
+            "fats": 13.4,
+            "protein": 52.9,
+            "totalWeight": "250g (Total)",
+            "calories": 574,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "images": [
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ]
+          }
+        }
+      ],
+      "total": 99,
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "date": "08:37 pm, 06 Sept 2026",
+      "customerPhone": "9113237706",
+      "gymLocation": "Gadagkar Complex, Opposite Ramesh Bhavan Hotel, Hemanth Nagar, Bengeri Extension, Keshwapur, Hubballi, Karnataka 580023"
+    },
+    {
+      "paymentMethod": "COD",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "declinedDate": "03:35 pm, 06 Sept 2026",
+      "gymLocation": "2nd Floor, Guru Krupa, Above Professional Couriers, Bailappanavar Nagar, Vidya Nagar, Hubballi, Karnataka 580029",
+      "status": "declined",
+      "total": 99,
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "totalWeight": "250g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "eaa": 21.05,
+            "calories": 574,
+            "monthlyPrice": 2499,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "carbs": 70,
+            "category": "weight_gain",
+            "fats": 13.4,
+            "id": "veg-bulk-50p",
+            "mealItems": [
+              {
+                "bcaa": 5.76,
+                "carbs": 27.2,
+                "name": "Soya Chunks",
+                "protein": 31.4,
+                "calories": 213,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "fats": 0.36
+              },
+              {
+                "name": "Paneer",
+                "carbs": 0.9,
+                "eaa": 2.46,
+                "bcaa": 1.14,
+                "fats": 6,
+                "calories": 65,
+                "protein": 5.4,
+                "quantity": "30g"
+              },
+              {
+                "fats": 0.3,
+                "calories": 51,
+                "eaa": 1.98,
+                "quantity": "60g",
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "protein": 4.8,
+                "bcaa": 0.81
+              },
+              {
+                "quantity": "30g",
+                "calories": 104,
+                "fats": 1.5,
+                "protein": 5.5,
+                "bcaa": 1.04,
+                "eaa": 2.17,
+                "carbs": 16.6,
+                "name": "Roasted Chana"
+              },
+              {
+                "protein": 0.8,
+                "fats": 0.1,
+                "calories": 30,
+                "eaa": 0.22,
+                "quantity": "50g",
+                "bcaa": 0.11,
+                "name": "Mixed Fruits",
+                "carbs": 7.5
+              },
+              {
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6,
+                "protein": 4,
+                "eaa": 1.38,
+                "calories": 111,
+                "bcaa": 0.56,
+                "quantity": "20g (Total)",
+                "fats": 5.1
+              }
+            ],
+            "isVeg": true,
+            "price": 99,
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "protein": 52.9,
+            "images": [
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ]
+          }
+        }
+      ],
+      "date": "02:34 pm, 06 Sept 2026",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "gymName": "Khona's Gym",
+      "id": "PRTN-3254",
+      "isPreOrder": false,
+      "customerName": "Karthik",
+      "deliveryTimeRemaining": 0,
+      "deliveredAt": "2026-09-06T09:12:53.202Z",
+      "orderType": "instant",
+      "createdAt": "2026-09-06T09:04:11.380Z",
+      "customerPhone": "9113237706",
+      "declinedAt": "2026-09-06T15:35:55.928Z",
+      "acceptedAt": "2026-09-06T15:06:42.387Z"
+    },
+    {
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "createdAt": "2026-09-06T08:20:28.644Z",
+      "orderType": "instant",
+      "customerName": "Karthik",
+      "customerPhone": "9113237706",
+      "isPreOrder": false,
+      "deliveryTimeRemaining": 0,
+      "status": "delivered",
+      "paymentMethod": "COD",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "date": "01:50 pm, 06 Sept 2026",
+      "id": "PRTN-5563",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "product": {
+            "images": [
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "isVeg": true,
+            "price": 99,
+            "fats": 13.4,
+            "category": "weight_gain",
+            "protein": 52.9,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "eaa": 21.05,
+            "carbs": 70,
+            "monthlyPrice": 2499,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "calories": 574,
+            "id": "veg-bulk-50p",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "250g (Total)",
+            "mealItems": [
+              {
+                "quantity": "60g",
+                "calories": 213,
+                "fats": 0.36,
+                "eaa": 12.84,
+                "name": "Soya Chunks",
+                "bcaa": 5.76,
+                "protein": 31.4,
+                "carbs": 27.2
+              },
+              {
+                "calories": 65,
+                "fats": 6,
+                "eaa": 2.46,
+                "quantity": "30g",
+                "name": "Paneer",
+                "protein": 5.4,
+                "carbs": 0.9,
+                "bcaa": 1.14
+              },
+              {
+                "name": "Sprouts",
+                "protein": 4.8,
+                "eaa": 1.98,
+                "quantity": "60g",
+                "calories": 51,
+                "bcaa": 0.81,
+                "carbs": 7.2,
+                "fats": 0.3
+              },
+              {
+                "protein": 5.5,
+                "fats": 1.5,
+                "eaa": 2.17,
+                "bcaa": 1.04,
+                "name": "Roasted Chana",
+                "calories": 104,
+                "carbs": 16.6,
+                "quantity": "30g"
+              },
+              {
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "protein": 0.8,
+                "bcaa": 0.11,
+                "calories": 30,
+                "eaa": 0.22,
+                "quantity": "50g",
+                "fats": 0.1
+              },
+              {
+                "protein": 4,
+                "fats": 5.1,
+                "calories": 111,
+                "carbs": 11.6,
+                "eaa": 1.38,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56
+              }
+            ]
+          },
+          "quantity": 1
+        }
+      ],
+      "total": 99,
+      "deliveredAt": "2026-09-06T08:24:41.961Z"
+    },
+    {
+      "deliveredAt": "2026-09-06T08:31:03.713Z",
+      "date": "01:16 pm, 06 Sept 2026",
+      "customerName": "Karthik",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "paymentMethod": "COD",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "deliveryTimeRemaining": 0,
+      "id": "PRTN-2041",
+      "total": 99,
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "mealItems": [
+              {
+                "name": "Soya Chunks",
+                "carbs": 27.2,
+                "eaa": 12.84,
+                "protein": 31.4,
+                "bcaa": 5.76,
+                "fats": 0.36,
+                "quantity": "60g",
+                "calories": 213
+              },
+              {
+                "calories": 65,
+                "quantity": "30g",
+                "fats": 6,
+                "protein": 5.4,
+                "bcaa": 1.14,
+                "eaa": 2.46,
+                "name": "Paneer",
+                "carbs": 0.9
+              },
+              {
+                "bcaa": 0.81,
+                "name": "Sprouts",
+                "quantity": "60g",
+                "protein": 4.8,
+                "calories": 51,
+                "eaa": 1.98,
+                "carbs": 7.2,
+                "fats": 0.3
+              },
+              {
+                "fats": 1.5,
+                "eaa": 2.17,
+                "calories": 104,
+                "carbs": 16.6,
+                "quantity": "30g",
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "bcaa": 1.04
+              },
+              {
+                "protein": 0.8,
+                "fats": 0.1,
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "bcaa": 0.11,
+                "quantity": "50g",
+                "calories": 30
+              },
+              {
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "carbs": 11.6,
+                "protein": 4,
+                "calories": 111,
+                "bcaa": 0.56,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)"
+              }
+            ],
+            "calories": 574,
+            "monthlyPrice": 2499,
+            "fats": 13.4,
+            "images": [
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "id": "veg-bulk-50p",
+            "protein": 52.9,
+            "eaa": 21.05,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "isVeg": true,
+            "price": 99,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "carbs": 70,
+            "totalWeight": "250g (Total)",
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg"
+          }
+        }
+      ],
+      "isPreOrder": false,
+      "declinedDate": "03:28 pm, 06 Sept 2026",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "createdAt": "2026-09-06T07:46:03.891Z",
+      "orderType": "instant",
+      "declinedAt": "2026-09-06T15:28:34.833Z",
+      "customerPhone": "9113237706",
+      "status": "declined"
+    },
+    {
+      "date": "11:44 pm, 05 Sept 2026",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "deliveredAt": "2026-09-06T08:31:07.027Z",
+      "isPreOrder": false,
+      "createdAt": "2026-09-05T18:14:16.987Z",
+      "orderType": "instant",
+      "total": 69,
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "mealItems": [
+              {
+                "fats": 0.2,
+                "carbs": 14.2,
+                "eaa": 8.54,
+                "protein": 20.9,
+                "name": "Soya Chunks",
+                "quantity": "40g",
+                "bcaa": 3.82,
+                "calories": 142
+              },
+              {
+                "quantity": "60g",
+                "fats": 0.3,
+                "carbs": 7.2,
+                "calories": 51,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "eaa": 1.98,
+                "name": "Sprouts"
+              },
+              {
+                "quantity": "25g",
+                "calories": 86.3,
+                "fats": 1.3,
+                "eaa": 1.81,
+                "bcaa": 0.87,
+                "name": "Roasted Chana",
+                "protein": 4.6,
+                "carbs": 13.8
+              },
+              {
+                "protein": 0.8,
+                "fats": 0.1,
+                "calories": 30,
+                "bcaa": 0.11,
+                "quantity": "50g",
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "eaa": 0.22
+              },
+              {
+                "quantity": "20g (Total)",
+                "bcaa": 0.56,
+                "calories": 111,
+                "carbs": 11.6,
+                "protein": 4,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "fats": 5.1,
+                "eaa": 1.38
+              }
+            ],
+            "images": [
+              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80"
+            ],
+            "monthlyPrice": 1699,
+            "price": 69,
+            "isVeg": true,
+            "calories": 420.3,
+            "carbs": 54.3,
+            "tags": [
+              "35g+ Protein",
+              "Bulk 35P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "totalWeight": "195g (Total)",
+            "eaa": 13.93,
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "category": "weight_gain",
+            "bcaa": 6.17,
+            "protein": 35.1,
+            "name": "Bulk 35P – Weight Gain Meal (Veg)",
+            "description": "Balanced vegetarian nutrition for everyday strength and growth. Moderate-calorie muscle builder for steady mass accumulation without unwanted fat.",
+            "id": "veg-bulk-35p",
+            "fats": 7
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "customerPhone": "9113237706",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "status": "delivered",
+      "paymentMethod": "COD",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "deliveryTimeRemaining": 0,
+      "id": "PRTN-8414",
+      "customerName": "Karthik",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031"
+    },
+    {
+      "customerName": "Karthik",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "items": [
+        {
+          "product": {
+            "totalWeight": "250g (Total)",
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "bcaa": 9.42,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "images": [
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "fats": 13.4,
+            "eaa": 21.05,
+            "calories": 574,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "monthlyPrice": 2499,
+            "carbs": 70,
+            "id": "veg-bulk-50p",
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "calories": 213,
+                "quantity": "60g",
+                "protein": 31.4,
+                "bcaa": 5.76,
+                "eaa": 12.84,
+                "name": "Soya Chunks",
+                "carbs": 27.2
+              },
+              {
+                "protein": 5.4,
+                "name": "Paneer",
+                "eaa": 2.46,
+                "calories": 65,
+                "bcaa": 1.14,
+                "quantity": "30g",
+                "carbs": 0.9,
+                "fats": 6
+              },
+              {
+                "calories": 51,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "quantity": "60g",
+                "eaa": 1.98,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "fats": 0.3
+              },
+              {
+                "carbs": 16.6,
+                "fats": 1.5,
+                "bcaa": 1.04,
+                "calories": 104,
+                "quantity": "30g",
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "eaa": 2.17
+              },
+              {
+                "quantity": "50g",
+                "fats": 0.1,
+                "eaa": 0.22,
+                "calories": 30,
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "bcaa": 0.11,
+                "protein": 0.8
+              },
+              {
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "protein": 4,
+                "bcaa": 0.56,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6,
+                "eaa": 1.38
+              }
+            ],
+            "protein": 52.9,
+            "isVeg": true,
+            "price": 99,
+            "category": "weight_gain"
+          },
+          "purchaseOption": "single",
+          "quantity": 6
+        }
+      ],
+      "total": 594,
+      "orderType": "instant",
+      "createdAt": "2026-09-05T16:34:10.876Z",
+      "customerPhone": "9113237706",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "date": "10:04 pm, 05 Sept 2026",
+      "scheduledDate": "Live Kitchen Delivery (Today)",
+      "paymentMethod": "COD",
+      "deliveryTimeSlot": "Live Kitchen Delivery",
+      "id": "PRTN-7307",
+      "deliveryTimeRemaining": 0,
+      "status": "delivered",
+      "deliveredAt": "2026-09-06T09:12:56.209Z",
+      "isPreOrder": false,
+      "gymId": "g1"
+    },
+    {
+      "scheduledDate": "7th Sep (Grand Opening)",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "product": {
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "protein": 52.9,
+            "calories": 574,
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "eaa": 21.05,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "carbs": 70,
+            "price": 99,
+            "isVeg": true,
+            "totalWeight": "250g (Total)",
+            "fats": 13.4,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "category": "weight_gain",
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "id": "veg-bulk-50p",
+            "monthlyPrice": 2499,
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "protein": 31.4,
+                "carbs": 27.2,
+                "bcaa": 5.76,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "calories": 213,
+                "name": "Soya Chunks"
+              },
+              {
+                "fats": 6,
+                "eaa": 2.46,
+                "carbs": 0.9,
+                "protein": 5.4,
+                "name": "Paneer",
+                "bcaa": 1.14,
+                "quantity": "30g",
+                "calories": 65
+              },
+              {
+                "protein": 4.8,
+                "fats": 0.3,
+                "eaa": 1.98,
+                "name": "Sprouts",
+                "carbs": 7.2,
+                "bcaa": 0.81,
+                "calories": 51,
+                "quantity": "60g"
+              },
+              {
+                "fats": 1.5,
+                "protein": 5.5,
+                "quantity": "30g",
+                "calories": 104,
+                "eaa": 2.17,
+                "name": "Roasted Chana",
+                "carbs": 16.6,
+                "bcaa": 1.04
+              },
+              {
+                "fats": 0.1,
+                "protein": 0.8,
+                "eaa": 0.22,
+                "quantity": "50g",
+                "name": "Mixed Fruits",
+                "calories": 30,
+                "bcaa": 0.11,
+                "carbs": 7.5
+              },
+              {
+                "protein": 4,
+                "bcaa": 0.56,
+                "carbs": 11.6,
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "eaa": 1.38,
+                "fats": 5.1
+              }
+            ]
+          },
+          "quantity": 1
+        }
+      ],
+      "isPreOrder": true,
+      "paymentMethod": "COD",
+      "total": 99,
+      "deliveryTimeRemaining": 0,
+      "date": "08:40 pm, 05 Sept 2026",
+      "deliveryTimeSlot": "6:00 AM – 8:00 AM",
+      "customerName": "Karthik",
+      "id": "PRTN-4227",
+      "deliveredAt": "2026-09-05T15:39:10.471Z",
+      "orderType": "preorder",
+      "createdAt": "2026-09-05T15:10:37.659Z",
+      "gymLocation": "Lokappan Hakkal, Vidya Nagar, Hubballi, Karnataka 580021",
+      "status": "delivered",
+      "gymName": "Omkar Fitness",
+      "customerPhone": "9113237701",
+      "gymId": "g3"
+    },
+    {
+      "deliveredAt": "2026-09-05T15:45:35.411Z",
+      "customerName": "Karthik",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "status": "delivered",
+      "paymentMethod": "COD",
+      "scheduledDate": "7th Sep (Grand Opening)",
+      "deliveryTimeSlot": "6:00 AM – 8:00 AM",
+      "date": "08:39 pm, 05 Sept 2026",
+      "isPreOrder": true,
+      "createdAt": "2026-09-05T15:09:42.231Z",
+      "orderType": "preorder",
+      "customerPhone": "9113237701",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain",
+            "id": "veg-bulk-50p",
+            "carbs": 70,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "protein": 52.9,
+            "eaa": 21.05,
+            "isVeg": true,
+            "price": 99,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "calories": 574,
+            "mealItems": [
+              {
+                "carbs": 27.2,
+                "name": "Soya Chunks",
+                "bcaa": 5.76,
+                "eaa": 12.84,
+                "calories": 213,
+                "quantity": "60g",
+                "fats": 0.36,
+                "protein": 31.4
+              },
+              {
+                "quantity": "30g",
+                "carbs": 0.9,
+                "bcaa": 1.14,
+                "calories": 65,
+                "name": "Paneer",
+                "eaa": 2.46,
+                "fats": 6,
+                "protein": 5.4
+              },
+              {
+                "name": "Sprouts",
+                "calories": 51,
+                "eaa": 1.98,
+                "quantity": "60g",
+                "bcaa": 0.81,
+                "fats": 0.3,
+                "protein": 4.8,
+                "carbs": 7.2
+              },
+              {
+                "protein": 5.5,
+                "fats": 1.5,
+                "eaa": 2.17,
+                "bcaa": 1.04,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "calories": 104,
+                "carbs": 16.6
+              },
+              {
+                "quantity": "50g",
+                "calories": 30,
+                "protein": 0.8,
+                "fats": 0.1,
+                "bcaa": 0.11,
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "eaa": 0.22
+              },
+              {
+                "quantity": "20g (Total)",
+                "calories": 111,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56,
+                "eaa": 1.38,
+                "carbs": 11.6,
+                "fats": 5.1,
+                "protein": 4
+              }
+            ],
+            "bcaa": 9.42,
+            "fats": 13.4,
+            "totalWeight": "250g (Total)",
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "monthlyPrice": 2499,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ]
+          }
+        }
+      ],
+      "id": "PRTN-8589",
+      "total": 99,
+      "deliveryTimeRemaining": 0,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymId": "g1"
+    },
+    {
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "isPreOrder": true,
+      "orderType": "preorder",
+      "createdAt": "2026-09-05T15:09:34.341Z",
+      "deliveryTimeRemaining": 0,
+      "status": "delivered",
+      "date": "08:39 pm, 05 Sept 2026",
+      "deliveredAt": "2026-09-05T15:40:05.940Z",
+      "id": "PRTN-3361",
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "price": 99,
+            "isVeg": true,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "id": "veg-bulk-50p",
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "calories": 574,
+            "mealItems": [
+              {
+                "calories": 213,
+                "bcaa": 5.76,
+                "carbs": 27.2,
+                "quantity": "60g",
+                "name": "Soya Chunks",
+                "protein": 31.4,
+                "eaa": 12.84,
+                "fats": 0.36
+              },
+              {
+                "quantity": "30g",
+                "calories": 65,
+                "fats": 6,
+                "carbs": 0.9,
+                "bcaa": 1.14,
+                "eaa": 2.46,
+                "protein": 5.4,
+                "name": "Paneer"
+              },
+              {
+                "quantity": "60g",
+                "calories": 51,
+                "fats": 0.3,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "carbs": 7.2,
+                "eaa": 1.98,
+                "name": "Sprouts"
+              },
+              {
+                "fats": 1.5,
+                "eaa": 2.17,
+                "quantity": "30g",
+                "protein": 5.5,
+                "calories": 104,
+                "name": "Roasted Chana",
+                "carbs": 16.6,
+                "bcaa": 1.04
+              },
+              {
+                "eaa": 0.22,
+                "fats": 0.1,
+                "protein": 0.8,
+                "calories": 30,
+                "carbs": 7.5,
+                "quantity": "50g",
+                "name": "Mixed Fruits",
+                "bcaa": 0.11
+              },
+              {
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "eaa": 1.38,
+                "bcaa": 0.56,
+                "protein": 4,
+                "fats": 5.1,
+                "carbs": 11.6
+              }
+            ],
+            "carbs": 70,
+            "monthlyPrice": 2499,
+            "fats": 13.4,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "250g (Total)",
+            "eaa": 21.05,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "bcaa": 9.42,
+            "protein": 52.9,
+            "category": "weight_gain"
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "total": 99,
+      "customerPhone": "7892354063",
+      "paymentMethod": "COD",
+      "scheduledDate": "7th Sep (Grand Opening)",
+      "customerName": "Chetan Jartarghar",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeSlot": "8:00 AM – 10:00 AM",
+      "gymId": "g1"
+    },
+    {
+      "deliveryTimeRemaining": 0,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerName": "Proteino",
+      "customerPhone": "1234567890",
+      "items": [
+        {
+          "product": {
+            "carbs": 16,
+            "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+            "calories": 360,
+            "monthlyPrice": 2699,
+            "tags": [
+              "Paneer Salad",
+              "Cottage Cheese",
+              "Veg Protein",
+              "Keto Friendly"
+            ],
+            "images": [
+              "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80"
+            ],
+            "ingredients": [
+              "Tandoori Spiced Paneer",
+              "Tri-color Bell Peppers",
+              "English Cucumber",
+              "Cracked Walnuts",
+              "Thick Mint Greek Yogurt Dressing"
+            ],
+            "isVeg": true,
+            "price": 109,
+            "id": "panner-salad",
+            "category": "salad",
+            "name": "Paneer Salad",
+            "fats": 18,
+            "description": "Cottage cheese with fresh veggies and a light dressing. Soft high-protein paneer tossed with bell peppers, cucumber, and herbs.",
+            "protein": 22
+          },
+          "purchaseOption": "single",
+          "quantity": 1
+        }
+      ],
+      "id": "PRTN-6386",
+      "total": 109,
+      "scheduledDate": "7th Sep (Grand Opening)",
+      "paymentMethod": "COD",
+      "date": "07:19 pm, 04 Sept 2026",
+      "status": "delivered",
+      "deliveryTimeSlot": "6:00 AM – 8:00 AM",
+      "isPreOrder": true,
+      "deliveredAt": "2026-09-04T13:53:41.775Z",
+      "orderType": "preorder",
+      "createdAt": "2026-09-04T13:49:13.893Z",
+      "gymId": "g1"
+    },
+    {
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "total": 99,
+      "items": [
+        {
+          "product": {
+            "monthlyPrice": 2499,
+            "eaa": 21.05,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "id": "veg-bulk-50p",
+            "calories": 574,
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "fats": 13.4,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "bcaa": 9.42,
+            "protein": 52.9,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "carbs": 70,
+            "isVeg": true,
+            "price": 99,
+            "category": "weight_gain",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "calories": 213,
+                "bcaa": 5.76,
+                "protein": 31.4,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "carbs": 27.2,
+                "name": "Soya Chunks"
+              },
+              {
+                "carbs": 0.9,
+                "name": "Paneer",
+                "eaa": 2.46,
+                "bcaa": 1.14,
+                "quantity": "30g",
+                "fats": 6,
+                "calories": 65,
+                "protein": 5.4
+              },
+              {
+                "protein": 4.8,
+                "fats": 0.3,
+                "calories": 51,
+                "quantity": "60g",
+                "eaa": 1.98,
+                "bcaa": 0.81,
+                "name": "Sprouts",
+                "carbs": 7.2
+              },
+              {
+                "quantity": "30g",
+                "carbs": 16.6,
+                "bcaa": 1.04,
+                "calories": 104,
+                "name": "Roasted Chana",
+                "eaa": 2.17,
+                "fats": 1.5,
+                "protein": 5.5
+              },
+              {
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "protein": 0.8,
+                "bcaa": 0.11,
+                "calories": 30,
+                "fats": 0.1,
+                "quantity": "50g"
+              },
+              {
+                "protein": 4,
+                "fats": 5.1,
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "bcaa": 0.56,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6
+              }
+            ],
+            "totalWeight": "250g (Total)"
+          },
+          "quantity": 1,
+          "purchaseOption": "single"
+        }
+      ],
+      "customerPhone": "7483232936",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "date": "09:20 pm, 03 Sept 2026",
+      "customerName": "Tejas Katigar",
+      "isPreOrder": true,
+      "status": "delivered",
+      "deliveryTimeRemaining": 0,
+      "deliveryTimeSlot": "6:00 AM – 8:00 AM",
+      "createdAt": "2026-09-03T15:50:05.705Z",
+      "orderType": "preorder",
+      "scheduledDate": "Tomorrow (Fri, 4 Sept)",
+      "id": "PRTN-2650",
+      "gymId": "g1"
+    },
+    {
+      "deliveryTimeSlot": "6:00 AM – 8:00 AM",
+      "isPreOrder": true,
+      "scheduledDate": "Tomorrow (Wed, 2 Sept)",
+      "date": "11:32 pm, 01 Sept 2026",
+      "deliveryTimeRemaining": 0,
+      "deliveredAt": "2026-09-04T13:53:44.472Z",
+      "status": "delivered",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "id": "PRTN-8040",
+      "customerName": "Karthik Ram D",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "orderType": "preorder",
+      "createdAt": "2026-09-01T18:02:34.532Z",
+      "total": 99,
+      "customerPhone": "9113225555",
+      "items": [
+        {
+          "product": {
+            "protein": 52.9,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain",
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "id": "veg-bulk-50p",
+            "eaa": 21.05,
+            "mealItems": [
+              {
+                "bcaa": 5.76,
+                "quantity": "60g",
+                "calories": 213,
+                "protein": 31.4,
+                "name": "Soya Chunks",
+                "carbs": 27.2,
+                "eaa": 12.84,
+                "fats": 0.36
+              },
+              {
+                "fats": 6,
+                "eaa": 2.46,
+                "calories": 65,
+                "protein": 5.4,
+                "quantity": "30g",
+                "bcaa": 1.14,
+                "name": "Paneer",
+                "carbs": 0.9
+              },
+              {
+                "bcaa": 0.81,
+                "carbs": 7.2,
+                "protein": 4.8,
+                "quantity": "60g",
+                "name": "Sprouts",
+                "calories": 51,
+                "eaa": 1.98,
+                "fats": 0.3
+              },
+              {
+                "fats": 1.5,
+                "eaa": 2.17,
+                "protein": 5.5,
+                "calories": 104,
+                "quantity": "30g",
+                "name": "Roasted Chana",
+                "carbs": 16.6,
+                "bcaa": 1.04
+              },
+              {
+                "calories": 30,
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "quantity": "50g",
+                "bcaa": 0.11,
+                "fats": 0.1,
+                "protein": 0.8
+              },
+              {
+                "protein": 4,
+                "bcaa": 0.56,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "eaa": 1.38,
+                "carbs": 11.6,
+                "calories": 111,
+                "fats": 5.1,
+                "quantity": "20g (Total)"
+              }
+            ],
+            "monthlyPrice": 2499,
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "bcaa": 9.42,
+            "calories": 574,
+            "price": 99,
+            "isVeg": true,
+            "totalWeight": "250g (Total)",
+            "fats": 13.4,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "carbs": 70,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg"
+          },
+          "purchaseOption": "single",
+          "quantity": 1
+        }
+      ],
+      "gymId": "g1"
+    },
+    {
+      "isPreOrder": false,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeSlot": "Immediate Live Prep",
+      "date": "05:43 pm, 30 Aug 2026",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "scheduledDate": "Today (Live Session)",
+      "deliveredAt": "2026-09-04T13:53:54.562Z",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 7,
+          "product": {
+            "name": "Paneer Salad",
+            "ingredients": [
+              "Tandoori Spiced Paneer",
+              "Tri-color Bell Peppers",
+              "English Cucumber",
+              "Cracked Walnuts",
+              "Thick Mint Greek Yogurt Dressing"
+            ],
+            "carbs": 16,
+            "fats": 18,
+            "image": "/assets/fresh_salad_bowl_1783093339839-CWuBqDiA.jpg",
+            "price": 109,
+            "isVeg": true,
+            "images": [
+              "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
+              "/assets/fresh_salad_bowl_1783093339839-CWuBqDiA.jpg",
+              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80"
+            ],
+            "calories": 360,
+            "tags": [
+              "Paneer Salad",
+              "Cottage Cheese",
+              "Veg Protein",
+              "Keto Friendly"
+            ],
+            "description": "Cottage cheese with fresh veggies and a light dressing. Soft high-protein paneer tossed with bell peppers, cucumber, and herbs.",
+            "monthlyPrice": 2699,
+            "id": "panner-salad",
+            "category": "salad",
+            "protein": 22
+          }
+        }
+      ],
+      "customerPhone": "9113225558",
+      "createdAt": "2026-08-30T12:13:02.833Z",
+      "orderType": "instant",
+      "total": 763,
+      "deliveryTimeRemaining": 0,
+      "customerName": "Karthik Ram D",
+      "status": "delivered",
+      "id": "PRTN-1142",
+      "gymId": "g1"
+    },
+    {
+      "createdAt": "2026-08-30T11:43:04.065Z",
+      "orderType": "preorder",
+      "scheduledDate": "Tomorrow (Mon, 31 Aug)",
+      "deliveryTimeSlot": "Custom: ",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "date": "05:13 pm, 30 Aug 2026",
+      "deliveredAt": "2026-09-04T13:53:52.889Z",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerName": "Proteino",
+      "total": 99,
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "id": "veg-bulk-50p",
+            "carbs": 70,
+            "mealItems": [
+              {
+                "protein": 31.4,
+                "fats": 0.36,
+                "calories": 213,
+                "eaa": 12.84,
+                "carbs": 27.2,
+                "quantity": "60g",
+                "name": "Soya Chunks",
+                "bcaa": 5.76
+              },
+              {
+                "carbs": 0.9,
+                "name": "Paneer",
+                "quantity": "30g",
+                "bcaa": 1.14,
+                "eaa": 2.46,
+                "protein": 5.4,
+                "calories": 65,
+                "fats": 6
+              },
+              {
+                "fats": 0.3,
+                "eaa": 1.98,
+                "protein": 4.8,
+                "quantity": "60g",
+                "calories": 51,
+                "name": "Sprouts",
+                "carbs": 7.2,
+                "bcaa": 0.81
+              },
+              {
+                "bcaa": 1.04,
+                "quantity": "30g",
+                "calories": 104,
+                "name": "Roasted Chana",
+                "carbs": 16.6,
+                "protein": 5.5,
+                "fats": 1.5,
+                "eaa": 2.17
+              },
+              {
+                "calories": 30,
+                "quantity": "50g",
+                "carbs": 7.5,
+                "fats": 0.1,
+                "bcaa": 0.11,
+                "protein": 0.8,
+                "name": "Mixed Fruits",
+                "eaa": 0.22
+              },
+              {
+                "bcaa": 0.56,
+                "carbs": 11.6,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "eaa": 1.38,
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "protein": 4,
+                "calories": 111
+              }
+            ],
+            "totalWeight": "250g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "monthlyPrice": 2499,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain",
+            "isVeg": true,
+            "price": 99,
+            "protein": 52.9,
+            "eaa": 21.05,
+            "fats": 13.4,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "calories": 574,
+            "bcaa": 9.42,
+            "images": [
+              "/src/assets/images/high_protein_meal_1783093326321.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ]
+          }
+        }
+      ],
+      "deliveryTimeRemaining": 0,
+      "isPreOrder": true,
+      "id": "PRTN-9352",
+      "status": "delivered",
+      "customerPhone": "1234567890",
+      "gymId": "g1"
+    },
+    {
+      "deliveryTimeSlot": "6 PM",
+      "deliveredAt": "2026-09-04T13:54:06.919Z",
+      "date": "12:15 am, 30 Aug 2026",
+      "deliveryTimeRemaining": 0,
+      "customerName": "Chetan Jartarghar",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerPhone": "7892354063",
+      "id": "PRTN-3712",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "status": "delivered",
+      "createdAt": "2026-08-29T18:45:59.097Z",
+      "total": 99,
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "protein": 52.9,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "eaa": 21.05,
+            "calories": 574,
+            "bcaa": 9.42,
+            "totalWeight": "250g (Total)",
+            "fats": 13.4,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "id": "veg-bulk-50p",
+            "images": [
+              "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80"
+            ],
+            "mealItems": [
+              {
+                "quantity": "60g",
+                "bcaa": 5.76,
+                "calories": 213,
+                "protein": 31.4,
+                "name": "Soya Chunks",
+                "eaa": 12.84,
+                "carbs": 27.2,
+                "fats": 0.36
+              },
+              {
+                "calories": 65,
+                "fats": 6,
+                "quantity": "30g",
+                "eaa": 2.46,
+                "carbs": 0.9,
+                "name": "Paneer",
+                "protein": 5.4,
+                "bcaa": 1.14
+              },
+              {
+                "quantity": "60g",
+                "calories": 51,
+                "fats": 0.3,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "name": "Sprouts",
+                "carbs": 7.2,
+                "eaa": 1.98
+              },
+              {
+                "name": "Roasted Chana",
+                "protein": 5.5,
+                "bcaa": 1.04,
+                "eaa": 2.17,
+                "quantity": "30g",
+                "calories": 104,
+                "carbs": 16.6,
+                "fats": 1.5
+              },
+              {
+                "quantity": "50g",
+                "calories": 30,
+                "bcaa": 0.11,
+                "carbs": 7.5,
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "fats": 0.1,
+                "protein": 0.8
+              },
+              {
+                "carbs": 11.6,
+                "fats": 5.1,
+                "bcaa": 0.56,
+                "protein": 4,
+                "calories": 111,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "quantity": "20g (Total)",
+                "eaa": 1.38
+              }
+            ],
+            "price": 99,
+            "isVeg": true,
+            "carbs": 70,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "category": "weight_gain",
+            "monthlyPrice": 2499,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis."
+          }
+        }
+      ],
+      "gymId": "g1"
+    },
+    {
+      "date": "11:05 pm, 29 Aug 2026",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "customerPhone": "1234567890",
+      "total": 109,
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "id": "panner-salad",
+            "images": [
+              "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80"
+            ],
+            "monthlyPrice": 2699,
+            "name": "Paneer Salad",
+            "protein": 22,
+            "ingredients": [
+              "Tandoori Spiced Paneer",
+              "Tri-color Bell Peppers",
+              "English Cucumber",
+              "Cracked Walnuts",
+              "Thick Mint Greek Yogurt Dressing"
+            ],
+            "fats": 18,
+            "calories": 360,
+            "isVeg": true,
+            "price": 109,
+            "carbs": 16,
+            "tags": [
+              "Paneer Salad",
+              "Cottage Cheese",
+              "Veg Protein",
+              "Keto Friendly"
+            ],
+            "description": "Cottage cheese with fresh veggies and a light dressing. Soft high-protein paneer tossed with bell peppers, cucumber, and herbs.",
+            "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+            "category": "salad"
+          }
+        }
+      ],
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeRemaining": 0,
+      "createdAt": "2026-08-29T17:35:47.906Z",
+      "deliveredAt": "2026-09-04T13:54:04.106Z",
+      "status": "delivered",
+      "customerName": "Proteino",
+      "deliveryTimeSlot": "2 PM",
+      "id": "PRTN-2914",
+      "gymId": "g2"
+    },
+    {
+      "customerPhone": "9113345621",
+      "customerName": "Proteino",
+      "gymName": "Omkar Fitness",
+      "createdAt": "2026-08-29T17:32:43.737Z",
+      "deliveryTimeRemaining": 0,
+      "deliveryTimeSlot": "2 PM",
+      "status": "delivered",
+      "gymLocation": "Lokappan Hakkal, Vidya Nagar, Hubballi, Karnataka 580021",
+      "id": "PRTN-4005",
+      "date": "11:02 pm, 29 Aug 2026",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "tags": [
+              "35g+ Protein",
+              "Lean 35P",
+              "Weight Loss",
+              "Veg Plan",
+              "BCAA 6.22g",
+              "EAA 13.78g"
+            ],
+            "id": "veg-lean-35p",
+            "monthlyPrice": 1699,
+            "calories": 319,
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)",
+              "Pumpkin Seeds"
+            ],
+            "totalWeight": "178g (Total)",
+            "fats": 3.17,
+            "eaa": 13.78,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "bcaa": 6.22,
+            "name": "Lean 35P – Weight Loss Meal (Veg)",
+            "carbs": 43.8,
+            "isVeg": true,
+            "price": 69,
+            "mealItems": [
+              {
+                "fats": 0.27,
+                "eaa": 9.61,
+                "protein": 23.6,
+                "quantity": "45g",
+                "calories": 159.8,
+                "name": "Soya Chunks",
+                "carbs": 20.4,
+                "bcaa": 4.32
+              },
+              {
+                "carbs": 7.2,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "calories": 51,
+                "name": "Sprouts",
+                "quantity": "60g",
+                "eaa": 1.98,
+                "fats": 0.3
+              },
+              {
+                "eaa": 1.45,
+                "fats": 1,
+                "quantity": "20g",
+                "carbs": 11,
+                "calories": 69.2,
+                "protein": 3.7,
+                "name": "Roasted Chana",
+                "bcaa": 0.7
+              },
+              {
+                "fats": 0.2,
+                "eaa": 0.42,
+                "quantity": "50g",
+                "bcaa": 0.21,
+                "calories": 22,
+                "protein": 1.2,
+                "name": "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)",
+                "carbs": 4.5
+              },
+              {
+                "calories": 17,
+                "quantity": "3g",
+                "bcaa": 0.18,
+                "protein": 0.9,
+                "name": "Pumpkin Seeds",
+                "carbs": 0.7,
+                "eaa": 0.32,
+                "fats": 1.4
+              }
+            ],
+            "images": [
+              "https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"
+            ],
+            "category": "weight_loss",
+            "protein": 36.2,
+            "description": "Light, balanced nutrition to keep you fuelled and satisfied. Calorie-controlled vegetarian shred option using dense protein textures and nutrient-rich greens."
+          }
+        }
+      ],
+      "total": 69,
+      "gymId": "g3"
+    },
+    {
+      "id": "PRTN-1300",
+      "items": [
+        {
+          "quantity": 3,
+          "product": {
+            "tags": [
+              "50g+ Protein",
+              "Lean 50P",
+              "Weight Loss",
+              "Veg Plan",
+              "BCAA 9.33g",
+              "EAA 20.60g"
+            ],
+            "calories": 483,
+            "isVeg": true,
+            "price": 99,
+            "protein": 50.1,
+            "mealItems": [
+              {
+                "bcaa": 5.76,
+                "protein": 31.4,
+                "name": "Soya Chunks",
+                "calories": 213,
+                "carbs": 27.2,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "fats": 0.36
+              },
+              {
+                "protein": 6.3,
+                "carbs": 1,
+                "name": "Paneer",
+                "eaa": 2.87,
+                "bcaa": 1.33,
+                "fats": 7,
+                "calories": 76,
+                "quantity": "35g"
+              },
+              {
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "quantity": "60g",
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "eaa": 1.98,
+                "calories": 51,
+                "fats": 0.3
+              },
+              {
+                "fats": 1.5,
+                "eaa": 2.17,
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "calories": 104,
+                "carbs": 16.6,
+                "bcaa": 1.04,
+                "quantity": "30g"
+              },
+              {
+                "fats": 0.2,
+                "eaa": 0.42,
+                "calories": 22,
+                "protein": 1.2,
+                "name": "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)",
+                "quantity": "50g",
+                "carbs": 4.5,
+                "bcaa": 0.21
+              },
+              {
+                "quantity": "3g",
+                "carbs": 0.7,
+                "name": "Pumpkin Seeds",
+                "calories": 17,
+                "eaa": 0.32,
+                "bcaa": 0.18,
+                "fats": 1.4,
+                "protein": 0.9
+              }
+            ],
+            "id": "veg-lean-50p",
+            "description": "High-protein vegetarian nutrition for a leaner, stronger you. High protein fat shred meal with dense textured soya, paneer, and fresh low-calorie greens.",
+            "carbs": 57.2,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "category": "weight_loss",
+            "name": "Lean 50P – Weight Loss Meal (Veg)",
+            "bcaa": 9.33,
+            "monthlyPrice": 2499,
+            "fats": 10.76,
+            "images": [
+              "https://images.unsplash.com/photo-1547496502-affa22d38842?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/high_protein_meal_1783093326321.jpg"
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)",
+              "Pumpkin Seeds"
+            ],
+            "totalWeight": "238g (Total)",
+            "eaa": 20.6
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "total": 297,
+      "deliveryTimeSlot": "12 PM",
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "customerName": "Proteino",
+      "date": "11:02 pm, 29 Aug 2026",
+      "createdAt": "2026-08-29T17:32:17.378Z",
+      "deliveryTimeRemaining": 0,
+      "customerPhone": "9113345621",
+      "status": "delivered",
+      "gymId": "g2"
+    },
+    {
+      "id": "PRTN-5816",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "ingredients": [
+              "Tandoori Spiced Paneer",
+              "Tri-color Bell Peppers",
+              "English Cucumber",
+              "Cracked Walnuts",
+              "Thick Mint Greek Yogurt Dressing"
+            ],
+            "category": "salad",
+            "id": "panner-salad",
+            "name": "Paneer Salad",
+            "fats": 18,
+            "protein": 22,
+            "description": "Cottage cheese with fresh veggies and a light dressing. Soft high-protein paneer tossed with bell peppers, cucumber, and herbs.",
+            "images": [
+              "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
+              "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80"
+            ],
+            "calories": 360,
+            "isVeg": true,
+            "price": 109,
+            "carbs": 16,
+            "tags": [
+              "Paneer Salad",
+              "Cottage Cheese",
+              "Veg Protein",
+              "Keto Friendly"
             ],
             "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+            "monthlyPrice": 2699
+          }
+        }
+      ],
+      "total": 109,
+      "deliveryTimeRemaining": 25,
+      "createdAt": "2026-08-29T16:59:12.322Z",
+      "date": "10:29 pm, 29 Aug 2026",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerName": "Proteino",
+      "customerPhone": "G-CwxIOMqJ",
+      "deliveryTimeSlot": "2 PM",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "status": "delivered",
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "purchaseOption": "single",
+          "product": {
+            "totalWeight": "250g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain",
+            "id": "veg-bulk-50p",
+            "mealItems": [
+              {
+                "carbs": 27.2,
+                "name": "Soya Chunks",
+                "eaa": 12.84,
+                "bcaa": 5.76,
+                "fats": 0.36,
+                "protein": 31.4,
+                "quantity": "60g",
+                "calories": 213
+              },
+              {
+                "bcaa": 1.14,
+                "name": "Paneer",
+                "protein": 5.4,
+                "quantity": "30g",
+                "calories": 65,
+                "carbs": 0.9,
+                "eaa": 2.46,
+                "fats": 6
+              },
+              {
+                "carbs": 7.2,
+                "fats": 0.3,
+                "bcaa": 0.81,
+                "quantity": "60g",
+                "calories": 51,
+                "protein": 4.8,
+                "eaa": 1.98,
+                "name": "Sprouts"
+              },
+              {
+                "calories": 104,
+                "quantity": "30g",
+                "fats": 1.5,
+                "eaa": 2.17,
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "bcaa": 1.04,
+                "carbs": 16.6
+              },
+              {
+                "name": "Mixed Fruits",
+                "calories": 30,
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "quantity": "50g",
+                "bcaa": 0.11,
+                "fats": 0.1,
+                "protein": 0.8
+              },
+              {
+                "fats": 5.1,
+                "eaa": 1.38,
+                "carbs": 11.6,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "calories": 111,
+                "protein": 4,
+                "quantity": "20g (Total)",
+                "bcaa": 0.56
+              }
+            ],
+            "fats": 13.4,
+            "eaa": 21.05,
+            "bcaa": 9.42,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "protein": 52.9,
+            "carbs": 70,
+            "isVeg": true,
+            "price": 99,
+            "calories": 574,
+            "monthlyPrice": 2499
+          },
+          "quantity": 1
+        }
+      ],
+      "createdAt": "2026-08-28T17:16:41.786Z",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "total": 99,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "date": "10:46 pm, 28 Aug 2026",
+      "status": "delivered",
+      "customerPhone": "G-X7gXAr7B",
+      "customerName": "Bhavana",
+      "deliveryTimeSlot": "2 PM",
+      "id": "PRTN-4119",
+      "deliveryTimeRemaining": 0,
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "product": {
+            "description": "Balanced vegetarian nutrition for everyday strength and growth. Moderate-calorie muscle builder for steady mass accumulation without unwanted fat.",
+            "monthlyPrice": 1699,
+            "eaa": 13.93,
+            "mealItems": [
+              {
+                "carbs": 14.2,
+                "name": "Soya Chunks",
+                "eaa": 8.54,
+                "protein": 20.9,
+                "calories": 142,
+                "quantity": "40g",
+                "bcaa": 3.82,
+                "fats": 0.2
+              },
+              {
+                "calories": 51,
+                "quantity": "60g",
+                "fats": 0.3,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "eaa": 1.98
+              },
+              {
+                "bcaa": 0.87,
+                "carbs": 13.8,
+                "protein": 4.6,
+                "name": "Roasted Chana",
+                "calories": 86.3,
+                "eaa": 1.81,
+                "quantity": "25g",
+                "fats": 1.3
+              },
+              {
+                "name": "Mixed Fruits",
+                "carbs": 7.5,
+                "eaa": 0.22,
+                "bcaa": 0.11,
+                "calories": 30,
+                "fats": 0.1,
+                "quantity": "50g",
+                "protein": 0.8
+              },
+              {
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "calories": 111,
+                "protein": 4,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56,
+                "carbs": 11.6
+              }
+            ],
+            "fats": 7,
+            "category": "weight_gain",
+            "bcaa": 6.17,
+            "protein": 35.1,
+            "name": "Bulk 35P – Weight Gain Meal (Veg)",
+            "totalWeight": "195g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "price": 69,
+            "isVeg": true,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "id": "veg-bulk-35p",
+            "carbs": 54.3,
+            "calories": 420.3,
+            "tags": [
+              "35g+ Protein",
+              "Bulk 35P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ]
+          },
+          "quantity": 3,
+          "purchaseOption": "single"
+        }
+      ],
+      "id": "PRTN-4221",
+      "total": 207,
+      "customerName": "vaishali pawar",
+      "date": "10:45 pm, 28 Aug 2026",
+      "status": "delivered",
+      "createdAt": "2026-08-28T17:15:44.952Z",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeSlot": "6 PM",
+      "customerPhone": "G-IeGodgL8",
+      "deliveryTimeRemaining": 0,
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "product": {
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "eaa": 21.05,
+            "carbs": 70,
+            "mealItems": [
+              {
+                "protein": 31.4,
+                "fats": 0.36,
+                "carbs": 27.2,
+                "bcaa": 5.76,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "name": "Soya Chunks",
+                "calories": 213
+              },
+              {
+                "carbs": 0.9,
+                "fats": 6,
+                "calories": 65,
+                "bcaa": 1.14,
+                "protein": 5.4,
+                "quantity": "30g",
+                "eaa": 2.46,
+                "name": "Paneer"
+              },
+              {
+                "protein": 4.8,
+                "calories": 51,
+                "fats": 0.3,
+                "quantity": "60g",
+                "bcaa": 0.81,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "eaa": 1.98
+              },
+              {
+                "calories": 104,
+                "quantity": "30g",
+                "fats": 1.5,
+                "protein": 5.5,
+                "bcaa": 1.04,
+                "eaa": 2.17,
+                "name": "Roasted Chana",
+                "carbs": 16.6
+              },
+              {
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "bcaa": 0.11,
+                "carbs": 7.5,
+                "quantity": "50g",
+                "fats": 0.1,
+                "calories": 30,
+                "protein": 0.8
+              },
+              {
+                "fats": 5.1,
+                "protein": 4,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6,
+                "quantity": "20g (Total)",
+                "bcaa": 0.56,
+                "calories": 111
+              }
+            ],
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "calories": 574,
+            "price": 99,
+            "isVeg": true,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "protein": 52.9,
+            "id": "veg-bulk-50p",
+            "fats": 13.4,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "totalWeight": "250g (Total)",
+            "monthlyPrice": 2499,
+            "category": "weight_gain",
+            "bcaa": 9.42,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ]
+          },
+          "quantity": 2,
+          "purchaseOption": "single"
+        }
+      ],
+      "deliveryTimeSlot": "4 PM",
+      "customerName": "KARTHIK",
+      "customerPhone": "G-X7gXAr7B",
+      "total": 198,
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "date": "10:28 pm, 28 Aug 2026",
+      "status": "delivered",
+      "createdAt": "2026-08-28T16:58:09.232Z",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "id": "PRTN-5327",
+      "deliveryTimeRemaining": 25,
+      "gymId": "g2"
+    },
+    {
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "createdAt": "2026-08-28T16:55:25.105Z",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "items": [
+        {
+          "product": {
+            "monthlyPrice": 2499,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "eaa": 21.05,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "calories": 574,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "250g (Total)",
+            "fats": 13.4,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "carbs": 70,
+            "isVeg": true,
+            "price": 99,
+            "id": "veg-bulk-50p",
+            "mealItems": [
+              {
+                "calories": 213,
+                "fats": 0.36,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "name": "Soya Chunks",
+                "protein": 31.4,
+                "carbs": 27.2,
+                "bcaa": 5.76
+              },
+              {
+                "quantity": "30g",
+                "fats": 6,
+                "protein": 5.4,
+                "calories": 65,
+                "eaa": 2.46,
+                "bcaa": 1.14,
+                "name": "Paneer",
+                "carbs": 0.9
+              },
+              {
+                "quantity": "60g",
+                "calories": 51,
+                "bcaa": 0.81,
+                "name": "Sprouts",
+                "eaa": 1.98,
+                "carbs": 7.2,
+                "protein": 4.8,
+                "fats": 0.3
+              },
+              {
+                "bcaa": 1.04,
+                "calories": 104,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "carbs": 16.6,
+                "eaa": 2.17,
+                "protein": 5.5,
+                "fats": 1.5
+              },
+              {
+                "bcaa": 0.11,
+                "protein": 0.8,
+                "carbs": 7.5,
+                "calories": 30,
+                "quantity": "50g",
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "fats": 0.1
+              },
+              {
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "protein": 4,
+                "bcaa": 0.56,
+                "fats": 5.1,
+                "calories": 111,
+                "carbs": 11.6,
+                "quantity": "20g (Total)"
+              }
+            ],
+            "category": "weight_gain",
+            "protein": 52.9
+          },
+          "quantity": 1,
+          "purchaseOption": "single"
+        }
+      ],
+      "customerPhone": "G-TwWoWJwU",
+      "status": "delivered",
+      "total": 99,
+      "id": "PRTN-9111",
+      "deliveryTimeRemaining": 0,
+      "date": "10:25 pm, 28 Aug 2026",
+      "customerName": "Chetan Jartarghar",
+      "deliveryTimeSlot": "2 PM",
+      "gymId": "g1"
+    },
+    {
+      "status": "delivered",
+      "deliveryTimeSlot": "4 PM",
+      "date": "09:12 pm, 28 Aug 2026",
+      "customerPhone": "9113237706",
+      "deliveryTimeRemaining": 0,
+      "customerName": "karthik",
+      "createdAt": "2026-08-28T15:42:27.982Z",
+      "items": [
+        {
+          "product": {
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "250g (Total)",
+            "monthlyPrice": 2499,
+            "protein": 52.9,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "bcaa": 9.42,
+            "eaa": 21.05,
+            "category": "weight_gain",
+            "fats": 13.4,
+            "carbs": 70,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "id": "veg-bulk-50p",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "calories": 574,
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "calories": 213,
+                "name": "Soya Chunks",
+                "protein": 31.4,
+                "carbs": 27.2,
+                "bcaa": 5.76
+              },
+              {
+                "bcaa": 1.14,
+                "carbs": 0.9,
+                "name": "Paneer",
+                "calories": 65,
+                "eaa": 2.46,
+                "quantity": "30g",
+                "protein": 5.4,
+                "fats": 6
+              },
+              {
+                "calories": 51,
+                "quantity": "60g",
+                "fats": 0.3,
+                "eaa": 1.98,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "name": "Sprouts",
+                "carbs": 7.2
+              },
+              {
+                "fats": 1.5,
+                "carbs": 16.6,
+                "eaa": 2.17,
+                "calories": 104,
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "bcaa": 1.04
+              },
+              {
+                "name": "Mixed Fruits",
+                "calories": 30,
+                "eaa": 0.22,
+                "quantity": "50g",
+                "bcaa": 0.11,
+                "carbs": 7.5,
+                "fats": 0.1,
+                "protein": 0.8
+              },
+              {
+                "fats": 5.1,
+                "eaa": 1.38,
+                "calories": 111,
+                "protein": 4,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "quantity": "20g (Total)",
+                "carbs": 11.6,
+                "bcaa": 0.56
+              }
+            ],
+            "price": 99,
             "isVeg": true
           },
           "quantity": 1,
           "purchaseOption": "single"
         }
       ],
-      "total": 139,
-      "status": "cooking",
-      "deliveryTimeRemaining": 30,
-      "customerName": "Member",
-      "customerPhone": "0987654334",
-      "gymName": "Gold's Gym",
-      "gymLocation": "Downtown Fitness Hub, Sector 4",
-      "deliveryTimeSlot": "2 PM"
+      "id": "PRTN-1131",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "total": 99,
+      "gymId": "g1"
     },
     {
-      "id": "PRTN-9237",
-      "date": "10:55 pm, 03 Jul",
+      "customerPhone": "G-5k48nFUm",
+      "deliveryTimeSlot": "2 PM",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "product": {
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "id": "veg-bulk-50p",
+            "eaa": 21.05,
+            "protein": 52.9,
+            "category": "weight_gain",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "mealItems": [
+              {
+                "carbs": 27.2,
+                "bcaa": 5.76,
+                "quantity": "60g",
+                "name": "Soya Chunks",
+                "calories": 213,
+                "eaa": 12.84,
+                "fats": 0.36,
+                "protein": 31.4
+              },
+              {
+                "fats": 6,
+                "eaa": 2.46,
+                "protein": 5.4,
+                "calories": 65,
+                "carbs": 0.9,
+                "quantity": "30g",
+                "name": "Paneer",
+                "bcaa": 1.14
+              },
+              {
+                "fats": 0.3,
+                "eaa": 1.98,
+                "quantity": "60g",
+                "calories": 51,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "protein": 4.8,
+                "bcaa": 0.81
+              },
+              {
+                "bcaa": 1.04,
+                "carbs": 16.6,
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "calories": 104,
+                "eaa": 2.17,
+                "quantity": "30g",
+                "fats": 1.5
+              },
+              {
+                "quantity": "50g",
+                "calories": 30,
+                "fats": 0.1,
+                "carbs": 7.5,
+                "bcaa": 0.11,
+                "protein": 0.8,
+                "eaa": 0.22,
+                "name": "Mixed Fruits"
+              },
+              {
+                "calories": 111,
+                "eaa": 1.38,
+                "fats": 5.1,
+                "quantity": "20g (Total)",
+                "carbs": 11.6,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "protein": 4,
+                "bcaa": 0.56
+              }
+            ],
+            "monthlyPrice": 2499,
+            "fats": 13.4,
+            "totalWeight": "250g (Total)",
+            "calories": 574,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "carbs": 70,
+            "bcaa": 9.42,
+            "isVeg": true,
+            "price": 99
+          },
+          "quantity": 1
+        }
+      ],
+      "deliveryTimeRemaining": 0,
+      "total": 99,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerName": "Anusha J",
+      "status": "delivered",
+      "date": "11:23 pm, 27 Aug 2026",
+      "deliveredAt": "2026-09-06T08:31:51.912Z",
+      "createdAt": "2026-08-27T17:53:40.191Z",
+      "id": "PRTN-5107",
+      "gymId": "g1"
+    },
+    {
+      "status": "delivered",
+      "id": "PRTN-2065",
+      "deliveryTimeRemaining": 0,
+      "customerPhone": "9113237706",
+      "deliveryTimeSlot": "6 PM",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "createdAt": "2026-08-26T10:07:28.881Z",
+      "date": "03:37 pm, 26 Aug 2026",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "deliveredAt": "2026-09-06T09:12:57.995Z",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "image": "/assets/fresh_salad_bowl_1783093339839-CWuBqDiA.jpg",
+            "tags": [
+              "Sprouts Salad",
+              "Digestive Health",
+              "High Fiber",
+              "Traditional Food",
+              "Zero Oil"
+            ],
+            "carbs": 42,
+            "isVeg": true,
+            "price": 45,
+            "monthlyPrice": 1149,
+            "ingredients": [
+              "Sprouted Moong",
+              "Sprouted Kala Chana",
+              "Crunchy Cucumber",
+              "Fresh Tomatoes",
+              "Coriander Leaves",
+              "Tangy Lemon Juice",
+              "Chaat Masala"
+            ],
+            "category": "salad",
+            "fats": 4,
+            "name": "Sprouts Salad",
+            "protein": 14,
+            "id": "sprouts-salad",
+            "description": "Protein rich sprouts with crunchy veggies and herbs. Traditional protein booster with sprouted green gram, kala chana, cucumber, and lemon chaat masala.",
+            "calories": 280
+          }
+        }
+      ],
+      "customerName": "Proteino",
+      "total": 45,
+      "gymId": "g1"
+    },
+    {
+      "customerPhone": "9113237706",
+      "deliveredAt": "2026-09-06T09:12:59.514Z",
+      "status": "delivered",
+      "gymName": "Omkar Fitness",
+      "deliveryTimeSlot": "4 PM",
+      "customerName": "Proteino",
+      "id": "PRTN-2755",
+      "createdAt": "2026-08-26T09:55:27.395Z",
+      "deliveryTimeRemaining": 0,
+      "gymLocation": "Lokappan Hakkal, Vidya Nagar, Hubballi, Karnataka 580021",
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "protein": 35.1,
+            "tags": [
+              "35g+ Protein",
+              "Bulk 35P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "totalWeight": "195g (Total)",
+            "calories": 420.3,
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "eaa": 13.93,
+            "id": "veg-bulk-35p",
+            "isVeg": true,
+            "price": 69,
+            "mealItems": [
+              {
+                "fats": 0.2,
+                "eaa": 8.54,
+                "quantity": "40g",
+                "carbs": 14.2,
+                "protein": 20.9,
+                "calories": 142,
+                "name": "Soya Chunks",
+                "bcaa": 3.82
+              },
+              {
+                "quantity": "60g",
+                "name": "Sprouts",
+                "eaa": 1.98,
+                "calories": 51,
+                "bcaa": 0.81,
+                "fats": 0.3,
+                "carbs": 7.2,
+                "protein": 4.8
+              },
+              {
+                "protein": 4.6,
+                "fats": 1.3,
+                "eaa": 1.81,
+                "calories": 86.3,
+                "quantity": "25g",
+                "name": "Roasted Chana",
+                "carbs": 13.8,
+                "bcaa": 0.87
+              },
+              {
+                "bcaa": 0.11,
+                "name": "Mixed Fruits",
+                "carbs": 7.5,
+                "eaa": 0.22,
+                "fats": 0.1,
+                "quantity": "50g",
+                "protein": 0.8,
+                "calories": 30
+              },
+              {
+                "bcaa": 0.56,
+                "quantity": "20g (Total)",
+                "calories": 111,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6,
+                "eaa": 1.38,
+                "protein": 4,
+                "fats": 5.1
+              }
+            ],
+            "carbs": 54.3,
+            "name": "Bulk 35P – Weight Gain Meal (Veg)",
+            "description": "Balanced vegetarian nutrition for everyday strength and growth. Moderate-calorie muscle builder for steady mass accumulation without unwanted fat.",
+            "bcaa": 6.17,
+            "category": "weight_gain",
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "monthlyPrice": 1699,
+            "fats": 7
+          }
+        }
+      ],
+      "total": 69,
+      "date": "03:25 pm, 26 Aug 2026",
+      "gymId": "g3"
+    },
+    {
+      "status": "declined",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "id": "PRTN-4062",
+      "deliveryTimeSlot": "2 PM",
+      "deliveryTimeRemaining": 25,
+      "declinedDate": "03:03 pm, 06 Sept 2026",
+      "declinedAt": "2026-09-06T15:03:27.033Z",
+      "createdAt": "2026-08-26T09:41:52.193Z",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerName": "Proteino",
       "items": [
         {
           "product": {
-            "id": "soya-salad",
-            "name": "Soya salad",
-            "category": "salad",
-            "price": 139,
-            "protein": 24,
-            "calories": 310,
-            "carbs": 24,
-            "fats": 10,
-            "description": "High-protein vegan salad with air-fried soya chunks, roasted peanuts, onion, tomatoes, and spicy lemon tamarind dressing.",
-            "ingredients": [
-              "Air-fried Soya Chunks",
-              "Roasted Peanuts",
-              "Red Onions",
-              "Juicy Tomatoes",
-              "Fresh Coriander",
-              "Lemon Tamarind Dressing"
-            ],
-            "tags": [
-              "100% Vegan",
-              "High Plant Protein",
-              "Crunchy Texture",
-              "Spicy Kick"
-            ],
+            "fats": 4,
+            "id": "sprouts-salad",
             "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
-            "isVeg": true
+            "name": "Sprouts Salad",
+            "category": "salad",
+            "carbs": 42,
+            "isVeg": true,
+            "price": 45,
+            "protein": 14,
+            "description": "Protein rich sprouts with crunchy veggies and herbs. Traditional protein booster with sprouted green gram, kala chana, cucumber, and lemon chaat masala.",
+            "tags": [
+              "Sprouts Salad",
+              "Digestive Health",
+              "High Fiber",
+              "Traditional Food",
+              "Zero Oil"
+            ],
+            "monthlyPrice": 1149,
+            "calories": 280,
+            "ingredients": [
+              "Sprouted Moong",
+              "Sprouted Kala Chana",
+              "Crunchy Cucumber",
+              "Fresh Tomatoes",
+              "Coriander Leaves",
+              "Tangy Lemon Juice",
+              "Chaat Masala"
+            ]
           },
           "quantity": 1,
           "purchaseOption": "single"
         }
       ],
-      "total": 139,
-      "status": "cooking",
-      "deliveryTimeRemaining": 30,
-      "customerName": "Member",
-      "customerPhone": "0987654334",
-      "gymName": "Gold's Gym",
-      "gymLocation": "Downtown Fitness Hub, Sector 4",
-      "deliveryTimeSlot": "2 PM"
+      "customerPhone": "9113237706",
+      "total": 45,
+      "date": "03:11 pm, 26 Aug 2026",
+      "gymId": "g1"
     },
     {
-      "id": "PRTN-2904",
-      "date": "Today, 08:30 AM",
-      "customerName": "Sarah Connor",
-      "customerPhone": "9876543210",
-      "gymName": "Gold's Gym - Indiranagar",
-      "gymLocation": "80 Feet Rd, Hal 3rd Stage, Indiranagar, Bengaluru",
+      "total": 99,
+      "deliveredAt": "2026-09-06T09:13:05.963Z",
+      "items": [
+        {
+          "product": {
+            "id": "veg-lean-50p",
+            "fats": 10.76,
+            "eaa": 20.6,
+            "description": "High-protein vegetarian nutrition for a leaner, stronger you. High protein fat shred meal with dense textured soya, paneer, and fresh low-calorie greens.",
+            "name": "Lean 50P – Weight Loss Meal (Veg)",
+            "calories": 483,
+            "bcaa": 9.33,
+            "protein": 50.1,
+            "isVeg": true,
+            "price": 99,
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)",
+              "Pumpkin Seeds"
+            ],
+            "totalWeight": "238g (Total)",
+            "tags": [
+              "50g+ Protein",
+              "Lean 50P",
+              "Weight Loss",
+              "Veg Plan",
+              "BCAA 9.33g",
+              "EAA 20.60g"
+            ],
+            "mealItems": [
+              {
+                "quantity": "60g",
+                "fats": 0.36,
+                "calories": 213,
+                "carbs": 27.2,
+                "eaa": 12.84,
+                "name": "Soya Chunks",
+                "bcaa": 5.76,
+                "protein": 31.4
+              },
+              {
+                "calories": 76,
+                "name": "Paneer",
+                "quantity": "35g",
+                "bcaa": 1.33,
+                "eaa": 2.87,
+                "carbs": 1,
+                "protein": 6.3,
+                "fats": 7
+              },
+              {
+                "bcaa": 0.81,
+                "name": "Sprouts",
+                "calories": 51,
+                "eaa": 1.98,
+                "protein": 4.8,
+                "carbs": 7.2,
+                "quantity": "60g",
+                "fats": 0.3
+              },
+              {
+                "carbs": 16.6,
+                "bcaa": 1.04,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "calories": 104,
+                "eaa": 2.17,
+                "fats": 1.5,
+                "protein": 5.5
+              },
+              {
+                "protein": 1.2,
+                "fats": 0.2,
+                "calories": 22,
+                "quantity": "50g",
+                "carbs": 4.5,
+                "eaa": 0.42,
+                "bcaa": 0.21,
+                "name": "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)"
+              },
+              {
+                "fats": 1.4,
+                "eaa": 0.32,
+                "protein": 0.9,
+                "calories": 17,
+                "carbs": 0.7,
+                "quantity": "3g",
+                "name": "Pumpkin Seeds",
+                "bcaa": 0.18
+              }
+            ],
+            "category": "weight_loss",
+            "monthlyPrice": 2499,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "carbs": 57.2
+          },
+          "quantity": 1,
+          "purchaseOption": "single"
+        }
+      ],
+      "deliveryTimeSlot": "2 PM",
+      "customerName": "Proteino",
+      "date": "09:29 am, 26 Aug",
+      "status": "delivered",
+      "deliveryTimeRemaining": 0,
+      "createdAt": "2026-08-26T09:29:37.700Z",
+      "customerPhone": "9113237706",
+      "id": "PRTN-3801",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "calories": 574,
+            "eaa": 21.05,
+            "id": "veg-bulk-50p",
+            "price": 99,
+            "isVeg": true,
+            "fats": 13.4,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "carbs": 70,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "bcaa": 9.42,
+            "category": "weight_gain",
+            "mealItems": [
+              {
+                "eaa": 12.84,
+                "fats": 0.36,
+                "protein": 31.4,
+                "name": "Soya Chunks",
+                "calories": 213,
+                "carbs": 27.2,
+                "quantity": "60g",
+                "bcaa": 5.76
+              },
+              {
+                "quantity": "30g",
+                "calories": 65,
+                "protein": 5.4,
+                "fats": 6,
+                "bcaa": 1.14,
+                "carbs": 0.9,
+                "eaa": 2.46,
+                "name": "Paneer"
+              },
+              {
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "eaa": 1.98,
+                "fats": 0.3,
+                "calories": 51,
+                "quantity": "60g"
+              },
+              {
+                "bcaa": 1.04,
+                "carbs": 16.6,
+                "quantity": "30g",
+                "calories": 104,
+                "protein": 5.5,
+                "name": "Roasted Chana",
+                "eaa": 2.17,
+                "fats": 1.5
+              },
+              {
+                "carbs": 7.5,
+                "protein": 0.8,
+                "name": "Mixed Fruits",
+                "bcaa": 0.11,
+                "eaa": 0.22,
+                "fats": 0.1,
+                "calories": 30,
+                "quantity": "50g"
+              },
+              {
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "protein": 4,
+                "eaa": 1.38,
+                "bcaa": 0.56,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6
+              }
+            ],
+            "protein": 52.9,
+            "totalWeight": "250g (Total)",
+            "monthlyPrice": 2499,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ]
+          }
+        }
+      ],
+      "deliveryTimeSlot": "2 PM",
+      "createdAt": "2026-08-26T09:27:15.540Z",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "total": 99,
+      "customerPhone": "G-CwxIOMqJ",
+      "date": "09:27 am, 26 Aug",
+      "deliveryTimeRemaining": 25,
+      "status": "delivered",
+      "id": "PRTN-4179",
+      "customerName": "Proteino",
+      "gymId": "g1"
+    },
+    {
+      "customerName": "Proteino",
+      "status": "declined",
+      "customerPhone": "9113237706",
       "deliveryTimeSlot": "2 PM",
       "items": [
         {
+          "quantity": 1,
           "product": {
-            "id": "nonveg-bulk-35p",
-            "name": "Non-Veg BULK 35P",
-            "price": 229,
-            "protein": 35,
-            "calories": 700,
-            "isVeg": false
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "carbs": 54.3,
+            "protein": 35.1,
+            "totalWeight": "195g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "fats": 7,
+            "category": "weight_gain",
+            "bcaa": 6.17,
+            "id": "veg-bulk-35p",
+            "isVeg": true,
+            "price": 69,
+            "name": "Bulk 35P – Weight Gain Meal (Veg)",
+            "description": "Balanced vegetarian nutrition for everyday strength and growth. Moderate-calorie muscle builder for steady mass accumulation without unwanted fat.",
+            "monthlyPrice": 1699,
+            "mealItems": [
+              {
+                "bcaa": 3.82,
+                "protein": 20.9,
+                "quantity": "40g",
+                "name": "Soya Chunks",
+                "calories": 142,
+                "carbs": 14.2,
+                "eaa": 8.54,
+                "fats": 0.2
+              },
+              {
+                "carbs": 7.2,
+                "bcaa": 0.81,
+                "name": "Sprouts",
+                "protein": 4.8,
+                "eaa": 1.98,
+                "fats": 0.3,
+                "quantity": "60g",
+                "calories": 51
+              },
+              {
+                "calories": 86.3,
+                "fats": 1.3,
+                "quantity": "25g",
+                "eaa": 1.81,
+                "carbs": 13.8,
+                "name": "Roasted Chana",
+                "protein": 4.6,
+                "bcaa": 0.87
+              },
+              {
+                "protein": 0.8,
+                "fats": 0.1,
+                "bcaa": 0.11,
+                "calories": 30,
+                "eaa": 0.22,
+                "quantity": "50g",
+                "name": "Mixed Fruits",
+                "carbs": 7.5
+              },
+              {
+                "protein": 4,
+                "fats": 5.1,
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56,
+                "carbs": 11.6
+              }
+            ],
+            "eaa": 13.93,
+            "calories": 420.3,
+            "tags": [
+              "35g+ Protein",
+              "Bulk 35P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ]
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "date": "09:09 am, 26 Aug",
+      "total": 69,
+      "id": "PRTN-5238",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "deliveryTimeRemaining": 25,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "declinedAt": "2026-09-06T15:03:37.547Z",
+      "declinedDate": "03:03 pm, 06 Sept 2026",
+      "gymId": "g1"
+    },
+    {
+      "deliveryTimeRemaining": 25,
+      "items": [
+        {
+          "product": {
+            "protein": 52.9,
+            "price": 99,
+            "isVeg": true,
+            "category": "weight_gain",
+            "fats": 13.4,
+            "bcaa": 9.42,
+            "mealItems": [
+              {
+                "calories": 213,
+                "name": "Soya Chunks",
+                "quantity": "60g",
+                "eaa": 12.84,
+                "bcaa": 5.76,
+                "carbs": 27.2,
+                "fats": 0.36,
+                "protein": 31.4
+              },
+              {
+                "fats": 6,
+                "eaa": 2.46,
+                "protein": 5.4,
+                "calories": 65,
+                "name": "Paneer",
+                "quantity": "30g",
+                "carbs": 0.9,
+                "bcaa": 1.14
+              },
+              {
+                "calories": 51,
+                "quantity": "60g",
+                "carbs": 7.2,
+                "fats": 0.3,
+                "bcaa": 0.81,
+                "protein": 4.8,
+                "eaa": 1.98,
+                "name": "Sprouts"
+              },
+              {
+                "fats": 1.5,
+                "eaa": 2.17,
+                "quantity": "30g",
+                "name": "Roasted Chana",
+                "calories": 104,
+                "protein": 5.5,
+                "bcaa": 1.04,
+                "carbs": 16.6
+              },
+              {
+                "protein": 0.8,
+                "calories": 30,
+                "fats": 0.1,
+                "quantity": "50g",
+                "bcaa": 0.11,
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "name": "Mixed Fruits"
+              },
+              {
+                "fats": 5.1,
+                "eaa": 1.38,
+                "protein": 4,
+                "calories": 111,
+                "carbs": 11.6,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56
+              }
+            ],
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "id": "veg-bulk-50p",
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "totalWeight": "250g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "carbs": 70,
+            "calories": 574,
+            "eaa": 21.05,
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "monthlyPrice": 2499,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis."
           },
           "quantity": 1,
           "purchaseOption": "single"
         }
       ],
-      "total": 229,
+      "total": 99,
+      "deliveryTimeSlot": "2 PM",
+      "id": "PRTN-5521",
+      "customerName": "Proteino",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "date": "09:08 am, 26 Aug",
+      "status": "delivered",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerPhone": "G-CwxIOMqJ",
+      "gymId": "g1"
+    },
+    {
+      "status": "delivered",
+      "deliveredAt": "2026-09-06T07:50:48.516Z",
+      "customerName": "Proteino",
+      "deliveryTimeSlot": "4 PM",
+      "deliveryTimeRemaining": 0,
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerPhone": "9113237706",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "carbs": 70,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "fats": 13.4,
+            "protein": 52.9,
+            "price": 99,
+            "isVeg": true,
+            "bcaa": 9.42,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "calories": 574,
+            "eaa": 21.05,
+            "totalWeight": "250g (Total)",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "monthlyPrice": 2499,
+            "id": "veg-bulk-50p",
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "carbs": 27.2,
+                "quantity": "60g",
+                "eaa": 12.84,
+                "protein": 31.4,
+                "calories": 213,
+                "name": "Soya Chunks",
+                "bcaa": 5.76
+              },
+              {
+                "protein": 5.4,
+                "bcaa": 1.14,
+                "calories": 65,
+                "name": "Paneer",
+                "quantity": "30g",
+                "eaa": 2.46,
+                "carbs": 0.9,
+                "fats": 6
+              },
+              {
+                "quantity": "60g",
+                "protein": 4.8,
+                "calories": 51,
+                "fats": 0.3,
+                "carbs": 7.2,
+                "bcaa": 0.81,
+                "eaa": 1.98,
+                "name": "Sprouts"
+              },
+              {
+                "quantity": "30g",
+                "name": "Roasted Chana",
+                "calories": 104,
+                "bcaa": 1.04,
+                "eaa": 2.17,
+                "carbs": 16.6,
+                "fats": 1.5,
+                "protein": 5.5
+              },
+              {
+                "bcaa": 0.11,
+                "name": "Mixed Fruits",
+                "protein": 0.8,
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "quantity": "50g",
+                "fats": 0.1,
+                "calories": 30
+              },
+              {
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56,
+                "eaa": 1.38,
+                "carbs": 11.6,
+                "protein": 4,
+                "fats": 5.1
+              }
+            ],
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain"
+          }
+        },
+        {
+          "quantity": 1,
+          "product": {
+            "id": "veg-bulk-35p",
+            "isVeg": true,
+            "price": 69,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "description": "Balanced vegetarian nutrition for everyday strength and growth. Moderate-calorie muscle builder for steady mass accumulation without unwanted fat.",
+            "carbs": 54.3,
+            "calories": 420.3,
+            "tags": [
+              "35g+ Protein",
+              "Bulk 35P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "protein": 35.1,
+            "eaa": 13.93,
+            "mealItems": [
+              {
+                "name": "Soya Chunks",
+                "protein": 20.9,
+                "bcaa": 3.82,
+                "calories": 142,
+                "quantity": "40g",
+                "eaa": 8.54,
+                "carbs": 14.2,
+                "fats": 0.2
+              },
+              {
+                "fats": 0.3,
+                "eaa": 1.98,
+                "calories": 51,
+                "quantity": "60g",
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "protein": 4.8,
+                "bcaa": 0.81
+              },
+              {
+                "bcaa": 0.87,
+                "protein": 4.6,
+                "name": "Roasted Chana",
+                "carbs": 13.8,
+                "eaa": 1.81,
+                "quantity": "25g",
+                "fats": 1.3,
+                "calories": 86.3
+              },
+              {
+                "protein": 0.8,
+                "bcaa": 0.11,
+                "name": "Mixed Fruits",
+                "calories": 30,
+                "quantity": "50g",
+                "carbs": 7.5,
+                "fats": 0.1,
+                "eaa": 0.22
+              },
+              {
+                "protein": 4,
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "fats": 5.1,
+                "carbs": 11.6,
+                "bcaa": 0.56,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "eaa": 1.38
+              }
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "fats": 7,
+            "totalWeight": "195g (Total)",
+            "monthlyPrice": 1699,
+            "category": "weight_gain",
+            "name": "Bulk 35P – Weight Gain Meal (Veg)",
+            "bcaa": 6.17
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "date": "09:02 am, 26 Aug",
+      "total": 168,
+      "id": "PRTN-2504",
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "195g (Total)",
+            "id": "veg-bulk-35p",
+            "price": 69,
+            "isVeg": true,
+            "tags": [
+              "35g+ Protein",
+              "Bulk 35P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "carbs": 54.3,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "category": "weight_gain",
+            "monthlyPrice": 1699,
+            "protein": 35.1,
+            "description": "Balanced vegetarian nutrition for everyday strength and growth. Moderate-calorie muscle builder for steady mass accumulation without unwanted fat.",
+            "mealItems": [
+              {
+                "name": "Soya Chunks",
+                "bcaa": 3.82,
+                "eaa": 8.54,
+                "calories": 142,
+                "carbs": 14.2,
+                "quantity": "40g",
+                "fats": 0.2,
+                "protein": 20.9
+              },
+              {
+                "name": "Sprouts",
+                "carbs": 7.2,
+                "eaa": 1.98,
+                "protein": 4.8,
+                "calories": 51,
+                "bcaa": 0.81,
+                "quantity": "60g",
+                "fats": 0.3
+              },
+              {
+                "calories": 86.3,
+                "protein": 4.6,
+                "fats": 1.3,
+                "quantity": "25g",
+                "eaa": 1.81,
+                "name": "Roasted Chana",
+                "carbs": 13.8,
+                "bcaa": 0.87
+              },
+              {
+                "eaa": 0.22,
+                "protein": 0.8,
+                "name": "Mixed Fruits",
+                "bcaa": 0.11,
+                "fats": 0.1,
+                "quantity": "50g",
+                "carbs": 7.5,
+                "calories": 30
+              },
+              {
+                "carbs": 11.6,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56,
+                "protein": 4,
+                "eaa": 1.38,
+                "fats": 5.1,
+                "calories": 111,
+                "quantity": "20g (Total)"
+              }
+            ],
+            "name": "Bulk 35P – Weight Gain Meal (Veg)",
+            "bcaa": 6.17,
+            "eaa": 13.93,
+            "calories": 420.3,
+            "fats": 7
+          }
+        },
+        {
+          "product": {
+            "totalWeight": "250g (Total)",
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "carbs": 27.2,
+                "protein": 31.4,
+                "eaa": 12.84,
+                "name": "Soya Chunks",
+                "bcaa": 5.76,
+                "quantity": "60g",
+                "calories": 213
+              },
+              {
+                "protein": 5.4,
+                "fats": 6,
+                "carbs": 0.9,
+                "bcaa": 1.14,
+                "quantity": "30g",
+                "eaa": 2.46,
+                "name": "Paneer",
+                "calories": 65
+              },
+              {
+                "quantity": "60g",
+                "fats": 0.3,
+                "calories": 51,
+                "eaa": 1.98,
+                "name": "Sprouts",
+                "carbs": 7.2,
+                "protein": 4.8,
+                "bcaa": 0.81
+              },
+              {
+                "bcaa": 1.04,
+                "quantity": "30g",
+                "calories": 104,
+                "name": "Roasted Chana",
+                "carbs": 16.6,
+                "protein": 5.5,
+                "fats": 1.5,
+                "eaa": 2.17
+              },
+              {
+                "fats": 0.1,
+                "protein": 0.8,
+                "calories": 30,
+                "eaa": 0.22,
+                "quantity": "50g",
+                "name": "Mixed Fruits",
+                "carbs": 7.5,
+                "bcaa": 0.11
+              },
+              {
+                "eaa": 1.38,
+                "protein": 4,
+                "fats": 5.1,
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "carbs": 11.6,
+                "bcaa": 0.56
+              }
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "category": "weight_gain",
+            "carbs": 70,
+            "isVeg": true,
+            "price": 99,
+            "protein": 52.9,
+            "fats": 13.4,
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "eaa": 21.05,
+            "id": "veg-bulk-50p",
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "calories": 574,
+            "bcaa": 9.42,
+            "monthlyPrice": 2499
+          },
+          "quantity": 1,
+          "purchaseOption": "single"
+        }
+      ],
+      "customerName": "Proteino",
+      "total": 168,
+      "date": "08:58 am, 26 Aug",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "status": "delivered",
+      "deliveryTimeRemaining": 25,
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "id": "PRTN-4189",
+      "deliveryTimeSlot": "2 PM",
+      "customerPhone": "G-CwxIOMqJ",
+      "gymId": "g1"
+    },
+    {
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerPhone": "9113237706",
+      "customerName": "Proteino",
+      "deliveryTimeRemaining": 25,
+      "total": 198,
+      "items": [
+        {
+          "product": {
+            "tags": [
+              "50g+ Protein",
+              "Bulk 50P",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "monthlyPrice": 2499,
+            "id": "veg-bulk-50p",
+            "mealItems": [
+              {
+                "fats": 0.36,
+                "carbs": 27.2,
+                "eaa": 12.84,
+                "protein": 31.4,
+                "calories": 213,
+                "quantity": "60g",
+                "name": "Soya Chunks",
+                "bcaa": 5.76
+              },
+              {
+                "name": "Paneer",
+                "carbs": 0.9,
+                "quantity": "30g",
+                "calories": 65,
+                "eaa": 2.46,
+                "bcaa": 1.14,
+                "fats": 6,
+                "protein": 5.4
+              },
+              {
+                "fats": 0.3,
+                "carbs": 7.2,
+                "quantity": "60g",
+                "eaa": 1.98,
+                "bcaa": 0.81,
+                "calories": 51,
+                "name": "Sprouts",
+                "protein": 4.8
+              },
+              {
+                "bcaa": 1.04,
+                "carbs": 16.6,
+                "protein": 5.5,
+                "calories": 104,
+                "name": "Roasted Chana",
+                "quantity": "30g",
+                "eaa": 2.17,
+                "fats": 1.5
+              },
+              {
+                "fats": 0.1,
+                "eaa": 0.22,
+                "protein": 0.8,
+                "quantity": "50g",
+                "calories": 30,
+                "name": "Mixed Fruits",
+                "carbs": 7.5,
+                "bcaa": 0.11
+              },
+              {
+                "carbs": 11.6,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "bcaa": 0.56,
+                "eaa": 1.38,
+                "protein": 4,
+                "fats": 5.1,
+                "quantity": "20g (Total)",
+                "calories": 111
+              }
+            ],
+            "category": "weight_gain",
+            "description": "Vegetarian protein to support strength and healthy weight gain. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "price": 99,
+            "isVeg": true,
+            "fats": 13.4,
+            "eaa": 21.05,
+            "name": "Bulk 50P – Weight Gain Meal (Veg)",
+            "bcaa": 9.42,
+            "protein": 52.9,
+            "image": "/src/assets/images/high_protein_meal_1783093326321.jpg",
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "250g (Total)",
+            "calories": 574,
+            "carbs": 70
+          },
+          "quantity": 2,
+          "purchaseOption": "single"
+        }
+      ],
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "date": "08:57 am, 26 Aug",
       "status": "cooking",
-      "deliveryTimeRemaining": 24
+      "deliveryTimeSlot": "2 PM",
+      "id": "PRTN-1339",
+      "gymId": "g1"
+    },
+    {
+      "declinedDate": "03:04 pm, 06 Sept 2026",
+      "deliveryTimeRemaining": 25,
+      "declinedAt": "2026-09-06T15:04:29.018Z",
+      "date": "03:29 am, 12 Jul",
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "protein": 35.1,
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "totalWeight": "195g (Total)",
+            "isVeg": true,
+            "price": 199,
+            "bcaa": 6.17,
+            "carbs": 54.3,
+            "mealItems": [
+              {
+                "protein": 20.9,
+                "fats": 0.2,
+                "calories": 142,
+                "quantity": "40g",
+                "eaa": 8.54,
+                "bcaa": 3.82,
+                "name": "Soya Chunks",
+                "carbs": 14.2
+              },
+              {
+                "name": "Sprouts",
+                "eaa": 1.98,
+                "quantity": "60g",
+                "protein": 4.8,
+                "calories": 51,
+                "bcaa": 0.81,
+                "fats": 0.3,
+                "carbs": 7.2
+              },
+              {
+                "fats": 1.3,
+                "protein": 4.6,
+                "eaa": 1.81,
+                "carbs": 13.8,
+                "name": "Roasted Chana",
+                "bcaa": 0.87,
+                "calories": 86.3,
+                "quantity": "25g"
+              },
+              {
+                "carbs": 7.5,
+                "quantity": "50g",
+                "name": "Mixed Fruits",
+                "calories": 30,
+                "bcaa": 0.11,
+                "eaa": 0.22,
+                "fats": 0.1,
+                "protein": 0.8
+              },
+              {
+                "fats": 5.1,
+                "eaa": 1.38,
+                "protein": 4,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "calories": 111,
+                "quantity": "20g (Total)",
+                "carbs": 11.6,
+                "bcaa": 0.56
+              }
+            ],
+            "name": "Weight Gain Meal Plan – 35g+ Protein (Veg)",
+            "calories": 420.3,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "fats": 7,
+            "description": "Real Food. Real Nutrition. Real Gains. Perfectly balanced moderate-calorie muscle builder for steady, high-quality mass accumulation without unwanted fat storage.",
+            "id": "veg-bulk-35p",
+            "category": "weight_gain",
+            "tags": [
+              "35g+ Protein",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "eaa": 13.93
+          }
+        }
+      ],
+      "customerName": "Karthik Ram D",
+      "total": 199,
+      "deliveryTimeSlot": "2 PM",
+      "customerPhone": "G-A4JYr64G",
+      "status": "declined",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "id": "PRTN-6499",
+      "gymId": "g1"
+    },
+    {
+      "deliveryTimeRemaining": 25,
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeSlot": "2 PM",
+      "total": 199,
+      "customerName": "Bhavana",
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "calories": 420.3,
+            "mealItems": [
+              {
+                "carbs": 14.2,
+                "fats": 0.2,
+                "calories": 142,
+                "bcaa": 3.82,
+                "protein": 20.9,
+                "quantity": "40g",
+                "name": "Soya Chunks",
+                "eaa": 8.54
+              },
+              {
+                "fats": 0.3,
+                "carbs": 7.2,
+                "eaa": 1.98,
+                "quantity": "60g",
+                "name": "Sprouts",
+                "calories": 51,
+                "bcaa": 0.81,
+                "protein": 4.8
+              },
+              {
+                "eaa": 1.81,
+                "name": "Roasted Chana",
+                "calories": 86.3,
+                "quantity": "25g",
+                "bcaa": 0.87,
+                "fats": 1.3,
+                "protein": 4.6,
+                "carbs": 13.8
+              },
+              {
+                "bcaa": 0.11,
+                "quantity": "50g",
+                "calories": 30,
+                "name": "Mixed Fruits",
+                "protein": 0.8,
+                "carbs": 7.5,
+                "fats": 0.1,
+                "eaa": 0.22
+              },
+              {
+                "fats": 5.1,
+                "quantity": "20g (Total)",
+                "calories": 111,
+                "carbs": 11.6,
+                "protein": 4,
+                "eaa": 1.38,
+                "bcaa": 0.56,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)"
+              }
+            ],
+            "totalWeight": "195g (Total)",
+            "id": "veg-bulk-35p",
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "tags": [
+              "35g+ Protein",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "protein": 35.1,
+            "category": "weight_gain",
+            "description": "Real Food. Real Nutrition. Real Gains. Perfectly balanced moderate-calorie muscle builder for steady, high-quality mass accumulation without unwanted fat storage.",
+            "price": 199,
+            "isVeg": true,
+            "carbs": 54.3,
+            "name": "Weight Gain Meal Plan – 35g+ Protein (Veg)",
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "bcaa": 6.17,
+            "eaa": 13.93,
+            "fats": 7
+          }
+        }
+      ],
+      "date": "04:12 pm, 11 Jul",
+      "status": "delivered",
+      "customerPhone": "G-X7gXAr7B",
+      "id": "PRTN-6474",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "gymId": "g1"
+    },
+    {
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerPhone": "G-A4JYr64G",
+      "id": "PRTN-5648",
+      "status": "delivered",
+      "date": "02:51 pm, 11 Jul",
+      "deliveryTimeRemaining": 25,
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "totalWeight": "~198g (Total)",
+            "calories": 310,
+            "tags": [
+              "35g+ Protein",
+              "Weight Gain",
+              "Non-Veg",
+              "BCAA 7.35g",
+              "EAA 17.10g"
+            ],
+            "ingredients": [
+              "Chicken (Boiled/Grilled)",
+              "Whole Eggs",
+              "Soya Chunks (Dry)",
+              "Sprouts",
+              "Pumpkin Seeds"
+            ],
+            "protein": 39.6,
+            "id": "nonveg-bulk-35p",
+            "mealItems": [
+              {
+                "eaa": 7.9,
+                "name": "Chicken (Boiled/Grilled)",
+                "bcaa": 3.4,
+                "protein": 17.4,
+                "fats": 1.9,
+                "carbs": 0,
+                "quantity": "55g",
+                "calories": 92
+              },
+              {
+                "protein": 9.5,
+                "fats": 7.1,
+                "eaa": 4,
+                "calories": 107,
+                "quantity": "1.5 (~75g)",
+                "name": "Whole Eggs (1.5 Eggs ~75g)",
+                "carbs": 0.6,
+                "bcaa": 1.65
+              },
+              {
+                "fats": 0.09,
+                "quantity": "15g",
+                "protein": 7.8,
+                "calories": 52,
+                "eaa": 3.2,
+                "name": "Soya Chunks (Dry)",
+                "bcaa": 1.44,
+                "carbs": 5.4
+              },
+              {
+                "quantity": "50g",
+                "fats": 0.25,
+                "eaa": 1.68,
+                "calories": 42,
+                "carbs": 6,
+                "name": "Sprouts",
+                "protein": 4,
+                "bcaa": 0.68
+              },
+              {
+                "carbs": 0.7,
+                "bcaa": 0.18,
+                "name": "Pumpkin Seeds",
+                "protein": 0.9,
+                "eaa": 0.32,
+                "quantity": "3g",
+                "fats": 1.4,
+                "calories": 17
+              }
+            ],
+            "eaa": 17.1,
+            "description": "Real Food. Real Nutrition. Real Results. Optimized mass gainer meal utilizing high-bioavailability poultry and egg proteins along with dense amino sources.",
+            "bcaa": 7.35,
+            "category": "weight_gain",
+            "name": "Weight Gain Meal Plan – 35g+ Protein (Non-Veg)",
+            "carbs": 12.7,
+            "fats": 10.74,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "price": 229,
+            "isVeg": false
+          }
+        }
+      ],
+      "total": 229,
+      "customerName": "Karthik Ram D",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "deliveryTimeSlot": "2 PM",
+      "gymId": "g1"
+    },
+    {
+      "customerName": "Tarun C.H",
+      "date": "02:51 pm, 11 Jul",
+      "total": 199,
+      "items": [
+        {
+          "purchaseOption": "single",
+          "quantity": 1,
+          "product": {
+            "eaa": 13.93,
+            "category": "weight_gain",
+            "mealItems": [
+              {
+                "fats": 0.2,
+                "carbs": 14.2,
+                "quantity": "40g",
+                "eaa": 8.54,
+                "protein": 20.9,
+                "calories": 142,
+                "name": "Soya Chunks",
+                "bcaa": 3.82
+              },
+              {
+                "fats": 0.3,
+                "eaa": 1.98,
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "protein": 4.8,
+                "calories": 51,
+                "quantity": "60g",
+                "bcaa": 0.81
+              },
+              {
+                "protein": 4.6,
+                "eaa": 1.81,
+                "carbs": 13.8,
+                "name": "Roasted Chana",
+                "bcaa": 0.87,
+                "fats": 1.3,
+                "calories": 86.3,
+                "quantity": "25g"
+              },
+              {
+                "fats": 0.1,
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "protein": 0.8,
+                "name": "Mixed Fruits",
+                "quantity": "50g",
+                "calories": 30,
+                "bcaa": 0.11
+              },
+              {
+                "fats": 5.1,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "quantity": "20g (Total)",
+                "calories": 111,
+                "carbs": 11.6,
+                "protein": 4,
+                "bcaa": 0.56
+              }
+            ],
+            "totalWeight": "195g (Total)",
+            "tags": [
+              "35g+ Protein",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "carbs": 54.3,
+            "id": "veg-bulk-35p",
+            "calories": 420.3,
+            "protein": 35.1,
+            "fats": 7,
+            "name": "Weight Gain Meal Plan – 35g+ Protein (Veg)",
+            "description": "Real Food. Real Nutrition. Real Gains. Perfectly balanced moderate-calorie muscle builder for steady, high-quality mass accumulation without unwanted fat storage.",
+            "isVeg": true,
+            "price": 199,
+            "bcaa": 6.17
+          }
+        }
+      ],
+      "deliveryTimeSlot": "2 PM",
+      "status": "delivered",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "id": "PRTN-4712",
+      "customerPhone": "G-SBiTKCQ3",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "deliveryTimeRemaining": 25,
+      "gymId": "g1"
+    },
+    {
+      "deliveryTimeRemaining": 25,
+      "status": "delivered",
+      "deliveryTimeSlot": "2 PM",
+      "date": "02:50 pm, 11 Jul",
+      "customerName": "vyb",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "total": 199,
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "carbs": 17,
+            "calories": 247,
+            "mealItems": [
+              {
+                "quantity": "55g",
+                "fats": 2,
+                "calories": 95,
+                "protein": 17.1,
+                "eaa": 7.85,
+                "name": "Chicken (Boiled/Grilled)",
+                "carbs": 0,
+                "bcaa": 3.35
+              },
+              {
+                "fats": 0.1,
+                "bcaa": 1.1,
+                "quantity": "1.5 (~50g)",
+                "calories": 25,
+                "protein": 5.5,
+                "eaa": 2.6,
+                "carbs": 0.5,
+                "name": "Egg Whites (1.5 Eggs ~50g)"
+              },
+              {
+                "quantity": "20g",
+                "name": "Soya Chunks",
+                "calories": 71,
+                "bcaa": 1.93,
+                "eaa": 4.28,
+                "carbs": 7.2,
+                "fats": 0.12,
+                "protein": 10.5
+              },
+              {
+                "carbs": 4.8,
+                "name": "Sprouts",
+                "eaa": 1.33,
+                "bcaa": 0.54,
+                "calories": 34,
+                "fats": 0.2,
+                "protein": 3.2,
+                "quantity": "40g"
+              },
+              {
+                "carbs": 4.5,
+                "name": "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)",
+                "eaa": 0.42,
+                "bcaa": 0.21,
+                "protein": 1.2,
+                "fats": 0.2,
+                "quantity": "50g",
+                "calories": 22
+              }
+            ],
+            "price": 199,
+            "isVeg": false,
+            "description": "Real Food. Real Nutrition. Real Results. Maximum fat loss efficiency featuring steamed chicken breast, egg whites, and fiber-packed veggies.",
+            "tags": [
+              "35g+ Protein",
+              "Weight Loss",
+              "Non-Veg",
+              "BCAA 7.13g",
+              "EAA 16.48g"
+            ],
+            "protein": 37.5,
+            "category": "weight_loss",
+            "eaa": 16.48,
+            "id": "nonveg-lean-35p",
+            "fats": 2.62,
+            "ingredients": [
+              "Chicken (Boiled/Grilled)",
+              "Egg Whites",
+              "Soya Chunks",
+              "Sprouts",
+              "Veggies (Cucumber, Carrot, Capsicum, Tomato, Lettuce, etc.)"
+            ],
+            "bcaa": 7.13,
+            "name": "Weight Loss Meal Plan – 35g+ Protein (Non-Veg)",
+            "totalWeight": "215g (Total)"
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "id": "PRTN-8009",
+      "customerPhone": "8618371315",
+      "gymId": "g1"
+    },
+    {
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "status": "delivered",
+      "customerName": "Proteino",
+      "total": 249,
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "id": "veg-bulk-50p",
+            "calories": 574,
+            "eaa": 21.05,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "totalWeight": "250g (Total)",
+            "tags": [
+              "50g+ Protein",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 9.42g",
+              "EAA 21.05g"
+            ],
+            "ingredients": [
+              "Soya Chunks",
+              "Paneer",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "carbs": 70,
+            "protein": 52.9,
+            "price": 249,
+            "isVeg": true,
+            "fats": 13.4,
+            "mealItems": [
+              {
+                "name": "Soya Chunks",
+                "eaa": 12.84,
+                "bcaa": 5.76,
+                "protein": 31.4,
+                "fats": 0.36,
+                "calories": 213,
+                "carbs": 27.2,
+                "quantity": "60g"
+              },
+              {
+                "eaa": 2.46,
+                "carbs": 0.9,
+                "name": "Paneer",
+                "quantity": "30g",
+                "protein": 5.4,
+                "bcaa": 1.14,
+                "calories": 65,
+                "fats": 6
+              },
+              {
+                "carbs": 7.2,
+                "name": "Sprouts",
+                "eaa": 1.98,
+                "calories": 51,
+                "quantity": "60g",
+                "bcaa": 0.81,
+                "fats": 0.3,
+                "protein": 4.8
+              },
+              {
+                "bcaa": 1.04,
+                "calories": 104,
+                "quantity": "30g",
+                "carbs": 16.6,
+                "name": "Roasted Chana",
+                "protein": 5.5,
+                "eaa": 2.17,
+                "fats": 1.5
+              },
+              {
+                "quantity": "50g",
+                "bcaa": 0.11,
+                "calories": 30,
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "carbs": 7.5,
+                "fats": 0.1,
+                "protein": 0.8
+              },
+              {
+                "fats": 5.1,
+                "eaa": 1.38,
+                "quantity": "20g (Total)",
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "calories": 111,
+                "bcaa": 0.56,
+                "protein": 4,
+                "carbs": 11.6
+              }
+            ],
+            "category": "weight_gain",
+            "name": "Weight Gain Meal Plan – 50g+ Protein (Veg)",
+            "description": "Real Food. Real Nutrition. Real Gains. Premium vegetarian mass builder meal with optimal amino acid profile to fuel recovery and muscle protein synthesis.",
+            "bcaa": 9.42
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "deliveryTimeRemaining": 25,
+      "date": "02:43 pm, 11 Jul",
+      "deliveryTimeSlot": "2 PM",
+      "id": "PRTN-8596",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerPhone": "G-CwxIOMqJ",
+      "gymId": "g1"
+    },
+    {
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "date": "02:31 pm, 11 Jul",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "status": "delivered",
+      "customerPhone": "G-A4JYr64G",
+      "customerName": "Karthik Ram D",
+      "deliveryTimeSlot": "2 PM",
+      "total": 199,
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "tags": [
+              "35g+ Protein",
+              "Weight Gain",
+              "Veg Plan",
+              "BCAA 6.17g",
+              "EAA 13.93g"
+            ],
+            "isVeg": true,
+            "price": 199,
+            "id": "veg-bulk-35p",
+            "totalWeight": "195g (Total)",
+            "eaa": 13.93,
+            "ingredients": [
+              "Soya Chunks",
+              "Sprouts",
+              "Roasted Chana",
+              "Mixed Fruits",
+              "Dry Fruits (Dates, Cashews, Raisins, Pumpkin Seeds)"
+            ],
+            "calories": 420.3,
+            "carbs": 54.3,
+            "image": "/assets/high_protein_meal_1783093326321-DfXyMziP.jpg",
+            "name": "Weight Gain Meal Plan – 35g+ Protein (Veg)",
+            "bcaa": 6.17,
+            "mealItems": [
+              {
+                "protein": 20.9,
+                "fats": 0.2,
+                "eaa": 8.54,
+                "bcaa": 3.82,
+                "calories": 142,
+                "name": "Soya Chunks",
+                "carbs": 14.2,
+                "quantity": "40g"
+              },
+              {
+                "fats": 0.3,
+                "calories": 51,
+                "quantity": "60g",
+                "eaa": 1.98,
+                "protein": 4.8,
+                "name": "Sprouts",
+                "carbs": 7.2,
+                "bcaa": 0.81
+              },
+              {
+                "bcaa": 0.87,
+                "carbs": 13.8,
+                "protein": 4.6,
+                "calories": 86.3,
+                "quantity": "25g",
+                "name": "Roasted Chana",
+                "eaa": 1.81,
+                "fats": 1.3
+              },
+              {
+                "protein": 0.8,
+                "name": "Mixed Fruits",
+                "eaa": 0.22,
+                "bcaa": 0.11,
+                "carbs": 7.5,
+                "fats": 0.1,
+                "calories": 30,
+                "quantity": "50g"
+              },
+              {
+                "fats": 5.1,
+                "protein": 4,
+                "bcaa": 0.56,
+                "eaa": 1.38,
+                "name": "Dry Fruits (Dates 10g + Cashews 1 pc + Raisins 4 pcs + Pumpkin Seeds 5g)",
+                "quantity": "20g (Total)",
+                "carbs": 11.6,
+                "calories": 111
+              }
+            ],
+            "fats": 7,
+            "description": "Real Food. Real Nutrition. Real Gains. Perfectly balanced moderate-calorie muscle builder for steady, high-quality mass accumulation without unwanted fat storage.",
+            "protein": 35.1,
+            "category": "weight_gain"
+          },
+          "purchaseOption": "single"
+        }
+      ],
+      "id": "PRTN-9398",
+      "deliveryTimeRemaining": 25,
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "product": {
+            "name": "Soya salad",
+            "protein": 24,
+            "id": "soya-salad",
+            "category": "salad",
+            "fats": 10,
+            "description": "High-protein vegan salad with air-fried soya chunks, roasted peanuts, onion, tomatoes, and spicy lemon tamarind dressing.",
+            "tags": [
+              "100% Vegan",
+              "High Plant Protein",
+              "Crunchy Texture",
+              "Spicy Kick"
+            ],
+            "calories": 310,
+            "price": 139,
+            "isVeg": true,
+            "carbs": 24,
+            "ingredients": [
+              "Air-fried Soya Chunks",
+              "Roasted Peanuts",
+              "Red Onions",
+              "Juicy Tomatoes",
+              "Fresh Coriander",
+              "Lemon Tamarind Dressing"
+            ],
+            "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg"
+          },
+          "purchaseOption": "single",
+          "quantity": 1
+        }
+      ],
+      "customerName": "Member",
+      "total": 139,
+      "date": "10:55 pm, 03 Jul",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "deliveryTimeRemaining": 30,
+      "id": "PRTN-9236",
+      "customerPhone": "0987654334",
+      "status": "delivered",
+      "deliveryTimeSlot": "2 PM",
+      "gymId": "g1"
+    },
+    {
+      "items": [
+        {
+          "product": {
+            "id": "soya-salad",
+            "name": "Soya salad",
+            "ingredients": [
+              "Air-fried Soya Chunks",
+              "Roasted Peanuts",
+              "Red Onions",
+              "Juicy Tomatoes",
+              "Fresh Coriander",
+              "Lemon Tamarind Dressing"
+            ],
+            "protein": 24,
+            "fats": 10,
+            "calories": 310,
+            "carbs": 24,
+            "image": "/src/assets/images/fresh_salad_bowl_1783093339839.jpg",
+            "tags": [
+              "100% Vegan",
+              "High Plant Protein",
+              "Crunchy Texture",
+              "Spicy Kick"
+            ],
+            "description": "High-protein vegan salad with air-fried soya chunks, roasted peanuts, onion, tomatoes, and spicy lemon tamarind dressing.",
+            "category": "salad",
+            "price": 139,
+            "isVeg": true
+          },
+          "quantity": 1,
+          "purchaseOption": "single"
+        }
+      ],
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "total": 139,
+      "deliveryTimeSlot": "2 PM",
+      "id": "PRTN-9237",
+      "date": "10:55 pm, 03 Jul",
+      "status": "delivered",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerPhone": "0987654334",
+      "customerName": "Member",
+      "deliveryTimeRemaining": 30,
+      "gymId": "g1"
+    },
+    {
+      "declinedAt": "2026-09-06T15:03:50.098Z",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "items": [
+        {
+          "quantity": 1,
+          "purchaseOption": "single",
+          "product": {
+            "price": 229,
+            "isVeg": false,
+            "protein": 35,
+            "calories": 700,
+            "name": "Non-Veg BULK 35P",
+            "id": "nonveg-bulk-35p"
+          }
+        }
+      ],
+      "customerPhone": "9876543210",
+      "status": "declined",
+      "customerName": "Sarah Connor",
+      "total": 229,
+      "deliveryTimeRemaining": 24,
+      "declinedDate": "03:03 pm, 06 Sept 2026",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "id": "PRTN-2904",
+      "date": "Today, 08:30 AM",
+      "deliveryTimeSlot": "2 PM",
+      "gymId": "g1"
     }
   ],
   "subscriptions": [
     {
-      "planId": "soya-salad",
-      "planName": "Soya Salad 26-Day Subscription",
-      "price": 3073,
-      "durationDays": 26,
-      "startDate": "2026-07-04T07:00:00.000Z",
-      "expiryDate": "2026-07-30T07:00:00.000Z",
-      "customerName": "Member",
-      "customerPhone": "0987654334",
+      "customerPhone": "7892354063",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerName": "Chetan Jartarghar",
+      "createdAt": "2026-08-29T18:45:27.451Z",
+      "status": "active",
       "gymId": "g1",
-      "gymName": "Gold's Gym",
-      "gymLocation": "Downtown Fitness Hub, Sector 4",
       "timeSlot": "2 PM",
+      "expiryDate": "2026-09-24T18:45:27.451Z",
+      "id": "SUB-713471",
+      "planId": "veg-bulk-50p",
+      "isPaused": false,
+      "price": 2499,
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 26-Day Subscription",
+      "startDate": "2026-08-29T18:45:27.451Z",
+      "date": "12:15 am, 30 Aug 2026",
+      "durationDays": 26
+    },
+    {
+      "createdAt": "2026-08-29T17:49:13.768Z",
+      "price": 4998,
+      "planName": "Lean 50P – Weight Loss Meal (Veg) 52-Day Subscription",
+      "customerName": "Proteino",
+      "isPaused": false,
+      "planId": "veg-lean-50p",
+      "timeSlot": "2 PM",
+      "gymLocation": "3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021",
+      "id": "SUB-575098",
+      "gymId": "g5",
+      "expiryDate": "2026-10-20T17:49:13.768Z",
+      "startDate": "2026-08-29T17:49:13.768Z",
+      "customerPhone": "1234567890",
+      "status": "active",
+      "durationDays": 52,
+      "gymName": "Iron Lifters 2.0",
+      "date": "05:49 pm, 29 Aug 2026"
+    },
+    {
+      "timeSlot": "2 PM",
+      "date": "05:43 pm, 29 Aug 2026",
+      "gymName": "Iron Lifters 2.0",
+      "gymLocation": "3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021",
+      "startDate": "2026-08-29T17:43:58.652Z",
+      "gymId": "g5",
+      "id": "SUB-924246",
+      "customerPhone": "1234567890",
+      "durationDays": 26,
+      "status": "active",
+      "createdAt": "2026-08-29T17:43:58.652Z",
+      "isPaused": false,
+      "expiryDate": "2026-09-24T17:43:58.652Z",
+      "planName": "Lean 35P – Weight Loss Meal (Veg) 26-Day Subscription",
+      "customerName": "Proteino",
+      "price": 1699,
+      "planId": "veg-lean-35p"
+    },
+    {
+      "startDate": "2026-08-28T16:51:52.889Z",
+      "timeSlot": "2 PM",
+      "customerPhone": "G-X7gXAr7B",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerName": "Bhavana",
+      "status": "active",
+      "gymId": "g1",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "durationDays": 104,
+      "date": "04:51 pm, 28 Aug 2026",
+      "expiryDate": "2026-12-10T16:51:52.889Z",
+      "price": 4996,
+      "planName": "Fruit Salad 104-Day Subscription",
+      "id": "SUB-221105",
+      "planId": "fruit-salad",
+      "isPaused": false,
+      "createdAt": "2026-08-28T16:51:52.889Z"
+    },
+    {
+      "id": "SUB-764325",
+      "timeSlot": "2 PM",
+      "status": "active",
+      "durationDays": 26,
+      "createdAt": "2026-08-28T16:51:18.478Z",
+      "expiryDate": "2026-09-23T16:51:18.478Z",
+      "gymId": "g1",
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 26-Day Subscription",
+      "isPaused": false,
+      "planId": "veg-bulk-50p",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "customerPhone": "G-TwWoWJwU",
+      "date": "04:51 pm, 28 Aug 2026",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "price": 2499,
+      "customerName": "Chetan Jartarghar",
+      "startDate": "2026-08-28T16:51:18.478Z"
+    },
+    {
+      "createdAt": "2026-08-28T16:48:36.015Z",
+      "timeSlot": "2 PM",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerName": "Bhavana",
+      "gymId": "g1",
+      "customerPhone": "911323770622",
+      "planId": "veg-lean-35p",
+      "date": "04:48 pm, 28 Aug 2026",
+      "expiryDate": "2026-09-23T16:48:36.015Z",
+      "isPaused": false,
+      "planName": "Lean 35P – Weight Loss Meal (Veg) 26-Day Subscription",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "id": "SUB-338964",
+      "startDate": "2026-08-28T16:48:36.015Z",
+      "durationDays": 26,
+      "price": 1699,
+      "status": "active"
+    },
+    {
+      "createdAt": "2026-08-26T09:56:38.410Z",
+      "gymName": "Iron Lifters 2.0",
+      "customerName": "Karthik Ram D",
+      "expiryDate": "2026-10-17T09:56:38.410Z",
+      "timeSlot": "2 PM",
+      "status": "active",
+      "price": 12332,
+      "gymLocation": "3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021",
+      "isPaused": false,
+      "planName": "Weight Gain Meal Plan – 50g+ Protein (Non-Veg) 52-Day Subscription",
+      "date": "09:56 am, 26 Aug 2026",
+      "planId": "nonveg-bulk-50p",
+      "customerPhone": "9342423701",
+      "durationDays": 52,
+      "startDate": "2026-08-26T09:56:38.410Z",
+      "gymId": "g5",
+      "id": "SUB-718969"
+    },
+    {
+      "gymId": "g1",
+      "timeSlot": "2 PM",
+      "customerPhone": "9113237706",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "id": "SUB-932130",
+      "status": "active",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerName": "Proteino",
+      "startDate": "2026-08-26T09:09:41.538Z",
+      "expiryDate": "2026-09-21T09:09:41.538Z",
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 26-Day Subscription",
+      "durationDays": 26,
+      "isPaused": false,
+      "price": 2499,
+      "planId": "veg-bulk-50p"
+    },
+    {
+      "price": 2499,
+      "planId": "veg-lean-50p",
+      "customerPhone": "9113237706",
+      "timeSlot": "2 PM",
+      "durationDays": 26,
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "startDate": "2026-08-26T09:08:35.681Z",
+      "planName": "Lean 50P – Weight Loss Meal (Veg) 26-Day Subscription",
+      "status": "active",
+      "isPaused": false,
+      "expiryDate": "2026-09-21T09:08:35.681Z",
+      "customerName": "Proteino",
+      "gymId": "g2",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "id": "SUB-457443"
+    },
+    {
+      "customerPhone": "9113237706",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "planId": "sprouts-salad",
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymId": "g2",
+      "customerName": "KARTHIK",
+      "id": "SUB-618795",
+      "expiryDate": "2026-09-21T08:54:44.817Z",
+      "timeSlot": "2 PM",
+      "status": "completed",
+      "price": 1149,
+      "startDate": "2026-08-26T08:54:44.817Z",
+      "isPaused": false,
+      "planName": "Sprouts Salad 26-Day Subscription",
+      "durationDays": 26
+    },
+    {
+      "id": "SUB-209738",
+      "price": 4596,
+      "planName": "Sprouts Salad 104-Day Subscription",
+      "isPaused": false,
+      "planId": "sprouts-salad",
+      "customerName": "KARTHIK",
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "durationDays": 104,
+      "timeSlot": "2 PM",
+      "gymId": "g2",
+      "status": "active",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "expiryDate": "2026-12-08T08:53:56.504Z",
+      "customerPhone": "9113237706",
+      "startDate": "2026-08-26T08:53:56.504Z"
+    },
+    {
+      "planName": "Weight Gain Meal Plan – 35g+ Protein (Veg) 26-Day Subscription",
+      "durationDays": 26,
+      "status": "active",
+      "isPaused": false,
+      "price": 4398,
+      "expiryDate": "2026-08-13T12:51:17.819Z",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "startDate": "2026-07-18T12:51:17.819Z",
+      "timeSlot": "2 PM",
+      "planId": "veg-bulk-35p",
+      "id": "SUB-402653",
+      "customerName": "Karthik Ram D",
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "gymId": "g1",
+      "customerPhone": "G-A4JYr64G"
+    },
+    {
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "planId": "veg-bulk-35p",
+      "isPaused": false,
+      "price": 4398,
+      "customerName": "Karthik Ram D",
+      "planName": "Weight Gain Meal Plan – 35g+ Protein (Veg) 26-Day Subscription",
+      "id": "SUB-399739",
+      "durationDays": 26,
+      "startDate": "2026-07-18T12:50:15.805Z",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "status": "active",
+      "customerPhone": "G-A4JYr64G",
+      "gymId": "g1",
+      "timeSlot": "2 PM",
+      "expiryDate": "2026-08-13T12:50:15.805Z"
+    },
+    {
+      "expiryDate": "2026-08-06T17:05:20.626Z",
+      "planId": "nonveg-bulk-50p",
+      "customerPhone": "G-30E00Qjl",
+      "timeSlot": "8 PM",
+      "price": 6166,
+      "customerName": "Ram Dalbanjan",
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "durationDays": 26,
+      "status": "completed",
+      "planName": "Weight Gain Meal Plan – 50g+ Protein (Non-Veg) 26-Day Subscription",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "gymId": "g2",
+      "startDate": "2026-07-11T17:05:20.626Z",
+      "id": "SUB-233297",
       "isPaused": false
+    },
+    {
+      "customerName": "Bhavana",
+      "gymId": "g5",
+      "status": "completed",
+      "timeSlot": "8 PM",
+      "gymName": "Iron Lifters 2.0",
+      "startDate": "2026-07-11T16:10:05.822Z",
+      "price": 4398,
+      "expiryDate": "2026-08-06T16:10:05.822Z",
+      "customerPhone": "G-X7gXAr7B",
+      "planId": "nonveg-lean-35p",
+      "durationDays": 26,
+      "id": "SUB-479314",
+      "planName": "Weight Loss Meal Plan – 35g+ Protein (Non-Veg) 26-Day Subscription",
+      "gymLocation": "3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021",
+      "isPaused": false
+    },
+    {
+      "startDate": "2026-07-11T14:52:17.618Z",
+      "durationDays": 26,
+      "customerPhone": "G-SBiTKCQ3",
+      "id": "SUB-988584",
+      "planName": "Weight Gain Meal Plan – 35g+ Protein (Veg) 26-Day Subscription",
+      "price": 4398,
+      "status": "completed",
+      "isPaused": false,
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "customerName": "Tarun C.H",
+      "timeSlot": "2 PM",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymId": "g1",
+      "planId": "veg-bulk-35p",
+      "expiryDate": "2026-08-06T14:52:17.618Z"
+    },
+    {
+      "startDate": "2026-07-04T07:00:00.000Z",
+      "customerName": "Member",
+      "expiryDate": "2026-07-30T07:00:00.000Z",
+      "timeSlot": "2 PM",
+      "price": 3073,
+      "planId": "soya-salad",
+      "durationDays": 26,
+      "gymName": "Jai Ho Fitness (Shirur Park)",
+      "gymId": "g1",
+      "customerPhone": "0987654334",
+      "isPaused": false,
+      "planName": "Soya Salad 26-Day Subscription",
+      "gymLocation": "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "id": "SUB-495084"
     }
   ],
   "users": [
     {
-      "name": "Sarah Connor",
-      "phone": "9876543210",
-      "password": "1234",
-      "goal": "gain",
       "weight": 70,
-      "height": 175,
+      "name": "Sarah Connor",
       "dailyCalorieGoal": 2100,
-      "dailyProteinGoal": 126,
-      "email": "9876543210@proteino.com"
+      "height": 175,
+      "goal": "gain",
+      "password": "1234",
+      "email": "9876543210@proteino.com",
+      "phone": "9876543210",
+      "dailyProteinGoal": 126
     },
     {
-      "name": "Test",
-      "phone": "1234567890",
       "password": "pass",
-      "email": "1234567890@proteino.com",
+      "dailyCalorieGoal": 2100,
       "goal": "gain",
       "weight": 70,
+      "phone": "1234567890",
+      "email": "1234567890@proteino.com",
+      "height": 175,
+      "dailyProteinGoal": 126,
+      "name": "Test"
+    },
+    {
+      "dailyProteinGoal": 126,
+      "phone": "G-A4JYr64G",
+      "email": "karthikramd84@gmail.com",
+      "dailyCalorieGoal": 2100,
+      "goal": "gain",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI31ihdErEeYn0TWNgDOKzmfXLCcxYb4g1_Bw8MeP1KT2x97A=s96-c",
+      "height": 175,
+      "password": "google_A4JYr64GCrR65GKYrHrt9nQSBMA3",
+      "name": "Karthik Ram D",
+      "weight": 70
+    },
+    {
+      "password": "google_CwxIOMqJixRObUDhdnVmrwo2wW52",
+      "dailyProteinGoal": 126,
+      "weight": 70,
+      "height": 175,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKvbMmBBR8-RMJLT_pKKOpfnNGaH9ZxSPu-c1zufmRTLYhATw=s96-c",
+      "dailyCalorieGoal": 2100,
+      "goal": "gain",
+      "email": "proteino.official@gmail.com",
+      "name": "Proteino",
+      "phone": "G-CwxIOMqJ"
+    },
+    {
+      "weight": 70,
+      "dailyProteinGoal": 126,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKUqhh8ZmrTDLKzdZYKIvQRKh716APkEfu6LljAsk1QXBk9rg=s96-c",
+      "height": 175,
+      "goal": "gain",
+      "phone": "G-SBiTKCQ3",
+      "email": "chtarun29@gmail.com",
+      "dailyCalorieGoal": 2100,
+      "name": "Tarun C.H",
+      "password": "google_SBiTKCQ32rfp80yTyt987euKMY73"
+    },
+    {
+      "goal": "gain",
+      "weight": 70,
+      "dailyProteinGoal": 126,
+      "height": 175,
+      "name": "Karthik",
+      "phone": "9113237706",
+      "email": "9113237706@proteino.com",
+      "password": "Karthik320",
+      "dailyCalorieGoal": 2100
+    },
+    {
+      "dailyProteinGoal": 126,
+      "goal": "gain",
+      "phone": "9342423701",
+      "email": "9342423701@proteino.com",
+      "password": "Bhavana320",
+      "name": "bhavana93424@gmail.com",
       "height": 175,
       "dailyCalorieGoal": 2100,
-      "dailyProteinGoal": 126
+      "weight": 70
+    },
+    {
+      "weight": 70,
+      "password": "google_X7gXAr7BXGe9MFD9GQ7cVLeQdln2",
+      "dailyProteinGoal": 126,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKecfBKcVNrEWX5QyvBkpvfTTcM4Y6ZXtTWOG9ArrX8nwkmXw=s96-c",
+      "height": 175,
+      "name": "Bhavana",
+      "goal": "gain",
+      "dailyCalorieGoal": 2100,
+      "phone": "G-X7gXAr7B",
+      "email": "bhavana93424@gmail.com"
+    },
+    {
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKt9NuT2ni3OAmi9beAgmVBrwZp71D7LkqyCkze10tHyzHzag=s96-c",
+      "height": 175,
+      "dailyCalorieGoal": 2100,
+      "email": "ramdalbanjan096@gmail.com",
+      "phone": "G-30E00Qjl",
+      "weight": 70,
+      "password": "google_30E00Qjly1PYRhzzj9HfbbaNu013",
+      "dailyProteinGoal": 126,
+      "goal": "gain",
+      "name": "Ram Dalbanjan"
+    },
+    {
+      "dailyProteinGoal": 126,
+      "goal": "gain",
+      "weight": 70,
+      "password": "nadeesh",
+      "email": "9014576539@proteino.com",
+      "phone": "9014576539",
+      "dailyCalorieGoal": 2100,
+      "name": "Rajesh Allu",
+      "height": 175
+    },
+    {
+      "dailyCalorieGoal": 2100,
+      "height": 175,
+      "password": "pranav@4912",
+      "phone": "8554939654",
+      "email": "8554939654@proteino.com",
+      "weight": 70,
+      "goal": "gain",
+      "dailyProteinGoal": 126,
+      "name": "Pranav Pawar"
+    },
+    {
+      "phone": "G-jlxMbHT3",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJKxXBEvgRvfUDduXfu8e3XYDfCqjngDYVGzC_mLEx3tMZIlA=s96-c",
+      "height": 175,
+      "email": "namanpawar2010@gmail.com",
+      "goal": "gain",
+      "dailyCalorieGoal": 2100,
+      "weight": 70,
+      "name": "Naman pawar",
+      "dailyProteinGoal": 126,
+      "password": "google_jlxMbHT31NaFpiG4WynlNVzr9bj1"
+    },
+    {
+      "password": "google_TwWoWJwU9Fch6nHSrwWynoS5MB23",
+      "goal": "gain",
+      "dailyProteinGoal": 126,
+      "name": "Chetan Jartarghar",
+      "email": "chetanjartarghar24@gmail.com",
+      "phone": "G-TwWoWJwU",
+      "weight": 70,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJOi8weiBW_JxxCpjiPs7KjaqP1IwaP3aTilUlgM_D0t0I7hw=s96-c",
+      "height": 175,
+      "dailyCalorieGoal": 2100
+    },
+    {
+      "dailyCalorieGoal": 2100,
+      "email": "7892354063@proteino.com",
+      "phone": "7892354063",
+      "password": "chetan",
+      "height": 175,
+      "dailyProteinGoal": 126,
+      "goal": "gain",
+      "name": "Chetan",
+      "weight": 70
+    },
+    {
+      "name": "Naman pawar",
+      "height": 175,
+      "email": "9480594010@proteino.com",
+      "phone": "9480594010",
+      "dailyProteinGoal": 126,
+      "weight": 70,
+      "goal": "gain",
+      "dailyCalorieGoal": 2100,
+      "password": "Pawar2010"
+    },
+    {
+      "dailyCalorieGoal": 2100,
+      "height": 175,
+      "phone": "7892354062",
+      "weight": 70,
+      "password": "chet",
+      "email": "7892354062@proteino.com",
+      "name": "Chetan",
+      "dailyProteinGoal": 126,
+      "goal": "gain"
+    },
+    {
+      "dailyCalorieGoal": 2100,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocIdaMbPVwZHeajgERITwX0IoTYPq_ij4FMWuWBVTtXXcY5a6Q=s96-c",
+      "height": 175,
+      "password": "google_5k48nFUmmAMvNkmEyEOniGnQQEt2",
+      "phone": "G-5k48nFUm",
+      "email": "anushajartarghar@gmail.com",
+      "weight": 70,
+      "goal": "gain",
+      "dailyProteinGoal": 126,
+      "name": "Anusha J"
+    },
+    {
+      "dailyCalorieGoal": 2100,
+      "goal": "gain",
+      "weight": 70,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLPjnEv1yF2anyefcwGGqf26r7c29-735vtueuFvAkI8u99dQ=s96-c",
+      "height": 175,
+      "name": "vaishali pawar",
+      "phone": "G-IeGodgL8",
+      "email": "vaishali.2n@gmail.com",
+      "dailyProteinGoal": 126,
+      "password": "google_IeGodgL8l9ZCSf7FBvTOydHmdh03"
+    },
+    {
+      "dailyCalorieGoal": 2100,
+      "height": 175,
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKc4Mn1gYSl53RJpDydX3b6LoArg9JMHEEHxwze4w3bUH5w5Q=s96-c",
+      "phone": "G-jQGN190d",
+      "weight": 70,
+      "email": "tej.official22@gmail.com",
+      "password": "google_jQGN190dJaSDLd1D9ngVKaUaulJ3",
+      "dailyProteinGoal": 126,
+      "name": "Tejas Katigar",
+      "goal": "gain"
+    },
+    {
+      "password": "misqaq-8zagza-pocbyW",
+      "name": "Swagat patil",
+      "dailyProteinGoal": 126,
+      "goal": "gain",
+      "weight": 70,
+      "email": "6360955529@proteino.com",
+      "dailyCalorieGoal": 2100,
+      "phone": "6360955529",
+      "height": 175
+    },
+    {
+      "password": "Pavan1813",
+      "dailyProteinGoal": 126,
+      "name": "Pavan",
+      "weight": 70,
+      "dailyCalorieGoal": 2100,
+      "goal": "gain",
+      "email": "8792127764@proteino.com",
+      "height": 175,
+      "phone": "8792127764"
     }
-  ]
+  ],
+  "deletedSubscriptions": [
+    {
+      "customerName": "Karthik",
+      "planName": "Paneer Salad 2-Month Subscription (52 Meals)",
+      "createdAt": "2026-09-06T15:07:27.161Z",
+      "date": "03:07 pm, 06 Sept 2026",
+      "isPaused": false,
+      "planId": "panner-salad",
+      "gymLocation": "4th Floor, Arihant Elite Complex, Above First Cry, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
+      "gymName": "Body Tone Fitness (Shirur Park)",
+      "price": 5398,
+      "customerPhone": "9113237706",
+      "timeSlot": "6:00 AM – 6:30 AM",
+      "expiryDate": "2026-10-28T15:07:27.161Z",
+      "status": "active",
+      "durationDays": 52,
+      "gymId": "g2",
+      "startDate": "2026-09-06T15:07:27.161Z",
+      "id": "SUB-861546",
+      "deletedAt": "2026-09-06T17:45:35.394Z",
+      "deletedDate": "11:15 pm, 06 Sept 2026",
+      "deletedBy": "Admin",
+      "reason": "Subscription Declined / Deleted by Admin"
+    },
+    {
+      "planId": "veg-bulk-50p",
+      "expiryDate": "2026-11-23T17:38:21.198Z",
+      "deletedDate": "05:39 pm, 06 Sept 2026",
+      "gymId": "g5",
+      "gymName": "Iron Lifters 2.0",
+      "timeSlot": "6:00 AM – 6:30 AM",
+      "customerName": "Chetan Jartarghar",
+      "customerPhone": "7892354063",
+      "date": "05:38 pm, 06 Sept 2026",
+      "deletedBy": "Admin",
+      "createdAt": "2026-09-06T17:38:21.198Z",
+      "id": "SUB-337318",
+      "price": 7497,
+      "status": "active",
+      "deletedAt": "2026-09-06T17:39:25.004Z",
+      "gymLocation": "3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021",
+      "durationDays": 78,
+      "startDate": "2026-09-06T17:38:21.198Z",
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 3-Month Subscription (78 Meals)",
+      "isPaused": false,
+      "reason": "Subscription Declined / Deleted by Admin"
+    },
+    {
+      "startDate": "2026-09-06T17:38:21.277Z",
+      "reason": "Subscription Declined / Deleted by Admin",
+      "timeSlot": "6:00 AM – 6:30 AM",
+      "gymId": "g5",
+      "deletedAt": "2026-09-06T17:38:59.161Z",
+      "durationDays": 78,
+      "status": "active",
+      "gymLocation": "3rd Floor, Shirur Park Road, Above Equitas Bank, Opp. Focusmart, Phase 4, Vidya Nagar, Hubballi, Karnataka 580021",
+      "expiryDate": "2026-11-23T17:38:21.277Z",
+      "id": "SUB-280170",
+      "price": 7497,
+      "isPaused": false,
+      "customerName": "Chetan Jartarghar",
+      "customerPhone": "7892354063",
+      "gymName": "Iron Lifters 2.0",
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 3-Month Subscription (78 Meals)",
+      "planId": "veg-bulk-50p",
+      "createdAt": "2026-09-06T17:38:21.277Z",
+      "deletedBy": "Admin",
+      "date": "05:38 pm, 06 Sept 2026",
+      "deletedDate": "05:38 pm, 06 Sept 2026"
+    },
+    {
+      "planId": "panner-salad",
+      "gymId": "g3",
+      "date": "03:19 pm, 06 Sept 2026",
+      "customerPhone": "9113237706",
+      "deletedAt": "2026-09-06T17:38:00.062Z",
+      "durationDays": 78,
+      "planName": "Paneer Salad 3-Month Subscription (78 Meals)",
+      "startDate": "2026-09-06T15:19:25.271Z",
+      "isPaused": false,
+      "gymLocation": "Lokappan Hakkal, Vidya Nagar, Hubballi, Karnataka 580021",
+      "customerName": "Karthik",
+      "deletedBy": "Admin",
+      "createdAt": "2026-09-06T15:19:25.271Z",
+      "id": "SUB-259076",
+      "status": "active",
+      "price": 8097,
+      "gymName": "Omkar Fitness",
+      "timeSlot": "10:00 AM",
+      "deletedDate": "05:38 pm, 06 Sept 2026",
+      "reason": "Subscription Declined / Deleted by Admin",
+      "expiryDate": "2026-11-23T15:19:25.271Z"
+    },
+    {
+      "isPaused": false,
+      "planId": "veg-bulk-50p",
+      "price": 2499,
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 1-Month Subscription (26 Meals)",
+      "deletedDate": "03:50 pm, 05 Sept 2026",
+      "startDate": "2026-09-05T15:50:02.079Z",
+      "customerPhone": "7892354063",
+      "deletedAt": "2026-09-05T15:50:17.599Z",
+      "durationDays": 26,
+      "status": "active",
+      "gymName": "Gold's Gym",
+      "deletedBy": "Admin",
+      "createdAt": "2026-09-05T15:50:02.079Z",
+      "gymId": "g1",
+      "gymLocation": "Downtown Fitness Hub, Sector 4",
+      "customerName": "Chetan Jartarghar",
+      "timeSlot": "6:00 AM – 8:00 AM",
+      "date": "03:50 pm, 05 Sept 2026",
+      "expiryDate": "2026-10-01T15:50:02.079Z",
+      "reason": "Cancelled/Deleted in Admin Panel",
+      "id": "SUB-756828"
+    },
+    {
+      "gymName": "Gold's Gym",
+      "isPaused": false,
+      "gymLocation": "Downtown Fitness Hub, Sector 4",
+      "status": "active",
+      "price": 2499,
+      "planName": "Bulk 50P – Weight Gain Meal (Veg) 26-Day Subscription",
+      "customerPhone": "7892354063",
+      "customerName": "Chetan Jartarghar",
+      "deletedBy": "Admin",
+      "createdAt": "2026-09-05T15:21:24.905Z",
+      "id": "SUB-451779",
+      "reason": "Cancelled/Deleted in Admin Panel",
+      "startDate": "2026-09-05T15:21:24.905Z",
+      "deletedDate": "03:48 pm, 05 Sept 2026",
+      "planId": "veg-bulk-50p",
+      "deletedAt": "2026-09-05T15:48:05.017Z",
+      "gymId": "g1",
+      "date": "08:51 pm, 05 Sept 2026",
+      "timeSlot": "6:00 AM – 8:00 AM",
+      "expiryDate": "2026-10-01T15:21:24.905Z",
+      "durationDays": 26
+    }
+  ],
+  "kitchenStatus": {
+    "isLive": true,
+    "updatedAt": "2026-09-06T17:35:10.052Z",
+    "updatedBy": "Admin"
+  }
 }

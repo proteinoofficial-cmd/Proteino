@@ -92,8 +92,8 @@ function buildLoudChimeWavBlob(): string {
   }
 }
 
-// Create distinct Pre-Order futuristic harmonic sequence WAV (Ascending crystal chime)
-function buildPreOrderChimeWavBlob(): string {
+// Create distinct Subscription Plan Order futuristic harmonic sequence WAV (Ascending crystal chime)
+function buildSubscriptionChimeWavBlob(): string {
   if (cachedPreOrderBlobWavUrl) return cachedPreOrderBlobWavUrl;
 
   try {
@@ -200,7 +200,7 @@ export function initAudioUnlock() {
     }
     // Pre-create the WAV blobs
     buildLoudChimeWavBlob();
-    buildPreOrderChimeWavBlob();
+    buildSubscriptionChimeWavBlob();
     buildKitchenOpeningChimeWavBlob();
   } catch (e) {
     console.warn("Audio unlock warning:", e);
@@ -275,23 +275,23 @@ export function playOrderAlertSound(): Promise<void> {
   });
 }
 
-// Play distinct sound for PRE-ORDERS (Crisp ascending crystal arpeggio + shimmer chime)
-export function playPreOrderAlertSound(): Promise<void> {
+// Play distinct sound for SUBSCRIPTIONS (Crisp ascending crystal arpeggio + shimmer chime)
+export function playSubscriptionAlertSound(): Promise<void> {
   return new Promise(async (resolve) => {
     initAudioUnlock();
 
-    // Strategy 1: HTML5 Audio with Distinct Pre-Order WAV Blob
+    // Strategy 1: HTML5 Audio with Distinct Subscription WAV Blob
     try {
-      const wavUrl = buildPreOrderChimeWavBlob();
+      const wavUrl = buildSubscriptionChimeWavBlob();
       if (wavUrl) {
         const audio = new Audio(wavUrl);
         audio.volume = 1.0;
         audio.play().catch((err) => {
-          console.warn("HTML5 pre-order audio autoplay error:", err);
+          console.warn("HTML5 subscription audio autoplay error:", err);
         });
       }
     } catch (e) {
-      console.warn("HTML5 Pre-order audio player error:", e);
+      console.warn("HTML5 Subscription audio player error:", e);
     }
 
     // Strategy 2: Web Audio API Oscillator Arpeggio Synthesis (Distinct Ascending Futuristic Chords)
@@ -313,7 +313,7 @@ export function playPreOrderAlertSound(): Promise<void> {
         master.connect(ctx.destination);
 
         // Harmonic ascending 5-note melodic chime (distinct from normal order bell)
-        const preOrderChimes = [
+        const subChimes = [
           { freq: 440.00, start: 0.00, dur: 0.65, vol: 0.65, type: 'triangle' as OscillatorType },  // A4
           { freq: 554.37, start: 0.18, dur: 0.70, vol: 0.70, type: 'triangle' as OscillatorType },  // C#5
           { freq: 659.25, start: 0.36, dur: 0.80, vol: 0.75, type: 'sine' as OscillatorType },      // E5
@@ -322,7 +322,7 @@ export function playPreOrderAlertSound(): Promise<void> {
           { freq: 1760.00, start: 0.76, dur: 1.40, vol: 0.85, type: 'sine' as OscillatorType },     // A6 Shimmer
         ];
 
-        preOrderChimes.forEach((n) => {
+        subChimes.forEach((n) => {
           if (!ctx) return;
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -340,12 +340,15 @@ export function playPreOrderAlertSound(): Promise<void> {
         });
       }
     } catch (synthErr) {
-      console.warn("Web Audio pre-order synth warning:", synthErr);
+      console.warn("Web Audio subscription synth warning:", synthErr);
     }
 
     resolve();
   });
 }
+
+// Alias for backwards compatibility
+export const playPreOrderAlertSound = playSubscriptionAlertSound;
 
 // Create distinct Kitchen Opening Ceremony / Session Start WAV (Majestic resonant gong + ascending triumphant fanfare)
 function buildKitchenOpeningChimeWavBlob(): string {

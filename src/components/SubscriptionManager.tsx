@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -54,6 +54,8 @@ export default function SubscriptionManager({
   const [successMsg, setSuccessMsg] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [showClosedModal, setShowClosedModal] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
 
   // Customer notification for declined/deleted subscription
   const [declinedNotice, setDeclinedNotice] = useState<{ planName?: string; date?: string } | null>(null);
@@ -170,25 +172,36 @@ export default function SubscriptionManager({
     setShowConfirmModal(true);
   };
 
-  const handleFinalConfirmOrder = () => {
-    const monthLabel = durationMonths === 1 ? '1-Month' : durationMonths === 2 ? '2-Month' : '3-Month';
-    const newSubPayload = {
-      planId: selectedProduct.id,
-      planName: `${selectedProduct.name} ${monthLabel} Subscription (${numDeliveryDays} Meals)`,
-      price: finalPrice,
-      durationDays: numDeliveryDays,
-      customerName,
-      customerPhone,
-      gymId: selectedGym.id,
-      gymName: selectedGym.name,
-      gymLocation: selectedGym.location,
-      timeSlot: selectedTimeSlot,
-      isPaused: false
-    };
+  const handleFinalConfirmOrder = async () => {
+    if (isSubmittingRef.current || isSubmitting) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
 
-    onBuySubscription(newSubPayload);
-    setShowConfirmModal(false);
-    setSuccessMsg(true);
+    try {
+      const monthLabel = durationMonths === 1 ? '1-Month' : durationMonths === 2 ? '2-Month' : '3-Month';
+      const newSubPayload = {
+        planId: selectedProduct.id,
+        planName: `${selectedProduct.name} ${monthLabel} Subscription (${numDeliveryDays} Meals)`,
+        price: finalPrice,
+        durationDays: numDeliveryDays,
+        customerName,
+        customerPhone,
+        gymId: selectedGym.id,
+        gymName: selectedGym.name,
+        gymLocation: selectedGym.location,
+        timeSlot: selectedTimeSlot,
+        isPaused: false
+      };
+
+      await onBuySubscription(newSubPayload);
+      setShowConfirmModal(false);
+      setSuccessMsg(true);
+    } finally {
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }, 2500);
+    }
   };
 
   // Scroll to top immediately upon entering Monthly Subscription view
@@ -423,14 +436,15 @@ export default function SubscriptionManager({
                 <button
                   type="button"
                   onClick={() => setGymSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-navy/40 hover:text-brand-navy"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-navy/40 hover:text-brand-navy cursor-pointer"
                 >
                   Clear
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1">
+            {/* Partner Gyms: Displays first 3 gym names at once, then scrolls when cursor is on it */}
+            <div className="grid grid-cols-1 gap-2 max-h-[224px] overflow-y-auto pr-1 scroll-smooth">
               {(() => {
                 const filteredGyms = GYMS.filter(gym => 
                   gym.name.toLowerCase().includes(gymSearch.toLowerCase()) || 
@@ -717,6 +731,7 @@ export default function SubscriptionManager({
                 <button
                   type="button"
                   onClick={() => setShowConfirmModal(false)}
+                  disabled={isSubmitting}
                   className="py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-xs transition-all active:scale-95 cursor-pointer text-center"
                 >
                   Cancel
@@ -724,10 +739,17 @@ export default function SubscriptionManager({
                 <button
                   type="button"
                   onClick={handleFinalConfirmOrder}
+                  disabled={isSubmitting}
                   className="py-3 px-4 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Check className="w-4 h-4 stroke-[3]" />
-                  <span>Confirm Order</span>
+                  {isSubmitting ? (
+                    <span>Confirming...</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>Confirm Order</span>
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>

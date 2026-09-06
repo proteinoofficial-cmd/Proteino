@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -26,7 +26,6 @@ import { Product, ActiveSubscription, CartItem } from '../types';
 import { PRODUCTS } from '../data';
 import ProductImageSlider from './ProductImageSlider';
 import { useStoreHours } from '../utils/storeHours';
-import ProteinoLogo from './ProteinoLogo';
 
 interface DashboardProps {
   onProductClick: (product: Product) => void;
@@ -207,17 +206,52 @@ export default function Dashboard({
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Format customer display name aesthetically with Title Case
+  const formattedCustomerName = useMemo(() => {
+    if (!userName || !userName.trim()) return 'Karthik';
+    return userName
+      .trim()
+      .split(' ')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }, [userName]);
+
   return (
     <div className="flex flex-col h-full bg-[#FAF9F6] overflow-y-auto pb-24 select-none">
       
-      {/* Top Header Section with Sign In button on Left/Top Header */}
+      {/* Top Header Section */}
       <div className="sticky top-0 bg-[#FAF9F6]/95 backdrop-blur-md z-30 px-5 pt-5 pb-3 flex items-center justify-between">
+        {/* Upside Left: Brand & Customer Name Greeting (No Logo) */}
         <div className="flex items-center gap-3">
-          {/* Left Corner Sign In Button for Guest exploration */}
+          <div>
+            <h1 className="text-2xl font-black text-brand-green tracking-wider font-display italic leading-tight">
+              PROTEINO
+            </h1>
+            <p className="text-xs font-semibold text-brand-navy/70 mt-0.5">
+              {isGuest ? (
+                <span className="flex items-center gap-1">
+                  <span>Hi, Guest</span>
+                  <span className="text-sm">👋</span>
+                  <span className="text-brand-navy/40 mx-1">•</span>
+                  <button onClick={onSignInClick} className="text-brand-green font-bold hover:underline cursor-pointer bg-transparent border-0 p-0">Sign in</button>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <span className="text-brand-navy/60 font-medium">Hi,</span>
+                  <span className="text-brand-navy font-black tracking-tight">{formattedCustomerName}</span>
+                  <span className="text-sm">👋</span>
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+        
+        {/* Right Header Section: Sign In button if guest + Notification Bell */}
+        <div className="flex items-center gap-2">
           {isGuest && (
             <button 
               onClick={onSignInClick}
-              id="btn-home-signin-left"
+              id="btn-home-signin-right"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white text-xs font-black shadow-sm active:scale-95 transition-all duration-200 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
@@ -225,30 +259,6 @@ export default function Dashboard({
             </button>
           )}
 
-          <ProteinoLogo 
-            size={36} 
-            variant="vector" 
-            className="w-9 h-9 rounded-xl overflow-hidden shadow-xs border border-brand-green/20 shrink-0" 
-          />
-
-          <div>
-            <h1 className="text-2xl font-black text-brand-green tracking-wider font-display italic">
-              PROTEINO
-            </h1>
-            <p className="text-xs font-semibold text-brand-navy/50">
-              {isGuest ? (
-                <span>
-                  Hi, Guest Explorer 👋 • <button onClick={onSignInClick} className="text-brand-green font-bold hover:underline cursor-pointer bg-transparent border-0 p-0">Log in</button>
-                </span>
-              ) : (
-                <span>Hi, {userName || 'Fitness Enthusiast'} 👋</span>
-              )}
-            </p>
-          </div>
-        </div>
-        
-        {/* Notification Bell Header Container */}
-        <div className="flex items-center gap-2">
           {/* Notification Bell Icon & Container */}
           <div className="relative" ref={notificationRef}>
             <button 

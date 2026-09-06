@@ -138,8 +138,8 @@ if (fs.existsSync(DATA_FILE)) {
       date: "Today, 08:30 AM",
       customerName: "Sarah Connor",
       customerPhone: "9876543210",
-      gymName: "Gold's Gym - Indiranagar",
-      gymLocation: "80 Feet Rd, Hal 3rd Stage, Indiranagar, Bengaluru",
+      gymName: "Jai Ho Fitness (Shirur Park)",
+      gymLocation: "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
       deliveryTimeSlot: "2 PM",
       items: [
         {
@@ -696,6 +696,25 @@ app.post("/api/orders", (req, res) => {
   }
 
   const newOrder = req.body;
+
+  // Deduplicate rapid duplicate submissions (e.g. double click, network retry within 15 seconds)
+  const cleanPhone = (newOrder.customerPhone || '').replace(/\D/g, '').slice(-10);
+  const nowMs = Date.now();
+  if (cleanPhone) {
+    const duplicateOrder = store.orders.find(o => {
+      const oPhone = (o.customerPhone || '').replace(/\D/g, '').slice(-10);
+      const oCreated = new Date(o.createdAt || o.date).getTime();
+      return oPhone === cleanPhone &&
+        Number(o.total) === Number(newOrder.total) &&
+        Math.abs(nowMs - oCreated) < 15000;
+    });
+
+    if (duplicateOrder) {
+      console.log(`[Deduplication] Prevented duplicate single meal order for phone: ${cleanPhone}`);
+      return res.status(200).json(duplicateOrder);
+    }
+  }
+
   let orderId = newOrder.id || `PRTN-${Math.floor(1000 + Math.random() * 9000)}`;
   
   // Ensure unique order ID
@@ -709,7 +728,10 @@ app.post("/api/orders", (req, res) => {
   }
 
   if (!newOrder.date) {
-    newOrder.date = new Date().toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString("en-IN", { day: '2-digit', month: 'short' });
+    const now = new Date();
+    const t = now.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: '2-digit', minute: '2-digit', hour12: true });
+    const d = now.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: '2-digit', month: 'short', year: 'numeric' });
+    newOrder.date = `${t}, ${d}`;
   }
   if (!newOrder.createdAt) {
     newOrder.createdAt = new Date().toISOString();
@@ -726,7 +748,7 @@ app.put("/api/orders/:id", (req, res) => {
   if (orderIdx !== -1) {
     if (status) {
       store.orders[orderIdx].status = status;
-      if (status === 'accepted' || status === 'out_for_delivery') {
+      if (status === 'cooking' || status === 'accepted' || status === 'out_for_delivery') {
         if (!store.orders[orderIdx].acceptedAt) {
           store.orders[orderIdx].acceptedAt = acceptedAt || new Date().toISOString();
         }
@@ -738,14 +760,14 @@ app.put("/api/orders/:id", (req, res) => {
         }
       }
       if (status === 'declined') {
-        if (!store.orders[orderIdx].declinedAt) {
-          store.orders[orderIdx].declinedAt = declinedAt || new Date().toISOString();
-        }
-        if (!store.orders[orderIdx].declinedDate) {
+        store.orders[orderIdx].declinedAt = declinedAt || new Date().toISOString();
+        if (declinedDate) {
+          store.orders[orderIdx].declinedDate = declinedDate;
+        } else if (!store.orders[orderIdx].declinedDate) {
           const now = new Date();
-          const t = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-          const d = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-          store.orders[orderIdx].declinedDate = declinedDate || `${t}, ${d}`;
+          const t = now.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
+          const d = now.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric" });
+          store.orders[orderIdx].declinedDate = `${t}, ${d}`;
         }
       }
     }
@@ -808,6 +830,24 @@ app.post("/api/subscriptions", (req, res) => {
     return res.status(400).json({ error: "Customer phone is required" });
   }
 
+  // Deduplicate rapid duplicate submissions (e.g. double click, network retry within 15 seconds)
+  const cleanSubPhone = customerPhone.replace(/\D/g, '').slice(-10);
+  const nowSubMs = Date.now();
+  if (cleanSubPhone) {
+    const duplicateSub = store.subscriptions.find(s => {
+      const sPhone = (s.customerPhone || '').replace(/\D/g, '').slice(-10);
+      const sCreated = new Date(s.createdAt || s.startDate).getTime();
+      return sPhone === cleanSubPhone &&
+        s.planId === planId &&
+        Math.abs(nowSubMs - sCreated) < 15000;
+    });
+
+    if (duplicateSub) {
+      console.log(`[Deduplication] Prevented duplicate subscription creation for phone: ${cleanSubPhone} (plan: ${planId})`);
+      return res.status(200).json(duplicateSub);
+    }
+  }
+
   const now = new Date();
   const startDate = req.body.startDate || now.toISOString();
   const startDateObj = new Date(startDate);
@@ -815,11 +855,13 @@ app.post("/api/subscriptions", (req, res) => {
   expiryDate.setDate(expiryDate.getDate() + durationDays);
 
   const formattedDateStr = startDateObj.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "short",
     year: "numeric"
   });
   const formattedTimeStr = startDateObj.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true
@@ -865,11 +907,13 @@ app.delete("/api/subscriptions/:idOrPhone", (req, res) => {
   if (toDelete.length > 0) {
     const now = new Date();
     const formattedDeletedDate = now.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
       year: "numeric"
     });
     const formattedDeletedTime = now.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true

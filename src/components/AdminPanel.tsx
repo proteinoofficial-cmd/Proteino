@@ -27,12 +27,16 @@ import {
   Sparkles,
   Power,
   Dumbbell,
-  MapPin
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  Bike,
+  ChefHat
 } from "lucide-react";
 import { Order, ActiveSubscription, DeletedSubscription } from "../types";
 import { PRODUCTS, GYMS } from "../data";
 import { apiFetch } from "../utils/api";
-import { playOrderAlertSound, playPreOrderAlertSound, playKitchenOpeningAlertSound, initAudioUnlock } from "../utils/audio";
+import { playOrderAlertSound, playSubscriptionAlertSound, playKitchenOpeningAlertSound, initAudioUnlock } from "../utils/audio";
 import { calculateMealsRemaining } from "../utils/deliverySlots";
 import { setLocalKitchenStatus } from "../utils/storeHours";
 
@@ -68,13 +72,13 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<"single" | "plan" | "gym" | "total">("single");
-  const [singleOrderSubTab, setSingleOrderSubTab] = useState<"current" | "past" | "deleted">("current");
-  const [subscriptionSubTab, setSubscriptionSubTab] = useState<"current" | "past" | "deleted">("current");
+  const [singleOrderSubTab, setSingleOrderSubTab] = useState<"all" | "past" | "declined">("all");
+  const [subscriptionSubTab, setSubscriptionSubTab] = useState<"current" | "past" | "declined">("current");
   const [timeFilter, setTimeFilter] = useState<"24h" | "month" | "all">("24h");
   const [typeFilter, setTypeFilter] = useState<"all" | "single" | "subscription">("all");
 
   // Past Orders Filters (Daily, Weekly, Monthly with all 12 months)
-  const [pastFilterType, setPastFilterType] = useState<"all" | "daily" | "weekly" | "monthly">("daily");
+  const [pastFilterType, setPastFilterType] = useState<"all" | "daily" | "weekly" | "monthly">("all");
   const [selectedDailyMode, setSelectedDailyMode] = useState<"today" | "yesterday" | "custom">("today");
   const [customDailyDate, setCustomDailyDate] = useState<string>(() => {
     return new Date().toISOString().split("T")[0];
@@ -121,6 +125,15 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     message: string;
     expiresAt: number;
   } | null>(null);
+
+  // Gym horizontal scroll ref (shows 2 cards at a time, scrollable on cursor hover/wheel)
+  const gymScrollRef = useRef<HTMLDivElement>(null);
+  const scrollGyms = (direction: "left" | "right") => {
+    if (gymScrollRef.current) {
+      const cardWidth = gymScrollRef.current.clientWidth / 2;
+      gymScrollRef.current.scrollBy({ left: direction === "left" ? -cardWidth * 2 : cardWidth * 2, behavior: "smooth" });
+    }
+  };
   const [openingAlertSecondsLeft, setOpeningAlertSecondsLeft] = useState<number>(30);
   const lastOpeningAlertKeyRef = useRef<string>("");
 
@@ -136,6 +149,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const hasInitializedRef = useRef(false);
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const knownSubIdsRef = useRef<Set<string>>(new Set());
+  const lastAlertTimestampRef = useRef<Record<string, number>>({});
 
   // Countdown effect for 30-second Kitchen Opening Alert
   useEffect(() => {
@@ -295,8 +309,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     if (createdAt) {
       const d = new Date(createdAt);
       if (!isNaN(d.getTime())) {
-        const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-        const date = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+        const time = d.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
+        const date = d.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric" });
         return { time, date, display: `${time}, ${date}` };
       }
     }
@@ -306,8 +320,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       }
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
-        const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-        const date = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+        const time = d.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
+        const date = d.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric" });
         return { time, date, display: `${time}, ${date}` };
       }
       return { time: dateStr, date: "", display: dateStr };
@@ -315,16 +329,23 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     return { time: "Just now", date: "", display: "Just now" };
   };
 
-  // Trigger an alert popup and sound effect (15s duration with distinct pre-order chime)
+  // Trigger an alert popup and sound effect (15s duration with distinct subscription chime)
   const triggerOrderAlert = (alert: NewOrderNotification) => {
+    const alertKey = `${alert.customerPhone || ''}_${alert.category}_${alert.title || ''}`;
+    const nowMs = Date.now();
+    if (lastAlertTimestampRef.current[alertKey] && (nowMs - lastAlertTimestampRef.current[alertKey] < 15000)) {
+      return;
+    }
+    lastAlertTimestampRef.current[alertKey] = nowMs;
+
     if (isSoundEnabled) {
-      if (alert.category === "preorder" || alert.isPreOrder) {
-        playPreOrderAlertSound();
+      if (alert.category === "subscription") {
+        playSubscriptionAlertSound();
       } else {
         playOrderAlertSound();
       }
     }
-    setActiveAlerts(prev => [alert, ...prev.filter(a => a.id !== alert.id)].slice(0, 5));
+    setActiveAlerts(prev => [alert, ...prev.filter(a => a.id !== alert.id && !(a.customerPhone === alert.customerPhone && a.category === alert.category))].slice(0, 5));
   };
 
   const dismissAlert = (alertId: string) => {
@@ -345,8 +366,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     initAudioUnlock();
     playOrderAlertSound();
     const nowTime = new Date();
-    const formattedTime = nowTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-    const formattedDate = nowTime.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const formattedTime = nowTime.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
+    const formattedDate = nowTime.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric" });
 
     const testAlert: NewOrderNotification = {
       id: `TEST-${Date.now().toString().slice(-4)}`,
@@ -364,30 +385,28 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     setActiveAlerts(prev => [testAlert, ...prev]);
   };
 
-  // Test distinct pre-order sound effect & 15-second popup
-  const testPreOrderAlertSound = () => {
+  // Test distinct monthly subscription order sound effect & 15-second popup
+  const testSubscriptionAlertSound = () => {
     initAudioUnlock();
-    playPreOrderAlertSound();
+    playSubscriptionAlertSound();
     const nowTime = new Date();
-    const formattedTime = nowTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-    const formattedDate = nowTime.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const formattedTime = nowTime.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
+    const formattedDate = nowTime.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric" });
 
-    const testPreAlert: NewOrderNotification = {
-      id: `PRE-${Date.now().toString().slice(-4)}`,
-      category: "preorder",
-      isPreOrder: true,
-      title: "🗓️ 2x Sprouts Salad & Paneer Bowl",
-      customerName: "Fitness Member (Pre-Order)",
+    const testSubAlert: NewOrderNotification = {
+      id: `SUB-${Date.now().toString().slice(-4)}`,
+      category: "subscription",
+      title: "🌟 26-Day Elite Monthly Plan",
+      customerName: "Karthik (Subscriber)",
       customerPhone: "9988776655",
-      gymName: "Fitness Health Club (Rajnagar, Hubballi)",
-      deliverySlot: "07:00 AM - 07:30 AM Tomorrow",
-      amount: 420,
+      gymName: "R11 Fitness (Vidya Nagar, Hubballi)",
+      amount: 3999,
       timeStr: formattedTime,
       dateStr: formattedDate,
       createdAt: Date.now(),
       expiresAt: Date.now() + 15000 // 15 seconds
     };
-    setActiveAlerts(prev => [testPreAlert, ...prev]);
+    setActiveAlerts(prev => [testSubAlert, ...prev]);
   };
 
   // Fetch all orders, subscriptions & deleted plans from the backend
@@ -521,20 +540,36 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     }
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: "placed" | "accepted" | "declined" | "out_for_delivery" | "delivered") => {
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: "placed" | "accepted" | "cooking" | "declined" | "out_for_delivery" | "delivered") => {
     const nowIso = new Date().toISOString();
     const now = new Date();
     const formattedDeletedDate = now.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
       year: "numeric"
     });
     const formattedDeletedTime = now.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true
     });
     const declinedDateStr = `${formattedDeletedTime}, ${formattedDeletedDate}`;
+
+    if (newStatus === "declined") {
+      setActionNotice("Order declined & moved to Declined tab.");
+      setTimeout(() => setActionNotice(null), 3500);
+    } else if (newStatus === "cooking" || newStatus === "accepted") {
+      setActionNotice("Order accepted! Cooking started with 30-min timer.");
+      setTimeout(() => setActionNotice(null), 3500);
+    } else if (newStatus === "out_for_delivery") {
+      setActionNotice("Order status updated: On the Way!");
+      setTimeout(() => setActionNotice(null), 3500);
+    } else if (newStatus === "delivered") {
+      setActionNotice("Order marked as Delivered!");
+      setTimeout(() => setActionNotice(null), 3500);
+    }
 
     // Instant optimistic update for Admin UI
     let updatedList: Order[] = [];
@@ -543,7 +578,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         ...o,
         status: newStatus,
         declinedDate: newStatus === 'declined' ? (o.declinedDate || declinedDateStr) : o.declinedDate,
-        acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? (o.acceptedAt || nowIso) : o.acceptedAt,
+        declinedAt: newStatus === 'declined' ? (o.declinedAt || nowIso) : o.declinedAt,
+        acceptedAt: (newStatus === 'cooking' || newStatus === 'accepted' || newStatus === 'out_for_delivery') ? (o.acceptedAt || nowIso) : o.acceptedAt,
         deliveredAt: newStatus === 'delivered' ? (o.deliveredAt || nowIso) : o.deliveredAt,
         deliveryTimeRemaining: newStatus === 'delivered' ? 0 : o.deliveryTimeRemaining
       } : o);
@@ -559,7 +595,9 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         detail: { 
           orderId, 
           status: newStatus, 
-          acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
+          declinedAt: newStatus === 'declined' ? nowIso : undefined,
+          declinedDate: newStatus === 'declined' ? declinedDateStr : undefined,
+          acceptedAt: (newStatus === 'cooking' || newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
           deliveredAt: newStatus === 'delivered' ? nowIso : undefined
         } 
       }));
@@ -568,8 +606,10 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         bc.postMessage({ 
           type: 'order_updated', 
           orderId, 
-          status: newStatus,
-          acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
+          status: newStatus, 
+          declinedAt: newStatus === 'declined' ? nowIso : undefined,
+          declinedDate: newStatus === 'declined' ? declinedDateStr : undefined,
+          acceptedAt: (newStatus === 'cooking' || newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
           deliveredAt: newStatus === 'delivered' ? nowIso : undefined
         });
         bc.close();
@@ -582,7 +622,9 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           status: newStatus,
-          acceptedAt: (newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
+          declinedAt: newStatus === 'declined' ? nowIso : undefined,
+          declinedDate: newStatus === 'declined' ? declinedDateStr : undefined,
+          acceptedAt: (newStatus === 'cooking' || newStatus === 'accepted' || newStatus === 'out_for_delivery') ? nowIso : undefined,
           deliveredAt: newStatus === 'delivered' ? nowIso : undefined,
           deliveryTimeRemaining: newStatus === 'delivered' ? 0 : undefined
         })
@@ -662,17 +704,16 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   // Delete subscription & move to Deleted Plans list
   const handleDeleteSubscription = async (subId: string) => {
     const sub = subscriptions.find(s => s.id === subId);
-    if (!window.confirm("Are you sure you want to decline/delete this subscription plan? It will be archived in 'Deleted Plans' and a decline notification will be sent to the customer.")) {
-      return;
-    }
 
     const now = new Date();
     const formattedDeletedDate = now.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
       year: "numeric"
     });
     const formattedDeletedTime = now.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true
@@ -701,9 +742,30 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       reason: "Subscription Declined / Deleted by Admin"
     };
 
-    // Optimistic state update
+    // Optimistic state update in Admin UI
     setSubscriptions(prev => prev.filter(s => s.id !== subId));
     setDeletedSubscriptions(prev => [archivedSub, ...prev.filter(d => d.id !== subId)]);
+    setActionNotice("Plan declined & archived in Deleted Plans. Customer notified.");
+    setTimeout(() => setActionNotice(null), 4000);
+
+    // Notify customer site immediately via broadcast & localStorage
+    try {
+      const payload = {
+        id: subId,
+        planName: sub?.planName || 'Gym High-Protein Plan',
+        phone: sub?.customerPhone || '',
+        date: deletedDateStr,
+        timestamp: Date.now(),
+        message: "Your plan was declined. Please order again later."
+      };
+      localStorage.setItem('proteino_last_declined_sub', JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent('proteino_subscription_declined', { detail: payload }));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('proteino_sync');
+        bc.postMessage({ type: 'subscription_declined', ...payload });
+        bc.close();
+      }
+    } catch (e) {}
 
     try {
       const res = await apiFetch(`/api/subscriptions/${encodeURIComponent(subId)}`, {
@@ -711,26 +773,6 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       });
       if (res.ok) {
         fetchData(true);
-        setActionNotice("Plan declined & archived in Deleted Plans. Customer notified.");
-        setTimeout(() => setActionNotice(null), 4000);
-
-        // Notify customer via broadcast & localStorage
-        try {
-          const payload = {
-            id: subId,
-            planName: sub?.planName || 'Gym High-Protein Plan',
-            phone: sub?.customerPhone || '',
-            date: deletedDateStr,
-            timestamp: Date.now()
-          };
-          localStorage.setItem('proteino_last_declined_sub', JSON.stringify(payload));
-          window.dispatchEvent(new CustomEvent('proteino_subscription_declined', { detail: payload }));
-          if (typeof BroadcastChannel !== 'undefined') {
-            const bc = new BroadcastChannel('proteino_sync');
-            bc.postMessage({ type: 'subscription_declined', ...payload });
-            bc.close();
-          }
-        } catch (e) {}
       } else {
         fetchData(true);
       }
@@ -899,6 +941,10 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       (o.gymName && o.gymName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [orders, searchQuery]);
+
+  const activeSingleOrders = useMemo(() => {
+    return filteredOrders.filter(o => o.status !== 'declined');
+  }, [filteredOrders]);
 
   const currentSingleOrders = useMemo(() => {
     return filteredOrders.filter(o => o.status !== 'delivered' && o.status !== 'declined');
@@ -1225,10 +1271,24 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       subscription?: ActiveSubscription;
     }> = [];
 
+    const resolveValidGymName = (rawName?: string): string => {
+      if (!rawName) return GYMS[0].name;
+      const direct = GYMS.find(g => g.name === rawName);
+      if (direct) return direct.name;
+      const match = GYMS.find(g => 
+        g.name.toLowerCase().includes(rawName.toLowerCase()) || 
+        rawName.toLowerCase().includes(g.name.toLowerCase())
+      );
+      if (match) return match.name;
+      return GYMS[0].name;
+    };
+
     orders.forEach((o, index) => {
       const ts = getOrderTimestamp(o.createdAt, o.date, index * 60000);
       const totalPieces = o.items.reduce((acc, i) => acc + i.quantity, 0);
       const itemsList = o.items.map(i => ({ name: i.product.name, quantity: i.quantity, price: i.product.price }));
+      const gymName = resolveValidGymName(o.gymName);
+      const gymObj = GYMS.find(g => g.name === gymName) || GYMS[0];
       list.push({
         id: o.id,
         orderType: 'single',
@@ -1236,8 +1296,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         timestamp: ts,
         customerName: o.customerName || 'Customer',
         customerPhone: o.customerPhone || '',
-        gymName: o.gymName || 'Jai Ho Fitness (Shirur Park)',
-        gymLocation: o.gymLocation || 'Shirur Park, Hubballi',
+        gymName: gymName,
+        gymLocation: gymObj.location,
         deliveryTimeSlot: o.deliveryTimeSlot || 'Live Kitchen Delivery',
         totalPieces,
         totalAmount: o.total || 0,
@@ -1251,6 +1311,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     subscriptions.forEach((s, index) => {
       const ts = getOrderTimestamp(s.createdAt || s.startDate, s.date || s.startDate, index * 60000);
       const totalPieces = s.durationDays || 26;
+      const gymName = resolveValidGymName(s.gymName);
+      const gymObj = GYMS.find(g => g.name === gymName) || GYMS[0];
       list.push({
         id: s.id,
         orderType: 'subscription',
@@ -1258,8 +1320,8 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
         timestamp: ts,
         customerName: s.customerName || 'Subscriber',
         customerPhone: s.customerPhone || '',
-        gymName: s.gymName || 'Jai Ho Fitness (Shirur Park)',
-        gymLocation: s.gymLocation || 'Shirur Park, Hubballi',
+        gymName: gymName,
+        gymLocation: gymObj.location,
         deliveryTimeSlot: s.timeSlot || 'Morning Delivery Slot',
         totalPieces,
         totalAmount: s.price || 0,
@@ -1282,6 +1344,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
       totalRevenue: number;
     }> = {};
 
+    // Strictly initialize ONLY the 15 gyms
     GYMS.forEach(g => {
       map[g.name] = {
         gymName: g.name,
@@ -1294,21 +1357,15 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
 
     gymOrdersList.forEach(entry => {
       const name = entry.gymName || GYMS[0].name;
-      if (!map[name]) {
-        map[name] = {
-          gymName: name,
-          gymLocation: entry.gymLocation || 'Partner Gym Location',
-          totalOrders: 0,
-          totalPieces: 0,
-          totalRevenue: 0
-        };
+      if (map[name]) {
+        map[name].totalOrders += 1;
+        map[name].totalPieces += entry.totalPieces;
+        map[name].totalRevenue += entry.totalAmount;
       }
-      map[name].totalOrders += 1;
-      map[name].totalPieces += entry.totalPieces;
-      map[name].totalRevenue += entry.totalAmount;
     });
 
-    return Object.values(map);
+    // Strictly return only the 15 gyms from GYMS
+    return GYMS.map(g => map[g.name]);
   }, [gymOrdersList]);
 
   const filteredGymOrders = useMemo(() => {
@@ -1468,14 +1525,14 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
             <span className="hidden md:inline">Test Live Sound</span>
           </button>
 
-          {/* Test Pre-Order Sound */}
+          {/* Test Subscription Order Sound */}
           <button
-            onClick={testPreOrderAlertSound}
+            onClick={testSubscriptionAlertSound}
             className="px-2.5 py-2 bg-sky-500/30 hover:bg-sky-500/50 text-sky-200 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 cursor-pointer border border-sky-400/40"
-            title="Simulate distinct pre-order sound effect & 15-second popup"
+            title="Simulate distinct subscription order sound effect & 15-second popup"
           >
-            <Sparkles className="w-3.5 h-3.5 text-sky-300" />
-            <span className="hidden md:inline">Test Pre-Order Sound</span>
+            <Repeat className="w-3.5 h-3.5 text-sky-300" />
+            <span className="hidden md:inline">Test Subscription Sound</span>
           </button>
 
           {/* Test Kitchen Opening Alert (30s) */}
@@ -1683,23 +1740,23 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 </span>
               </div>
 
-              {/* Sub-tabs: Current Orders vs Past Orders vs Deleted Meals */}
+              {/* Sub-tabs: All Orders vs Past Orders vs Declined Meals */}
               <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60">
                 <button
                   type="button"
-                  onClick={() => setSingleOrderSubTab("current")}
+                  onClick={() => setSingleOrderSubTab("all")}
                   className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    singleOrderSubTab === "current"
+                    singleOrderSubTab === "all"
                       ? "bg-[#0F1E36] text-white shadow-xs"
                       : "text-slate-600 hover:text-brand-navy"
                   }`}
                 >
-                  <Clock className="w-3.5 h-3.5 text-brand-green shrink-0" />
-                  <span>Current</span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-brand-green shrink-0" />
+                  <span>All Orders</span>
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                    singleOrderSubTab === "current" ? "bg-brand-green text-white" : "bg-slate-200 text-slate-700"
+                    singleOrderSubTab === "all" ? "bg-brand-green text-white" : "bg-slate-200 text-slate-700"
                   }`}>
-                    {currentSingleOrders.length}
+                    {activeSingleOrders.length}
                   </span>
                 </button>
 
@@ -1723,17 +1780,17 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
 
                 <button
                   type="button"
-                  onClick={() => setSingleOrderSubTab("deleted")}
+                  onClick={() => setSingleOrderSubTab("declined")}
                   className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    singleOrderSubTab === "deleted"
-                      ? "bg-[#0F1E36] text-white shadow-xs"
-                      : "text-slate-600 hover:text-brand-navy"
+                    singleOrderSubTab === "declined"
+                      ? "bg-red-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-red-600"
                   }`}
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                  <span>Deleted</span>
+                  <X className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span>Declined</span>
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                    singleOrderSubTab === "deleted" ? "bg-red-600 text-white" : "bg-slate-200 text-slate-700"
+                    singleOrderSubTab === "declined" ? "bg-white text-red-700" : "bg-red-100 text-red-700"
                   }`}>
                     {deletedSingleOrders.length}
                   </span>
@@ -1937,13 +1994,15 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
               )}
 
               {/* Render Single Meal Orders Cards */}
-              {singleOrderSubTab !== "deleted" && (() => {
-                const listToRender = singleOrderSubTab === 'current' ? currentSingleOrders : filteredPastSingleOrders;
+              {singleOrderSubTab !== "declined" && (() => {
+                const listToRender = singleOrderSubTab === 'all' 
+                  ? activeSingleOrders 
+                  : filteredPastSingleOrders;
                 if (listToRender.length === 0) {
                   return (
                     <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
-                      {singleOrderSubTab === "current" 
-                        ? "No current live orders found." 
+                      {singleOrderSubTab === "all"
+                        ? "No single meal orders found."
                         : "No past delivered orders match the selected filter."}
                     </div>
                   );
@@ -2082,21 +2141,26 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
                                   order.status === "placed"
                                     ? "bg-amber-100 text-amber-800 border border-amber-300"
-                                    : (order.status === "accepted" || order.status === "out_for_delivery")
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                    : (order.status === "cooking" || order.status === "accepted")
+                                    ? "bg-orange-100 text-orange-800 border border-orange-300"
+                                    : order.status === "out_for_delivery"
+                                    ? "bg-blue-100 text-blue-800 border border-blue-300"
                                     : order.status === "declined"
                                     ? "bg-red-100 text-red-800 border border-red-300"
                                     : "bg-[#EBF4E0] text-brand-green border border-brand-green/30"
                                 }`}>
                                   {order.status === "placed" && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
-                                  {(order.status === "accepted" || order.status === "out_for_delivery") && <Truck className="w-3.5 h-3.5 text-emerald-600" />}
+                                  {(order.status === "cooking" || order.status === "accepted") && <ChefHat className="w-3.5 h-3.5 text-orange-600" />}
+                                  {order.status === "out_for_delivery" && <Bike className="w-3.5 h-3.5 text-blue-600" />}
                                   {order.status === "declined" && <X className="w-3 h-3 text-red-600" />}
                                   {order.status === "delivered" && <CheckCircle className="w-3 h-3" />}
                                   <span>
                                     {order.status === "placed"
                                       ? "Waiting for Accept"
-                                      : (order.status === "accepted" || order.status === "out_for_delivery")
-                                      ? "Accepted (On the Way)"
+                                      : (order.status === "cooking" || order.status === "accepted")
+                                      ? "Cooking (EST 30 Mins)"
+                                      : order.status === "out_for_delivery"
+                                      ? "On the Way"
                                       : order.status === "declined"
                                       ? "Declined"
                                       : "Delivered"}
@@ -2105,41 +2169,57 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {/* Option 1: Accept */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {/* Option 1: Accept -> cooking (est 30 mins) */}
                               <button
-                                onClick={() => handleUpdateOrderStatus(order.id, "accepted")}
-                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                  order.status === "accepted" || order.status === "out_for_delivery"
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-400 font-extrabold shadow-inner"
-                                    : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95"
+                                onClick={() => handleUpdateOrderStatus(order.id, "cooking")}
+                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                  order.status === "cooking" || order.status === "accepted"
+                                    ? "bg-orange-100 text-orange-800 border border-orange-400 font-extrabold shadow-inner"
+                                    : "bg-orange-500 hover:bg-orange-600 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                {order.status === "accepted" || order.status === "out_for_delivery" ? "✓ Accepted" : "Accept"}
+                                <ChefHat className="w-3 h-3" />
+                                <span>{order.status === "cooking" || order.status === "accepted" ? "✓ Cooking" : "Accept"}</span>
                               </button>
 
-                              {/* Option 2: Decline */}
+                              {/* Option 2: Decline -> declined (moves to Declined tab) */}
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, "declined")}
-                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
                                   order.status === "declined"
                                     ? "bg-red-100 text-red-800 border border-red-400 font-extrabold shadow-inner"
                                     : "bg-red-600 hover:bg-red-700 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                {order.status === "declined" ? "✕ Declined" : "Decline"}
+                                <X className="w-3 h-3" />
+                                <span>{order.status === "declined" ? "✕ Declined" : "Decline"}</span>
                               </button>
 
-                              {/* Option 3: Mark as Delivered */}
+                              {/* Option 3: On the Way -> out_for_delivery */}
+                              <button
+                                onClick={() => handleUpdateOrderStatus(order.id, "out_for_delivery")}
+                                className={`flex-1 sm:flex-none py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                  order.status === "out_for_delivery"
+                                    ? "bg-blue-100 text-blue-800 border border-blue-400 font-extrabold shadow-inner"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-xs active:scale-95"
+                                }`}
+                              >
+                                <Bike className="w-3 h-3" />
+                                <span>{order.status === "out_for_delivery" ? "✓ On the Way" : "On the Way"}</span>
+                              </button>
+
+                              {/* Option 4: Mark as Delivered -> delivered */}
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, "delivered")}
-                                className={`flex-1 sm:flex-none py-2 px-3.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`flex-1 sm:flex-none py-2 px-3.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
                                   order.status === "delivered"
                                     ? "bg-slate-200 text-slate-500 border border-slate-300 font-extrabold"
                                     : "bg-brand-green hover:bg-brand-green/90 text-white shadow-xs active:scale-95"
                                 }`}
                               >
-                                {order.status === "delivered" ? "✓ Delivered" : "Mark as Delivered"}
+                                <Check className="w-3 h-3" />
+                                <span>{order.status === "delivered" ? "✓ Delivered" : "Mark as Delivered"}</span>
                               </button>
                             </div>
                           </div>
@@ -2151,15 +2231,15 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 );
               })()}
 
-              {/* 3. DELETED MEALS VIEW */}
-              {singleOrderSubTab === "deleted" && (
+              {/* 3. DECLINED MEALS VIEW */}
+              {singleOrderSubTab === "declined" && (
                 <div className="space-y-4">
                   <div className="bg-red-50 border border-red-200 rounded-3xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Trash2 className="w-5 h-5 text-red-600" />
+                      <X className="w-5 h-5 text-red-600" />
                       <div>
                         <h4 className="text-xs font-black text-red-950 uppercase tracking-wider">
-                          Deleted / Declined Single Meals Archive
+                          Declined Single Meals Archive
                         </h4>
                         <p className="text-[10px] text-red-700 font-medium">
                           All declined single meal orders with exact date and time timestamps.
@@ -2167,13 +2247,13 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                       </div>
                     </div>
                     <span className="text-xs font-black bg-red-600 text-white px-3 py-1 rounded-full">
-                      {deletedSingleOrders.length} DELETED
+                      {deletedSingleOrders.length} DECLINED
                     </span>
                   </div>
 
                   {deletedSingleOrders.length === 0 ? (
                     <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
-                      No deleted or declined single meal orders found.
+                      No declined single meal orders found.
                     </div>
                   ) : (
                     <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
@@ -2183,10 +2263,10 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                           <div key={order.id} className="bg-white rounded-3xl border border-red-200 p-5 shadow-xs flex flex-col gap-3 relative">
                             <div className="bg-red-100/80 border border-red-300/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between flex-wrap gap-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-base">🗑️</span>
+                                <span className="text-base">❌</span>
                                 <div>
                                   <p className="text-[11px] font-black text-red-950">
-                                    Declined / Deleted On: {order.declinedDate || dtInfo.display}
+                                    Declined On: {order.declinedDate || dtInfo.display}
                                   </p>
                                   <p className="text-[9px] font-bold text-red-700">
                                     By: Admin • Status: Order Declined
@@ -2288,17 +2368,17 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
 
                 <button
                   type="button"
-                  onClick={() => setSubscriptionSubTab("deleted")}
+                  onClick={() => setSubscriptionSubTab("declined")}
                   className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    subscriptionSubTab === "deleted"
+                    subscriptionSubTab === "declined"
                       ? "bg-red-600 text-white shadow-xs"
                       : "text-slate-600 hover:text-red-600"
                   }`}
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                  <span>Deleted Plans</span>
+                  <X className="w-3.5 h-3.5 text-red-400" />
+                  <span>Declined Plans</span>
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                    subscriptionSubTab === "deleted" ? "bg-white text-red-700" : "bg-red-100 text-red-700"
+                    subscriptionSubTab === "declined" ? "bg-white text-red-700" : "bg-red-100 text-red-700"
                   }`}>
                     {filteredDeletedSubscriptions.length}
                   </span>
@@ -2498,29 +2578,29 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* 1. DELETED PLANS VIEW (WITH DELETION DATE & TIME) */}
-              {subscriptionSubTab === "deleted" && (
+              {/* 1. DECLINED PLANS VIEW (WITH DECLINE DATE & TIME) */}
+              {subscriptionSubTab === "declined" && (
                 <div className="space-y-4">
                   <div className="bg-red-50 border border-red-200 rounded-3xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Trash2 className="w-5 h-5 text-red-600" />
+                      <X className="w-5 h-5 text-red-600" />
                       <div>
                         <h4 className="text-xs font-black text-red-950 uppercase tracking-wider">
-                          Deleted Subscription Plans Archive
+                          Declined Subscription Plans Archive
                         </h4>
                         <p className="text-[10px] text-red-700 font-medium">
-                          All deleted plans with exact date and time timestamps. You can restore them anytime.
+                          All declined plans with exact date and time timestamps. You can restore them anytime.
                         </p>
                       </div>
                     </div>
                     <span className="text-xs font-black bg-red-600 text-white px-3 py-1 rounded-full">
-                      {filteredDeletedSubscriptions.length} DELETED
+                      {filteredDeletedSubscriptions.length} DECLINED
                     </span>
                   </div>
 
                   {filteredDeletedSubscriptions.length === 0 ? (
                     <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-xs text-slate-400 font-bold">
-                      No deleted subscription plans found.
+                      No declined subscription plans found.
                     </div>
                   ) : (
                     <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
@@ -2532,16 +2612,16 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                         return (
                           <div key={delSub.id} className="bg-white rounded-3xl border border-red-200 p-5 shadow-xs flex flex-col gap-3 relative">
                             
-                            {/* Deletion Date & Time Prominent Header Badge */}
+                            {/* Decline Date & Time Prominent Header Badge */}
                             <div className="bg-red-100/80 border border-red-300/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between flex-wrap gap-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-base">🗑️</span>
+                                <span className="text-base">❌</span>
                                 <div>
                                   <p className="text-[11px] font-black text-red-950">
-                                    Deleted On: {delSub.deletedDate || (delSub.deletedAt ? new Date(delSub.deletedAt).toLocaleString('en-IN') : 'N/A')}
+                                    Declined On: {delSub.deletedDate || (delSub.deletedAt ? new Date(delSub.deletedAt).toLocaleString('en-IN') : 'N/A')}
                                   </p>
                                   <p className="text-[9px] font-bold text-red-700">
-                                    By: {delSub.deletedBy || "Admin"} • {delSub.reason || "Declined / Removed by Admin"}
+                                    By: {delSub.deletedBy || "Admin"} • {delSub.reason || "Declined by Admin"}
                                   </p>
                                 </div>
                               </div>
@@ -2772,10 +2852,10 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                                       <button
                                         onClick={() => handleDeleteSubscription(sub.id)}
                                         className="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
-                                        title="Move to Deleted Plans"
+                                        title="Move to Declined Plans"
                                       >
-                                        <Trash2 className="w-3 h-3" />
-                                        <span>Delete Plan</span>
+                                        <X className="w-3 h-3" />
+                                        <span>Decline Plan</span>
                                       </button>
                                     </div>
                                   </div>
@@ -2814,57 +2894,88 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
                 </span>
               </div>
 
-              {/* Gym Selector Horizontal Scrollable Strip (Shows ~2 cards at a time, scrollable on cursor hover / wheel) */}
-              <div className="flex overflow-x-auto gap-3.5 pb-3 pt-1 scroll-smooth snap-x scrollbar-thin scrollbar-thumb-emerald-500">
+              {/* Gym Selector Horizontal Strip: Shows 2 cards at a time, scrollable on cursor hover/wheel */}
+              <div className="relative group px-1">
+                {/* Left Scroll Arrow */}
                 <button
                   type="button"
-                  onClick={() => setSelectedGymFilter("all")}
-                  className={`min-w-[240px] sm:min-w-[280px] max-w-[300px] shrink-0 snap-start p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
-                    selectedGymFilter === "all"
-                      ? "bg-brand-navy text-white border-brand-navy shadow-sm"
-                      : "bg-white text-brand-navy border-slate-200 hover:border-brand-green/50"
-                  }`}
+                  onClick={() => scrollGyms("left")}
+                  className="absolute -left-2 sm:-left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-brand-navy hover:bg-slate-50 transition-all cursor-pointer opacity-80 hover:opacity-100 hover:scale-105"
+                  title="Previous Gyms"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase">All Partner Gyms</span>
-                    <Dumbbell className={`w-4 h-4 ${selectedGymFilter === "all" ? "text-brand-green" : "text-slate-400"}`} />
-                  </div>
-                  <div>
-                    <p className="text-xl font-black font-mono">{gymOrdersList.length}</p>
-                    <p className={`text-[10px] font-semibold ${selectedGymFilter === "all" ? "text-white/70" : "text-slate-500"}`}>
-                      Total Gym Orders
-                    </p>
-                  </div>
+                  <ChevronLeft className="w-5 h-5 text-brand-navy" />
                 </button>
 
-                {gymOverviewStats.map(gym => (
+                <div 
+                  ref={gymScrollRef}
+                  onWheel={(e) => {
+                    if (e.deltaY !== 0) {
+                      e.currentTarget.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  className="flex overflow-x-auto gap-3.5 pb-3 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin scrollbar-thumb-emerald-500/50 hover:scrollbar-thumb-emerald-600"
+                  style={{ scrollSnapType: "x mandatory" }}
+                >
                   <button
-                    key={gym.gymName}
                     type="button"
-                    onClick={() => setSelectedGymFilter(gym.gymName)}
-                    className={`min-w-[240px] sm:min-w-[280px] max-w-[300px] shrink-0 snap-start p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
-                      selectedGymFilter === gym.gymName
-                        ? "bg-emerald-700 text-white border-emerald-700 shadow-sm"
+                    onClick={() => setSelectedGymFilter("all")}
+                    className={`w-[calc(50%-7px)] min-w-[240px] shrink-0 snap-start p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
+                      selectedGymFilter === "all"
+                        ? "bg-brand-navy text-white border-brand-navy shadow-sm"
                         : "bg-white text-brand-navy border-slate-200 hover:border-brand-green/50"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black truncate max-w-[170px]" title={gym.gymName}>{gym.gymName.split('(')[0]}</span>
-                      <MapPin className={`w-3.5 h-3.5 shrink-0 ${selectedGymFilter === gym.gymName ? "text-white" : "text-emerald-600"}`} />
+                      <span className="text-xs font-black uppercase">All Partner Gyms</span>
+                      <Dumbbell className={`w-4 h-4 ${selectedGymFilter === "all" ? "text-brand-green" : "text-slate-400"}`} />
                     </div>
                     <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <p className="text-xl font-black font-mono">{gym.totalOrders}</p>
-                        <span className={`text-[10px] font-bold ${selectedGymFilter === gym.gymName ? "text-white/90" : "text-emerald-700 font-mono"}`}>
-                          ({gym.totalPieces}P)
-                        </span>
-                      </div>
-                      <p className={`text-[10px] font-medium truncate ${selectedGymFilter === gym.gymName ? "text-white/70" : "text-slate-500"}`} title={gym.gymLocation}>
-                        📍 {gym.gymLocation}
+                      <p className="text-xl font-black font-mono">{gymOrdersList.length}</p>
+                      <p className={`text-[10px] font-semibold ${selectedGymFilter === "all" ? "text-white/70" : "text-slate-500"}`}>
+                        Total Gym Orders
                       </p>
                     </div>
                   </button>
-                ))}
+
+                  {gymOverviewStats.map(gym => (
+                    <button
+                      key={gym.gymName}
+                      type="button"
+                      onClick={() => setSelectedGymFilter(gym.gymName)}
+                      className={`w-[calc(50%-7px)] min-w-[240px] shrink-0 snap-start p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
+                        selectedGymFilter === gym.gymName
+                          ? "bg-emerald-700 text-white border-emerald-700 shadow-sm"
+                          : "bg-white text-brand-navy border-slate-200 hover:border-brand-green/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black truncate max-w-[170px]" title={gym.gymName}>{gym.gymName.split('(')[0]}</span>
+                        <MapPin className={`w-3.5 h-3.5 shrink-0 ${selectedGymFilter === gym.gymName ? "text-white" : "text-emerald-600"}`} />
+                      </div>
+                      <div>
+                        <div className="flex items-baseline gap-1.5">
+                          <p className="text-xl font-black font-mono">{gym.totalOrders}</p>
+                          <span className={`text-[10px] font-bold ${selectedGymFilter === gym.gymName ? "text-white/90" : "text-emerald-700 font-mono"}`}>
+                            ({gym.totalPieces}P)
+                          </span>
+                        </div>
+                        <p className={`text-[10px] font-medium truncate ${selectedGymFilter === gym.gymName ? "text-white/70" : "text-slate-500"}`} title={gym.gymLocation}>
+                          📍 {gym.gymLocation}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right Scroll Arrow */}
+                <button
+                  type="button"
+                  onClick={() => scrollGyms("right")}
+                  className="absolute -right-2 sm:-right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-brand-navy hover:bg-slate-50 transition-all cursor-pointer opacity-80 hover:opacity-100 hover:scale-105"
+                  title="Next Gyms"
+                >
+                  <ChevronRight className="w-5 h-5 text-brand-navy" />
+                </button>
               </div>
 
               {/* Gym Order Type & Time Filters */}
