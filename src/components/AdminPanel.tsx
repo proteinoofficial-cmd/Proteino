@@ -706,7 +706,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     setDeletedSubscriptions(prev => [archivedSub, ...prev.filter(d => d.id !== subId)]);
 
     try {
-      const res = await apiFetch(`/api/subscriptions/${subId}`, {
+      const res = await apiFetch(`/api/subscriptions/${encodeURIComponent(subId)}`, {
         method: "DELETE"
       });
       if (res.ok) {
@@ -1937,7 +1937,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
               )}
 
               {/* Render Single Meal Orders Cards */}
-              {(() => {
+              {singleOrderSubTab !== "deleted" && (() => {
                 const listToRender = singleOrderSubTab === 'current' ? currentSingleOrders : filteredPastSingleOrders;
                 if (listToRender.length === 0) {
                   return (

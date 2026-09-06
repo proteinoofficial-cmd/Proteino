@@ -855,7 +855,12 @@ app.post("/api/subscriptions", (req, res) => {
 // Sync delete/cancel of sub & archive to deletedSubscriptions with date and time
 app.delete("/api/subscriptions/:idOrPhone", (req, res) => {
   const { idOrPhone } = req.params;
-  const toDelete = store.subscriptions.filter(sub => sub.id === idOrPhone || sub.customerPhone === idOrPhone);
+  const decodedIdOrPhone = decodeURIComponent(idOrPhone);
+  const toDelete = store.subscriptions.filter(sub => 
+    String(sub.id) === String(decodedIdOrPhone) || 
+    sub.customerPhone === decodedIdOrPhone || 
+    sub.id === decodedIdOrPhone
+  );
   
   if (toDelete.length > 0) {
     const now = new Date();
@@ -879,11 +884,15 @@ app.delete("/api/subscriptions/:idOrPhone", (req, res) => {
         reason: req.body?.reason || "Subscription Declined / Deleted by Admin"
       };
       // Prevent duplicate deleted entries
-      store.deletedSubscriptions = store.deletedSubscriptions.filter(d => d.id !== sub.id);
+      store.deletedSubscriptions = store.deletedSubscriptions.filter(d => String(d.id) !== String(sub.id));
       store.deletedSubscriptions.unshift(archived);
     });
 
-    store.subscriptions = store.subscriptions.filter(sub => sub.id !== idOrPhone && sub.customerPhone !== idOrPhone);
+    store.subscriptions = store.subscriptions.filter(sub => 
+      String(sub.id) !== String(decodedIdOrPhone) && 
+      sub.customerPhone !== decodedIdOrPhone && 
+      sub.id !== decodedIdOrPhone
+    );
     saveStore();
   }
 
