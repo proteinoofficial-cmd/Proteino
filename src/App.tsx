@@ -138,7 +138,9 @@ export default function App() {
   const [showCheckoutConfirmModal, setShowCheckoutConfirmModal] = useState(false);
   const [showOrderPlacedPopup, setShowOrderPlacedPopup] = useState(false);
   const [customerDeclinedSubAlert, setCustomerDeclinedSubAlert] = useState<{
+    id?: string;
     planName?: string;
+    gymName?: string;
     message: string;
     time?: string;
   } | null>(null);
@@ -235,6 +237,17 @@ export default function App() {
               deliveryTimeRemaining: event.data.status === 'delivered' ? 0 : o.deliveryTimeRemaining
             } : o));
           }
+          if (event.data?.type === 'subscription_declined') {
+            const pName = event.data.planName || 'High-Protein Gym Plan';
+            const gName = event.data.gymName ? ` for ${event.data.gymName}` : '';
+            setCustomerDeclinedSubAlert({
+              id: event.data.id,
+              planName: event.data.planName,
+              gymName: event.data.gymName,
+              message: `Your subscription plan (${pName}${gName}) was declined by admin. Please order again later.`,
+              time: event.data.date || new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })
+            });
+          }
           fetchUserData();
         };
       }
@@ -254,10 +267,14 @@ export default function App() {
           const raw = localStorage.getItem('proteino_last_declined_sub');
           if (raw) {
             const parsed = JSON.parse(raw);
+            const pName = parsed.planName || 'High-Protein Gym Plan';
+            const gName = parsed.gymName ? ` for ${parsed.gymName}` : '';
             setCustomerDeclinedSubAlert({
+              id: parsed.id,
               planName: parsed.planName,
-              message: "Your subscription plan was declined by admin. Please order again later.",
-              time: parsed.time || new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })
+              gymName: parsed.gymName,
+              message: `Your subscription plan (${pName}${gName}) was declined by admin. Please order again later.`,
+              time: parsed.time || parsed.date || new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })
             });
           }
         } catch (err) {}
@@ -266,10 +283,15 @@ export default function App() {
     };
 
     const handleSubDeclinedDirect = (e: any) => {
+      const detail = e.detail || {};
+      const pName = detail.planName || 'High-Protein Gym Plan';
+      const gName = detail.gymName ? ` for ${detail.gymName}` : '';
       setCustomerDeclinedSubAlert({
-        planName: e.detail?.planName,
-        message: "Your subscription plan was declined by admin. Please order again later.",
-        time: new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })
+        id: detail.id,
+        planName: detail.planName,
+        gymName: detail.gymName,
+        message: `Your subscription plan (${pName}${gName}) was declined by admin. Please order again later.`,
+        time: detail.date || new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })
       });
       fetchUserData();
     };
@@ -1174,6 +1196,7 @@ export default function App() {
               onRenewSub={handleRenewSubscription}
               onExploreClick={() => setCurrentView('dashboard')}
               isGuest={!profile}
+              customerPhone={profile?.phone}
               onSignInClick={() => {
                 setAuthModalNotice('');
                 setAuthModalStep('welcome');
@@ -2199,8 +2222,11 @@ export default function App() {
                         {customerDeclinedSubAlert.time || 'Notice'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-white/85 font-bold mt-1 leading-snug">
-                      Your subscription plan{customerDeclinedSubAlert.planName ? ` (${customerDeclinedSubAlert.planName})` : ''} was declined. Please order again later.
+                    <p className="text-[11px] text-white/90 font-bold mt-1 leading-snug">
+                      Your subscription for <span className="text-white font-extrabold">{customerDeclinedSubAlert.planName || 'High-Protein Plan'}</span>
+                      {customerDeclinedSubAlert.gymName && (
+                        <> at <span className="text-red-300 font-extrabold">📍 {customerDeclinedSubAlert.gymName}</span></>
+                      )} was declined by admin. Please order again later.
                     </p>
                     <div className="mt-2.5 flex items-center gap-2">
                       <button

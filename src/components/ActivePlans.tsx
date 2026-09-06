@@ -24,6 +24,16 @@ interface ActivePlansProps {
   onExploreClick?: () => void;
   isGuest?: boolean;
   onSignInClick?: () => void;
+  customerPhone?: string;
+}
+
+interface DeclinedNotice {
+  id?: string;
+  planName?: string;
+  gymName?: string;
+  gymLocation?: string;
+  date?: string;
+  timestamp?: number;
 }
 
 export default function ActivePlans({ 
@@ -32,7 +42,8 @@ export default function ActivePlans({
   onRenewSub,
   onExploreClick,
   isGuest, 
-  onSignInClick 
+  onSignInClick,
+  customerPhone
 }: ActivePlansProps) {
   // Separate Subscriptions into Current vs Past (Completed)
   const currentSubscriptions = activeSubscriptions.filter(s => s.status !== 'completed');
@@ -51,21 +62,71 @@ export default function ActivePlans({
   }, [currentSubscriptions.length, pastSubscriptions.length]);
 
   // Declined Subscription Notification State
-  const [declinedNotice, setDeclinedNotice] = useState<{ planName?: string; date?: string } | null>(null);
+  const [declinedNotice, setDeclinedNotice] = useState<DeclinedNotice | null>(null);
   const [isDeclinedDismissed, setIsDeclinedDismissed] = useState<boolean>(false);
+
+  const isKeyDismissed = (item?: DeclinedNotice | null) => {
+    if (!item) return false;
+    const key = item.id ? String(item.id) : `${item.planName || ''}_${item.gymName || ''}_${item.date || ''}`;
+    try {
+      const stored = localStorage.getItem('proteino_dismissed_declined_subs');
+      if (stored) {
+        const list: string[] = JSON.parse(stored);
+        return list.includes(key);
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  const handleDismissNotice = () => {
+    if (declinedNotice) {
+      const key = declinedNotice.id ? String(declinedNotice.id) : `${declinedNotice.planName || ''}_${declinedNotice.gymName || ''}_${declinedNotice.date || ''}`;
+      try {
+        const stored = localStorage.getItem('proteino_dismissed_declined_subs');
+        const list: string[] = stored ? JSON.parse(stored) : [];
+        if (!list.includes(key)) {
+          list.push(key);
+          localStorage.setItem('proteino_dismissed_declined_subs', JSON.stringify(list));
+        }
+      } catch (e) {}
+    }
+    setIsDeclinedDismissed(true);
+  };
 
   useEffect(() => {
     const checkDeclined = async () => {
       try {
+        // 1. Check direct localStorage broadcast payload
         const lastDeclinedRaw = localStorage.getItem('proteino_last_declined_sub');
         if (lastDeclinedRaw) {
           const parsed = JSON.parse(lastDeclinedRaw);
-          if (Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000) {
-            setDeclinedNotice({ planName: parsed.planName || 'Gym High-Protein Plan', date: parsed.date || 'Recent' });
+          // Show within last 48 hours
+          if (Date.now() - (parsed.timestamp || 0) < 48 * 60 * 60 * 1000) {
+            const candidate: DeclinedNotice = {
+              id: parsed.id,
+              planName: parsed.planName || 'High-Protein Gym Plan',
+              gymName: parsed.gymName || 'Partner Gym',
+              gymLocation: parsed.gymLocation || '',
+              date: parsed.date || 'Recent',
+              timestamp: parsed.timestamp || Date.now()
+            };
+            if (!isKeyDismissed(candidate)) {
+              setDeclinedNotice(candidate);
+              setIsDeclinedDismissed(false);
+            }
           }
         }
 
-        const phone = localStorage.getItem('proteino_last_order_phone') || '';
+        // 2. Also check deleted subscriptions endpoint on backend
+        let profilePhone = '';
+        try {
+          const profRaw = localStorage.getItem('proteino_profile');
+          if (profRaw) {
+            const prof = JSON.parse(profRaw);
+            profilePhone = prof.phone || '';
+          }
+        } catch (e) {}
+        const phone = customerPhone || profilePhone || localStorage.getItem('proteino_last_order_phone') || '';
         if (phone) {
           const clean = phone.replace(/\D/g, '').slice(-10);
           const res = await fetch(`/api/subscriptions/deleted?phone=${encodeURIComponent(clean)}`);
@@ -73,7 +134,18 @@ export default function ActivePlans({
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
               const latest = data[0];
-              setDeclinedNotice({ planName: latest.planName, date: latest.deletedDate || 'Recent' });
+              const candidate: DeclinedNotice = {
+                id: latest.id,
+                planName: latest.planName || 'High-Protein Gym Plan',
+                gymName: latest.gymName || 'Partner Gym',
+                gymLocation: latest.gymLocation || '',
+                date: latest.deletedDate || 'Recent',
+                timestamp: latest.deletedAt ? new Date(latest.deletedAt).getTime() : Date.now()
+              };
+              if (!isKeyDismissed(candidate)) {
+                setDeclinedNotice(candidate);
+                setIsDeclinedDismissed(false);
+              }
             }
           }
         }
@@ -83,34 +155,59 @@ export default function ActivePlans({
     checkDeclined();
 
     const handleDeclined = (e: any) => {
-      setDeclinedNotice({
-        planName: e.detail?.planName || 'Gym High-Protein Plan',
-        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
-      setIsDeclinedDismissed(false);
+      const detail = e.detail || {};
+      const candidate: DeclinedNotice = {
+        id: detail.id,
+        planName: detail.planName || 'High-Protein Gym Plan',
+        gymName: detail.gymName || 'Partner Gym',
+        gymLocation: detail.gymLocation || '',
+        date: detail.date || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: detail.timestamp || Date.now()
+      };
+      if (!isKeyDismissed(candidate)) {
+        setDeclinedNotice(candidate);
+        setIsDeclinedDismissed(false);
+      }
     };
 
     window.addEventListener('proteino_subscription_declined', handleDeclined);
 
     let bc: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== 'undefined') {
-      bc = new BroadcastChannel('proteino_sync');
-      bc.onmessage = (msg) => {
-        if (msg.data && msg.data.type === 'subscription_declined') {
-          setDeclinedNotice({
-            planName: msg.data.planName || 'Gym High-Protein Plan',
-            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          });
-          setIsDeclinedDismissed(false);
-        }
-      };
+      try {
+        bc = new BroadcastChannel('proteino_sync');
+        bc.onmessage = (msg) => {
+          if (msg.data && msg.data.type === 'subscription_declined') {
+            const candidate: DeclinedNotice = {
+              id: msg.data.id,
+              planName: msg.data.planName || 'High-Protein Gym Plan',
+              gymName: msg.data.gymName || 'Partner Gym',
+              gymLocation: msg.data.gymLocation || '',
+              date: msg.data.date || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              timestamp: msg.data.timestamp || Date.now()
+            };
+            if (!isKeyDismissed(candidate)) {
+              setDeclinedNotice(candidate);
+              setIsDeclinedDismissed(false);
+            }
+          }
+        };
+      } catch (e) {}
     }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'proteino_subscription_declined_trigger' || e.key === 'proteino_last_declined_sub') {
+        checkDeclined();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
 
     return () => {
       window.removeEventListener('proteino_subscription_declined', handleDeclined);
+      window.removeEventListener('storage', handleStorage);
       if (bc) bc.close();
     };
-  }, []);
+  }, [customerPhone]);
 
   return (
     <div className="flex flex-col h-full bg-[#FAF9F6] p-5 pb-28 overflow-y-auto select-none">
@@ -130,14 +227,14 @@ export default function ActivePlans({
 
       {/* Customer Notification: Subscription Declined */}
       {declinedNotice && !isDeclinedDismissed && (
-        <div className="mb-5 bg-red-50 border-2 border-red-300 rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="mb-5 bg-red-50/95 border-2 border-red-300 rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-              <AlertCircle className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 shadow-2xs border border-red-200">
+              <AlertCircle className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] bg-red-600 text-white font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   Subscription Declined
                 </span>
                 <span className="text-[10px] font-mono font-bold text-red-600">
@@ -145,28 +242,42 @@ export default function ActivePlans({
                 </span>
               </div>
               <h3 className="text-sm font-black text-red-950 mt-1">
-                Your subscription is declined. Please order again later.
+                Your subscription plan was declined by admin
               </h3>
-              <p className="text-xs font-semibold text-red-800/80 mt-0.5">
-                The kitchen administrator has declined your subscription plan{declinedNotice.planName ? ` (${declinedNotice.planName})` : ''}. You can order again at a later time.
+              <p className="text-xs font-semibold text-red-800/90 mt-1 leading-relaxed">
+                The kitchen administrator has declined your subscription for{' '}
+                <span className="font-extrabold text-red-950 underline decoration-red-300">
+                  {declinedNotice.planName || 'High-Protein Gym Plan'}
+                </span>
+                {declinedNotice.gymName && (
+                  <>
+                    {' '}at{' '}
+                    <span className="font-extrabold text-red-950">
+                      📍 {declinedNotice.gymName}
+                    </span>
+                  </>
+                )}
+                . You can order again at a later time or choose another plan.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-end sm:self-center">
+          <div className="flex items-center gap-2 self-end sm:self-center mt-2 sm:mt-0 shrink-0">
             {onExploreClick && (
               <button
+                type="button"
                 onClick={onExploreClick}
-                className="py-2 px-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                className="py-2 px-3.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-black transition-all cursor-pointer whitespace-nowrap shadow-xs"
               >
                 Order Again Later
               </button>
             )}
             <button
-              onClick={() => setIsDeclinedDismissed(true)}
-              className="p-1.5 rounded-xl hover:bg-red-100 text-red-600 border border-red-200 text-xs font-black cursor-pointer transition-all"
+              type="button"
+              onClick={handleDismissNotice}
+              className="p-1.5 rounded-xl hover:bg-red-100 active:scale-90 text-red-600 border border-red-200 text-xs font-black cursor-pointer transition-all"
               title="Dismiss notification"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         </div>

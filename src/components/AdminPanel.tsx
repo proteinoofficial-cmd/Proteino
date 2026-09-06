@@ -752,13 +752,16 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
     try {
       const payload = {
         id: subId,
-        planName: sub?.planName || 'Gym High-Protein Plan',
+        planName: sub?.planName || 'High-Protein Gym Plan',
+        gymName: sub?.gymName || (sub as any)?.gym || 'Partner Gym',
+        gymLocation: sub?.gymLocation || '',
         phone: sub?.customerPhone || '',
         date: deletedDateStr,
         timestamp: Date.now(),
-        message: "Your plan was declined. Please order again later."
+        message: `Your subscription plan (${sub?.planName || 'High-Protein Plan'}) for ${sub?.gymName || 'Partner Gym'} was declined by admin. Please order again later.`
       };
       localStorage.setItem('proteino_last_declined_sub', JSON.stringify(payload));
+      localStorage.setItem('proteino_subscription_declined_trigger', String(Date.now()));
       window.dispatchEvent(new CustomEvent('proteino_subscription_declined', { detail: payload }));
       if (typeof BroadcastChannel !== 'undefined') {
         const bc = new BroadcastChannel('proteino_sync');
