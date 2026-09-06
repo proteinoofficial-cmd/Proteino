@@ -703,7 +703,7 @@ export default function SubscriptionManager({
             </div>
           </div>
 
-          {/* Grand Opening & Payment Method COD */}
+          {/* Payment Method COD */}
           <div className="flex flex-col gap-2">
             <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3.5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -716,16 +716,6 @@ export default function SubscriptionManager({
               <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2.5 py-1 rounded-lg">
                 COD
               </span>
-            </div>
-
-            <div className="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 flex items-start gap-2 text-xs">
-              <span className="text-base shrink-0">🎉</span>
-              <div>
-                <p className="text-xs font-black text-sky-950">Proteino Grand Opening on 7th September</p>
-                <p className="text-[10px] text-sky-700 font-semibold leading-relaxed">
-                  Daily meal subscriptions will commence delivery starting 7th of September directly to your gym partner desk.
-                </p>
-              </div>
             </div>
           </div>
 
