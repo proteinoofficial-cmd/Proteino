@@ -237,6 +237,11 @@ export default function App() {
               deliveryTimeRemaining: event.data.status === 'delivered' ? 0 : o.deliveryTimeRemaining
             } : o));
           }
+          if (event.data?.type === 'trial_data_cleared') {
+            setOrders([]);
+            setActiveSubscriptions([]);
+            setCustomerDeclinedSubAlert(null);
+          }
           if (event.data?.type === 'subscription_declined') {
             const pName = event.data.planName || 'High-Protein Gym Plan';
             const gName = event.data.gymName ? ` for ${event.data.gymName}` : '';
@@ -255,10 +260,14 @@ export default function App() {
 
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === 'proteino_order_sync_trigger' || e.key === 'proteino_last_order_phone' || e.key === 'proteino_orders') {
-        if (e.key === 'proteino_orders' && e.newValue) {
-          try {
-            setOrders(JSON.parse(e.newValue));
-          } catch (err) {}
+        if (e.key === 'proteino_orders') {
+          if (e.newValue) {
+            try {
+              setOrders(JSON.parse(e.newValue));
+            } catch (err) {}
+          } else {
+            setOrders([]);
+          }
         }
         fetchUserData();
       }

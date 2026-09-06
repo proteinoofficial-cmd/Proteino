@@ -131,35 +131,8 @@ if (fs.existsSync(DATA_FILE)) {
     console.error("Failed to parse data-store.json, using fresh store.", err);
   }
 } else {
-  // Seed with a default sample order if empty
-  store.orders = [
-    {
-      id: "PRTN-2904",
-      date: "Today, 08:30 AM",
-      customerName: "Sarah Connor",
-      customerPhone: "9876543210",
-      gymName: "Jai Ho Fitness (Shirur Park)",
-      gymLocation: "54, Shirur Park Road, Shirur Park, Vidya Nagar, Hubballi, Karnataka 580031",
-      deliveryTimeSlot: "2 PM",
-      items: [
-        {
-          product: {
-            id: 'nonveg-bulk-35p',
-            name: 'Non-Veg BULK 35P',
-            price: 229,
-            protein: 35,
-            calories: 700,
-            isVeg: false
-          },
-          quantity: 1,
-          purchaseOption: "single"
-        }
-      ],
-      total: 229,
-      status: "cooking",
-      deliveryTimeRemaining: 24
-    }
-  ];
+  store.orders = [];
+  store.subscriptions = [];
   store.deletedSubscriptions = [];
 }
 
@@ -1041,6 +1014,21 @@ app.put("/api/subscriptions/:id", (req, res) => {
   } else {
     res.status(404).json({ error: "Subscription not found" });
   }
+});
+
+// Clear all trial / test orders and subscriptions for Grand Opening
+app.post("/api/admin/clear-trial-data", (req, res) => {
+  store.orders = [];
+  store.subscriptions = [];
+  store.deletedSubscriptions = [];
+  saveStore();
+  console.log("Cleared all trial orders, subscriptions, and deleted plans for Grand Opening.");
+  res.json({
+    success: true,
+    message: "All trial orders, subscriptions, and records have been cleared for Grand Opening!",
+    ordersCount: 0,
+    subscriptionsCount: 0
+  });
 });
 
 // Wildcard API fallback to return JSON instead of HTML SPA fallback for unmatched api routes

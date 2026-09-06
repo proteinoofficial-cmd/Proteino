@@ -22,7 +22,6 @@ import {
   VolumeX,
   Bell,
   X,
-  Trash2,
   RotateCcw,
   Sparkles,
   Power,
@@ -532,11 +531,20 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     initAudioUnlock();
-    if (password === "ADMIN" || password === "admin") {
+    const cleanInput = password.trim();
+    const customPass = typeof window !== 'undefined' ? localStorage.getItem('proteino_admin_custom_password') : null;
+    
+    // Configured Admin Password
+    const validPasswords = [
+      "ProteinoTeam@Hubli2026!"
+    ];
+    if (customPass) validPasswords.push(customPass.trim());
+
+    if (validPasswords.includes(cleanInput)) {
       setIsAuthenticated(true);
       setLoginError("");
     } else {
-      setLoginError("Incorrect password. Please enter 'ADMIN' or 'admin'.");
+      setLoginError("Incorrect password. Access denied.");
     }
   };
 
@@ -1412,18 +1420,18 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
           </div>
 
           <h2 className="text-2xl font-black text-brand-navy tracking-tight font-display">Proteino Admin Portal</h2>
-          <p className="text-xs text-brand-navy/50 font-medium mt-1">Authorized access only. Enter administrative passcode to proceed.</p>
+          <p className="text-xs text-brand-navy/50 font-medium mt-1">Authorized access only. Enter password to proceed.</p>
 
           <form onSubmit={handleLoginSubmit} className="w-full mt-6 flex flex-col gap-4">
             <div className="flex flex-col text-left gap-1.5 relative">
               <label className="text-[9px] font-black uppercase tracking-wider text-brand-navy/40 flex items-center gap-1">
-                <Lock className="w-3 h-3 text-brand-green" /> Passcode
+                <Lock className="w-3 h-3 text-brand-green" /> Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter ADMIN or admin"
+                placeholder="Enter password"
                 className="bg-[#FAF9F6] border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-brand-navy focus:outline-none focus:border-brand-green/40 shadow-sm w-full"
                 autoFocus
               />
@@ -1439,7 +1447,7 @@ export default function AdminPanel({ onBackToApp }: AdminPanelProps) {
               type="submit"
               className="w-full py-3.5 bg-brand-navy text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-brand-navy/90 active:scale-98 transition-all cursor-pointer"
             >
-              Verify Administrative Credentials
+              Unlock Admin Portal
             </button>
           </form>
 
